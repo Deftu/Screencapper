@@ -16,7 +16,19 @@ sometimes, you can't even send the image directly,
 so you need to upload it to an image hosting service
 first.
 
-## Taking a screenshot using Shotify
+## Taking a screenshot using Screencapper
 I take a screenshot, I get to see a preview of it,
 I can automatically upload it to my image hosting
 service, Twitter, Instagram or copy it to my clipboard.
+
+<div align="center">
+
+**Original [Shotify][shotify] mod by [isXander][xander]**\
+**This project is licensed under [LGPL-3.0][lgpl]**\
+**&copy; 2022 Deftu**
+
+</div>
+
+[shotify]: https://curseforge.com/minecraft/mc-mods/shotify
+[xander]: https://github.com/isXander
+[lgpl]: https://www.gnu.org/licenses/lgpl-3.0.en.html
