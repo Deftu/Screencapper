@@ -40,4 +40,8 @@ tasks {
             freeCompilerArgs += "-Xjvm-default=enable"
         }
     }
+
+    remapJar {
+        archiveBaseName.set("${modData.name}-${mcData.versionStr}")
+    }
 }
