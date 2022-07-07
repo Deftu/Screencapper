@@ -116,6 +116,14 @@ object ScreencapperConfig : Vigilant(
     ) fun openShareXConfigFile() {
         UDesktop.open(ShareXConfig.file)
     }
+    @Property(
+        type = PropertyType.BUTTON,
+        name = "${Screencapper.ID}.config.upload.sharex.reload_config",
+        description = "${Screencapper.ID}.config_description.upload.sharex.reload_config",
+        category = "${Screencapper.ID}.config_category.upload"
+    ) fun reloadShareXConfigFile() {
+        ShareXConfig.load()
+    }
 
     // Show/hide ShareX properties
     @Property(

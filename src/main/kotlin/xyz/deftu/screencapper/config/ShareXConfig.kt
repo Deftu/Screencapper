@@ -29,6 +29,7 @@ object ShareXConfig {
 
     fun save() {
         if (!file.exists()) file.createNewFile()
+        if (!::json.isInitialized) json = JsonObject()
         file.writeText(gson.toJson(json))
     }
 

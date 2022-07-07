@@ -21,7 +21,8 @@
     "screencapper.config.upload.sharex.url": "ShareX URL",
     "screencapper.config.upload.sharex.request_method": "ShareX Request Method",
     "screencapper.config.upload.sharex.request_type": "ShareX Request Type",
-    "screencapper.config.upload.sharex.open_config": "Open ShareX Config",
+    "screencapper.config.upload.sharex.open_config": "Open ShareX Config File",
+    "screencapper.config.upload.sharex.reload_config": "Reload ShareX Config File",
 
     "screencapper.config_option.general.preview_position.top_left": "Top Left",
     "screencapper.config_option.general.preview_position.top_right": "Top Right",
@@ -43,6 +44,7 @@
     "screencapper.config_description.upload.sharex.request_method": "The method to use when sending ShareX uploads.",
     "screencapper.config_description.upload.sharex.request_type": "The type of request to use when sending ShareX uploads.",
     "screencapper.config_description.upload.sharex.open_config": "Open the ShareX config file in your editor of choice.",
+    "screencapper.config_description.upload.sharex.reload_config": "Reload the ShareX config file.",
 
     "screencapper.text.chat.screenshot": "Screenshot taken!",
     "screencapper.text.chat.upload": "Upload",
