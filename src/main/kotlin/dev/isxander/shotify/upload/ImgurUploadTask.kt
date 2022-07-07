@@ -1,6 +1,5 @@
 package dev.isxander.shotify.upload
 
-import dev.isxander.shotify.util.Screenshot
 import java.net.URI
 import java.net.URL
 import java.net.URLEncoder
@@ -12,13 +11,14 @@ import java.util.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import xyz.deftu.screencapper.utils.Screenshot
 
-object ImgurUploadTask : UploadTask {
+object ImgurUploadTask  {
     private const val imgurClientId = "fb714c908164e90"
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    override fun upload(screenshot: Screenshot): Screenshot {
+    fun upload(screenshot: Screenshot): Screenshot {
         val base64 = Base64.getEncoder().encodeToString(screenshot.image.bytes)
         val form = "image=${URLEncoder.encode(base64, "UTF-8")}"
 

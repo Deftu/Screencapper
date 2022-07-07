@@ -19,7 +19,7 @@ first.
 ## Taking a screenshot using Screencapper
 I take a screenshot, I get to see a preview of it,
 I can automatically upload it to my image hosting
-service, Twitter, Instagram or copy it to my clipboard.
+service or copy it to my clipboard.
 
 <div align="center">
 

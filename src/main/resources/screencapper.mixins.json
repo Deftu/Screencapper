@@ -1,0 +1,11 @@
+{
+    "required": true,
+    "package": "xyz.deftu.screencapper.mixins",
+    "compatibilityLevel": "JAVA_17",
+    "injectors": {
+        "defaultRequire": 1
+    },
+    "mixins": [
+        "ScreenshotRecorderMixin"
+    ]
+}

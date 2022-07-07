@@ -23,6 +23,5 @@ object EmptyImageProvider : ImageProvider {
         height: Double,
         color: Color
     ) {
-        // just dont render anything
     }
 }
