@@ -1,12 +1,17 @@
+import com.modrinth.minotaur.dependencies.ModDependency
+import com.modrinth.minotaur.dependencies.DependencyType
+import xyz.unifycraft.gradle.tools.CurseDependency
+
 plugins {
     java
     kotlin("jvm") version("1.7.0")
     kotlin("plugin.serialization") version("1.7.0")
-    id("xyz.unifycraft.gradle.tools") version("1.7.0")
-    id("xyz.unifycraft.gradle.tools.loom") version("1.7.0")
-    id("xyz.unifycraft.gradle.tools.shadow") version("1.7.0")
-    id("xyz.unifycraft.gradle.tools.releases") version("1.7.0")
-    id("xyz.unifycraft.gradle.tools.blossom") version("1.7.0")
+    val ucgt = "1.8.2"
+    id("xyz.unifycraft.gradle.tools") version(ucgt)
+    id("xyz.unifycraft.gradle.tools.loom") version(ucgt)
+    id("xyz.unifycraft.gradle.tools.shadow") version(ucgt)
+    id("xyz.unifycraft.gradle.tools.releases") version(ucgt)
+    id("xyz.unifycraft.gradle.tools.blossom") version(ucgt)
 }
 
 repositories {
@@ -32,6 +37,30 @@ dependencies {
     })
 
     modImplementation("com.terraformersmc:modmenu:3.+")
+}
+
+releases {
+    file.set(tasks.remapJar)
+    changelogFile.set(file("CHANGELOG.md"))
+
+    modrinth {
+        projectId.set(property("releases.modrinth.id")?.toString() ?: throw IllegalStateException("No modrinth project ID set."))
+        dependencies.set(listOf(
+            ModDependency("P7dR8mSH", DependencyType.REQUIRED),
+            ModDependency("Ha28R6CL", DependencyType.REQUIRED),
+            ModDependency("mOgUt4GM", DependencyType.OPTIONAL)
+        ))
+    }
+
+    curseforge {
+        releaseName.set("[${mcData.versionStr}] ${modData.name} ${modData.version}")
+        projectId.set(property("releases.curseforge.id")?.toString() ?: throw IllegalStateException("No curseforge project ID set."))
+        dependencies.set(listOf(
+            CurseDependency("fabric-api", true),
+            CurseDependency("fabric-language-kotlin", true),
+            CurseDependency("modmenu", false)
+        ))
+    }
 }
 
 tasks {

@@ -47,12 +47,12 @@ object ScreenshotHandler {
                     it.withClickEvent(ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, upload(screenshot!!).toString()))
                 }
             }
-        val copyText = TranslatableText("${Screencapper.ID}.text.chat.copy")
-            .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.BLUE).apply {
-                styled {
-                    it.withClickEvent(ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, screenshot!!.image.bytes.contentToString()))
-                }
-            }
+        //val copyText = TranslatableText("${Screencapper.ID}.text.chat.copy")
+        //    .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.BLUE).apply {
+        //        styled {
+        //            it.withClickEvent(ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, screenshot!!.image.bytes.contentToString()))
+        //        }
+        //    }
         val openText = TranslatableText("${Screencapper.ID}.text.chat.open")
             .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.YELLOW).apply {
                 styled {
@@ -65,23 +65,23 @@ object ScreenshotHandler {
                     it.withClickEvent(ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, screenshot?.file?.parentFile?.absolutePath))
                 }
             }
-        val deleteText = TranslatableText("${Screencapper.ID}.text.chat.delete")
-            .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.RED).apply {
-                styled {
-                    it.withClickEvent(ChatHelper.runClickEvent {
-                        Multithreading.runAsync {
-                            screenshot?.file?.delete()
-                        }
-                    })
-                }
-            }
+        //val deleteText = TranslatableText("${Screencapper.ID}.text.chat.delete")
+        //    .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.RED).apply {
+        //        styled {
+        //            it.withClickEvent(ChatHelper.runClickEvent {
+        //                Multithreading.runAsync {
+        //                    screenshot?.file?.delete()
+        //                }
+        //            })
+        //        }
+        //     }
         return TranslatableText("${Screencapper.ID}.text.chat.screenshot").apply {
             formatted(Formatting.WHITE).append(" ")
             if (ScreencapperConfig.chatUpload) screenshot?.url?.let { append("[").append(uploadText).append("] ") }
-            if (ScreencapperConfig.chatCopy) append("[").append(copyText).append("] ")
+            //if (ScreencapperConfig.chatCopy) append("[").append(copyText).append("] ")
             if (ScreencapperConfig.chatOpen) screenshot?.file?.let { append("[").append(openText).append("] ") }
             if (ScreencapperConfig.chatOpenFolder) screenshot?.file?.parent?.let { append("[").append(openFolderText).append("] ") }
-            if (ScreencapperConfig.chatDelete) append("[").append(deleteText).append("] ")
+            //if (ScreencapperConfig.chatDelete) append("[").append(deleteText).append("] ")
         }
     }
 }
