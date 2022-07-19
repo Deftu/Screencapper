@@ -1,6 +1,9 @@
 package xyz.deftu.screencapper
 
+import com.mojang.brigadier.Command
+import com.mojang.brigadier.arguments.StringArgumentType
 import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager
 import net.fabricmc.loader.api.FabricLoader
 import okhttp3.OkHttpClient
 import xyz.deftu.screencapper.config.ScreencapperConfig
@@ -22,5 +25,20 @@ object Screencapper : ClientModInitializer {
         ScreencapperConfig.initialize()
         ShareXConfig.initialize(configDirectory)
         ScreenshotPreview.initialize()
+        ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("screenshot")
+            .then(ClientCommandManager.argument("action", StringArgumentType.word())
+                .executes { ctx ->
+                    when (StringArgumentType.getString(ctx, "action").lowercase()) {
+                        "copy" -> {
+                            ScreenshotHandler.copy()
+                            1
+                        }
+                        "delete" -> {
+                            ScreenshotHandler.delete()
+                            1
+                        }
+                        else -> 0
+                    }
+                }))
     }
 }

@@ -14,8 +14,14 @@ import xyz.deftu.screencapper.upload.ShareXUploadTask
 import xyz.deftu.screencapper.utils.ChatHelper
 import xyz.deftu.screencapper.utils.Multithreading
 import xyz.deftu.screencapper.utils.Screenshot
+import java.awt.Image
+import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.Transferable
+import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.File
 import java.net.URL
+import javax.imageio.ImageIO
 
 object ScreenshotHandler {
     private var screenshot: Screenshot? = null
@@ -47,12 +53,12 @@ object ScreenshotHandler {
                     it.withClickEvent(ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, upload(screenshot!!).toString()))
                 }
             }
-        //val copyText = TranslatableText("${Screencapper.ID}.text.chat.copy")
-        //    .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.BLUE).apply {
-        //        styled {
-        //            it.withClickEvent(ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, screenshot!!.image.bytes.contentToString()))
-        //        }
-        //    }
+        val copyText = TranslatableText("${Screencapper.ID}.text.chat.copy")
+            .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.BLUE).apply {
+                styled {
+                    it.withClickEvent(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/screenshot copy"))
+                }
+            }
         val openText = TranslatableText("${Screencapper.ID}.text.chat.open")
             .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.YELLOW).apply {
                 styled {
@@ -65,23 +71,46 @@ object ScreenshotHandler {
                     it.withClickEvent(ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, screenshot?.file?.parentFile?.absolutePath))
                 }
             }
-        //val deleteText = TranslatableText("${Screencapper.ID}.text.chat.delete")
-        //    .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.RED).apply {
-        //        styled {
-        //            it.withClickEvent(ChatHelper.runClickEvent {
-        //                Multithreading.runAsync {
-        //                    screenshot?.file?.delete()
-        //                }
-        //            })
-        //        }
-        //     }
+        val deleteText = TranslatableText("${Screencapper.ID}.text.chat.delete")
+            .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.RED).apply {
+                styled {
+                    it.withClickEvent(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/screenshot delete"))
+                }
+             }
         return TranslatableText("${Screencapper.ID}.text.chat.screenshot").apply {
             formatted(Formatting.WHITE).append(" ")
             if (ScreencapperConfig.chatUpload) screenshot?.url?.let { append("[").append(uploadText).append("] ") }
-            //if (ScreencapperConfig.chatCopy) append("[").append(copyText).append("] ")
+            if (ScreencapperConfig.chatCopy) append("[").append(copyText).append("] ")
             if (ScreencapperConfig.chatOpen) screenshot?.file?.let { append("[").append(openText).append("] ") }
             if (ScreencapperConfig.chatOpenFolder) screenshot?.file?.parent?.let { append("[").append(openFolderText).append("] ") }
-            //if (ScreencapperConfig.chatDelete) append("[").append(deleteText).append("] ")
+            if (ScreencapperConfig.chatDelete) append("[").append(deleteText).append("] ")
         }
+    }
+
+    internal fun delete() =
+        screenshot?.file?.delete()
+
+    internal fun copy() {
+        try {
+            screenshot?.let { scr ->
+                val selection = ImageSelection(scr)
+                Multithreading.runAsync {
+                    Toolkit.getDefaultToolkit().systemClipboard.setContents(selection, null)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+}
+
+private class ImageSelection(
+    val screenshot: Screenshot
+) : Transferable {
+    override fun getTransferDataFlavors() = arrayOf(DataFlavor.imageFlavor)
+    override fun isDataFlavorSupported(flavor: DataFlavor) = flavor == DataFlavor.imageFlavor
+    override fun getTransferData(flavor: DataFlavor?): Any {
+        if (flavor == DataFlavor.imageFlavor) return ImageIO.read(screenshot.file)
+        throw UnsupportedFlavorException(flavor)
     }
 }

@@ -26,6 +26,7 @@ dependencies {
     modImplementation("net.fabricmc:fabric-language-kotlin:1.8.1+kotlin.1.7.0")
 
     unishade(api("com.squareup.okhttp3:okhttp:4.9.3")!!)
+    include("com.mojang:brigadier:1.0.18")
     include(modImplementation("gg.essential:vigilance-1.18.1-fabric:227") {
         exclude(module = "kotlin-stdlib")
         exclude(module = "kotlin-stdlib-common")
