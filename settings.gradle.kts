@@ -26,3 +26,14 @@ val projectName: String = extra["mod.name"]?.toString()
     ?: throw MissingPropertyException("mod.name has not been set.")
 rootProject.name = projectName
 rootProject.buildFileName = "build.gradle.kts"
+
+listOf(
+    "1.18.2-fabric",
+    "1.19-fabric"
+).forEach { version ->
+    include(":$version")
+    project(":$version").apply {
+        projectDir = file("versions/$version")
+        buildFileName = "../../version.gradle.kts"
+    }
+}

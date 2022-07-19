@@ -1,6 +1,5 @@
 package xyz.deftu.screencapper
 
-import com.mojang.brigadier.Command
 import com.mojang.brigadier.arguments.StringArgumentType
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager
@@ -12,8 +11,8 @@ import xyz.deftu.screencapper.gui.preview.ScreenshotPreview
 import java.io.File
 
 object Screencapper : ClientModInitializer {
-    const val NAME = "@MOD_NAME@"
-    const val ID = "@MOD_ID@"
+    const val NAME = "Screencapper"
+    const val ID = "screencapper"
 
     val httpClient = OkHttpClient.Builder()
         .addInterceptor {
