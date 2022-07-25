@@ -2,7 +2,6 @@ package xyz.deftu.screencapper.upload
 
 import com.google.gson.GsonBuilder
 import net.minecraft.client.MinecraftClient
-import net.minecraft.text.TranslatableText
 import net.minecraft.util.Formatting
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -15,6 +14,7 @@ import xyz.deftu.screencapper.Screencapper
 import xyz.deftu.screencapper.config.RequestType
 import xyz.deftu.screencapper.config.ScreencapperConfig
 import xyz.deftu.screencapper.config.ShareXConfig
+import xyz.deftu.screencapper.utils.ChatHelper
 import xyz.deftu.screencapper.utils.Screenshot
 import java.io.FileInputStream
 import java.net.URL
@@ -28,7 +28,7 @@ object ShareXUploadTask {
     fun upload(screenshot: Screenshot): Screenshot {
         var screenshot = screenshot
         if (ScreencapperConfig.shareXUploadUrl.isEmpty()) {
-            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(TranslatableText("${Screencapper.ID}.error.upload_missing_url")
+            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.error.upload_missing_url")
                 .formatted(Formatting.RED))
             return screenshot
         }
@@ -39,10 +39,10 @@ object ShareXUploadTask {
         if (response.isSuccessful) {
             val upload = gson.fromJson(response.body?.string(), UploadResponse::class.java)
             if (upload.url != null) {
-                screenshot = Screenshot(screenshot.image, screenshot.file, URL(upload.url))
+                screenshot = Screenshot(screenshot.image, screenshot.bytes, screenshot.file, URL(upload.url))
             }
         } else {
-            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(TranslatableText("${Screencapper.ID}.error.upload_error", response.code)
+            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.error.upload_error", response.code)
                 .formatted(Formatting.RED))
             LogManager.getLogger("Screencapper (ShareX Upload)").error("""
                 Upload failed with code ${response.code}:

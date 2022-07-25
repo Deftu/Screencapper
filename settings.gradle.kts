@@ -20,6 +20,15 @@ pluginManagement {
         maven("https://s01.oss.sonatype.org/content/groups/public/")
         mavenLocal()
     }
+
+    plugins {
+        val kotlin = "1.6.21"
+        kotlin("jvm") version(kotlin)
+        kotlin("plugin.serialization") version(kotlin)
+
+        val ucgt = "1.9.2"
+        id("xyz.unifycraft.gradle.multiversion-root") version(ucgt)
+    }
 }
 
 val projectName: String = extra["mod.name"]?.toString()

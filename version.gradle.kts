@@ -4,13 +4,17 @@ import xyz.unifycraft.gradle.tools.CurseDependency
 
 plugins {
     java
-    kotlin("jvm") version("1.6.21")
-    kotlin("plugin.serialization") version("1.6.21")
+    kotlin("jvm")
+    kotlin("plugin.serialization")
     id("xyz.unifycraft.gradle.multiversion")
     id("xyz.unifycraft.gradle.tools")
     id("xyz.unifycraft.gradle.tools.loom")
     id("xyz.unifycraft.gradle.tools.shadow")
     id("xyz.unifycraft.gradle.tools.releases")
+}
+
+loomHelper {
+    disableRunConfigs(xyz.unifycraft.gradle.utils.GameSide.SERVER)
 }
 
 repositories {
@@ -26,7 +30,7 @@ dependencies {
         11802 -> "0.57.0+1.18.2"
         else -> throw IllegalStateException("Invalid MC version: ${mcData.version}")
     }}")
-    modImplementation("net.fabricmc:fabric-language-kotlin:1.8.1+kotlin.1.7.0")
+    modImplementation("net.fabricmc:fabric-language-kotlin:1.8.2+kotlin.1.7.10")
 
     unishade(api("com.squareup.okhttp3:okhttp:4.9.3")!!)
     include("com.mojang:brigadier:1.0.18")
@@ -34,7 +38,7 @@ dependencies {
         11900 -> "1.18.1-fabric"
         11802 -> "1.18.1-fabric"
         else -> "${mcData.versionStr}-${mcData.loader.name}"
-    }}:227") {
+    }}:240") {
         exclude(module = "kotlin-stdlib")
         exclude(module = "kotlin-stdlib-common")
         exclude(module = "kotlin-stdlib-jdk8")
@@ -56,7 +60,7 @@ releases {
     changelogFile.set(file("CHANGELOG.md"))
 
     modrinth {
-        projectId.set(property("releases.modrinth.id")?.toString() ?: throw IllegalStateException("No modrinth project ID set."))
+        projectId.set(property("releases.modrinth.id")?.toString() ?: throw IllegalStateException("No Modrinth project ID set."))
         dependencies.set(listOf(
             ModDependency("P7dR8mSH", DependencyType.REQUIRED),
             ModDependency("Ha28R6CL", DependencyType.REQUIRED),
@@ -66,7 +70,7 @@ releases {
 
     curseforge {
         releaseName.set("[${mcData.versionStr}] ${modData.name} ${modData.version}")
-        projectId.set(property("releases.curseforge.id")?.toString() ?: throw IllegalStateException("No curseforge project ID set."))
+        projectId.set(property("releases.curseforge.id")?.toString() ?: throw IllegalStateException("No CurseForge project ID set."))
         dependencies.set(listOf(
             CurseDependency("fabric-api", true),
             CurseDependency("fabric-language-kotlin", true),

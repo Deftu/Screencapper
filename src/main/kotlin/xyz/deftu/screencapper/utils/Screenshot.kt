@@ -6,6 +6,7 @@ import java.net.URL
 
 data class Screenshot(
     val image: NativeImage,
+    val bytes: ByteArray,
     val file: File,
     val url: URL? = null
 )

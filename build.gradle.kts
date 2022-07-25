@@ -1,7 +1,5 @@
 plugins {
-    kotlin("jvm") version("1.6.21")
-    kotlin("plugin.serialization") version("1.6.21")
-    id("xyz.unifycraft.gradle.multiversion-root") version("1.8.3")
+    id("xyz.unifycraft.gradle.multiversion-root")
 }
 
 preprocess {

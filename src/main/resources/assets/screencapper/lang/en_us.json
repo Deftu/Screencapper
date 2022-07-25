@@ -8,6 +8,7 @@
     "screencapper.config_category.upload": "Upload",
 
     "screencapper.config.general.toggle": "Master Toggle",
+    "screencapper.config.general.auto_copy": "Auto-copy to clipboard",
     "screencapper.config.general.preview": "Screenshot Preview",
     "screencapper.config.general.preview_time": "Screenshot Preview Time",
     "screencapper.config.general.preview_position": "Screenshot Preview Position",
@@ -30,14 +31,15 @@
     "screencapper.config_option.general.preview_position.bottom_right": "Bottom Right",
 
     "screencapper.config_description.general.toggle": "Master toggle for every feature in the mod.",
+    "screencapper.config_description.general.auto_copy": "Automatically copy new screenshots to the system clipboard.",
     "screencapper.config_description.general.preview": "Toggle for the screenshot preview.",
     "screencapper.config_description.general.preview_time": "The time in seconds the screenshot preview will be shown.",
     "screencapper.config_description.general.preview_position": "The position of the screen where the screenshot preview will be displayed.",
     "screencapper.config_description.chat.upload": "Toggle the upload option for the screenshot success message.",
-    "screencapper.config_description.chat.copy": "Toggle the copy option for the screenshot success message. (CURRENTLY DISABLED)",
+    "screencapper.config_description.chat.copy": "Toggle the copy option for the screenshot success message.",
     "screencapper.config_description.chat.open": "Toggle the open option for the screenshot success message.",
     "screencapper.config_description.chat.open_folder": "Toggle the open folder option for the screenshot success message.",
-    "screencapper.config_description.chat.delete": "Toggle the delete option for the screenshot success message. (CURRENTLY DISABLED)",
+    "screencapper.config_description.chat.delete": "Toggle the delete option for the screenshot success message.",
     "screencapper.config_description.upload.toggle": "Toggle automatic uploading of your screenshots. If this is disabled, you can still upload your screenshots by clicking the upload option in the confirmation chat message.",
     "screencapper.config_description.upload.mode": "The place in which screenshots are uploaded after being taken.",
     "screencapper.config_description.upload.sharex.url": "The URL to send ShareX uploads to.",
@@ -49,6 +51,7 @@
     "screencapper.text.chat.screenshot": "Screenshot taken!",
     "screencapper.text.chat.upload": "Upload",
     "screencapper.text.chat.copy": "Copy",
+    "screencapper.text.chat.copy.failed": "Failed to copy screenshot to clipboard. ",
     "screencapper.text.chat.open": "Open",
     "screencapper.text.chat.open_folder": "Open Folder",
     "screencapper.text.chat.delete": "Delete"

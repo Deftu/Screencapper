@@ -2,12 +2,17 @@ package xyz.deftu.screencapper
 
 import com.mojang.brigadier.arguments.StringArgumentType
 import net.fabricmc.api.ClientModInitializer
-import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager
+//#if MC>=11900
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
+//#else
+//$$ import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager
+//#endif
 import net.fabricmc.loader.api.FabricLoader
 import okhttp3.OkHttpClient
 import xyz.deftu.screencapper.config.ScreencapperConfig
 import xyz.deftu.screencapper.config.ShareXConfig
 import xyz.deftu.screencapper.gui.preview.ScreenshotPreview
+import java.awt.GraphicsEnvironment
 import java.io.File
 
 object Screencapper : ClientModInitializer {
@@ -24,7 +29,12 @@ object Screencapper : ClientModInitializer {
         ScreencapperConfig.initialize()
         ShareXConfig.initialize(configDirectory)
         ScreenshotPreview.initialize()
-        ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("screenshot")
+        //#if MC>=11900
+        ClientCommandManager.getActiveDispatcher()
+        //#else
+        //$$ ClientCommandManager.DISPATCHER
+        //#endif
+            ?.register(ClientCommandManager.literal("screenshot")
             .then(ClientCommandManager.argument("action", StringArgumentType.word())
                 .executes { ctx ->
                     when (StringArgumentType.getString(ctx, "action").lowercase()) {

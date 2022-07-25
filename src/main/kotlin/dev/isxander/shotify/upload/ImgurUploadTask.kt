@@ -19,7 +19,7 @@ object ImgurUploadTask  {
     private val json = Json { ignoreUnknownKeys = true }
 
     fun upload(screenshot: Screenshot): Screenshot {
-        val base64 = Base64.getEncoder().encodeToString(screenshot.image.bytes)
+        val base64 = Base64.getEncoder().encodeToString(screenshot.bytes)
         val form = "image=${URLEncoder.encode(base64, "UTF-8")}"
 
         val client = HttpClient.newHttpClient()
@@ -33,7 +33,7 @@ object ImgurUploadTask  {
         val json = json.decodeFromString<ImgurResponse>(response.body())
 
         if (json.success) {
-            return Screenshot(screenshot.image, screenshot.file, URL(json.data.link))
+            return Screenshot(screenshot.image, screenshot.bytes, screenshot.file, URL(json.data.link))
         } else {
             throw RuntimeException("Failed to upload image to Imgur: ${json.status}")
         }

@@ -25,7 +25,12 @@ object ScreencapperConfig : Vigilant(
         description = "${Screencapper.ID}.config_description.general.toggle",
         category = "${Screencapper.ID}.config_category.general"
     ) var toggle = true
-
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "${Screencapper.ID}.config.general.auto_copy",
+        description = "${Screencapper.ID}.config_description.general.auto_copy",
+        category = "${Screencapper.ID}.config_category.general"
+    ) var autoCopy = true
     @Property(
         type = PropertyType.SWITCH,
         name = "${Screencapper.ID}.config.general.preview",
