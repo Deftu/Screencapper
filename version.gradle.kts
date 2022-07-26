@@ -22,6 +22,17 @@ repositories {
     mavenCentral()
 }
 
+fun Dependency?.excludeVitals(): Dependency = apply {
+    check(this is ExternalModuleDependency)
+    exclude(module = "kotlin-stdlib")
+    exclude(module = "kotlin-stdlib-common")
+    exclude(module = "kotlin-stdlib-jdk8")
+    exclude(module = "kotlin-stdlib-jdk7")
+    exclude(module = "kotlin-reflect")
+    exclude(module = "annotations")
+    exclude(module = "fabric-loader")
+}!!
+
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
@@ -34,19 +45,26 @@ dependencies {
 
     unishade(api("com.squareup.okhttp3:okhttp:4.9.3")!!)
     include("com.mojang:brigadier:1.0.18")
-    include(modImplementation("gg.essential:vigilance-${when (mcData.version) {
-        11900 -> "1.18.1-fabric"
-        11802 -> "1.18.1-fabric"
-        else -> "${mcData.versionStr}-${mcData.loader.name}"
-    }}:240") {
-        exclude(module = "kotlin-stdlib")
-        exclude(module = "kotlin-stdlib-common")
-        exclude(module = "kotlin-stdlib-jdk8")
-        exclude(module = "kotlin-stdlib-jdk7")
-        exclude(module = "kotlin-reflect")
-        exclude(module = "annotations")
-        exclude(module = "fabric-loader")
-    })
+    include(modImplementation(libs.versions.universalcraft.map {
+        "gg.essential:universalcraft-${when (mcData.version) {
+            11802 -> "1.18.1-fabric"
+            else -> "${mcData.versionStr}-${mcData.loader.name}"
+        }}:$it"
+    }.get()).excludeVitals())
+    include(modImplementation(libs.versions.elementa.map {
+        "gg.essential:elementa-${when (mcData.version) {
+            11900 -> "1.18.1-fabric"
+            11802 -> "1.18.1-fabric"
+            else -> "${mcData.versionStr}-${mcData.loader.name}"
+        }}:$it"
+    }.get()).excludeVitals())
+    include(modImplementation(libs.versions.vigilance.map {
+        "gg.essential:vigilance-${when (mcData.version) {
+            11900 -> "1.18.1-fabric"
+            11802 -> "1.18.1-fabric"
+            else -> "${mcData.versionStr}-${mcData.loader.name}"
+        }}:$it"
+    }.get()).excludeVitals())
 
     modImplementation("com.terraformersmc:modmenu:${when (mcData.version) {
         11900 -> "4.0.4"

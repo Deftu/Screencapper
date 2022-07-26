@@ -1,18 +1,21 @@
 package xyz.deftu.screencapper
 
 import com.mojang.brigadier.arguments.StringArgumentType
+import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import net.fabricmc.api.ClientModInitializer
 //#if MC>=11900
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 //#else
 //$$ import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager
+//$$ import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource
 //#endif
 import net.fabricmc.loader.api.FabricLoader
 import okhttp3.OkHttpClient
 import xyz.deftu.screencapper.config.ScreencapperConfig
 import xyz.deftu.screencapper.config.ShareXConfig
 import xyz.deftu.screencapper.gui.preview.ScreenshotPreview
-import java.awt.GraphicsEnvironment
 import java.io.File
 
 object Screencapper : ClientModInitializer {
@@ -29,12 +32,7 @@ object Screencapper : ClientModInitializer {
         ScreencapperConfig.initialize()
         ShareXConfig.initialize(configDirectory)
         ScreenshotPreview.initialize()
-        //#if MC>=11900
-        ClientCommandManager.getActiveDispatcher()
-        //#else
-        //$$ ClientCommandManager.DISPATCHER
-        //#endif
-            ?.register(ClientCommandManager.literal("screenshot")
+        registerCommand(ClientCommandManager.literal("screenshot")
             .then(ClientCommandManager.argument("action", StringArgumentType.word())
                 .executes { ctx ->
                     when (StringArgumentType.getString(ctx, "action").lowercase()) {
@@ -49,5 +47,15 @@ object Screencapper : ClientModInitializer {
                         else -> 0
                     }
                 }))
+    }
+
+    private fun registerCommand(builder: LiteralArgumentBuilder<FabricClientCommandSource>) {
+        //#if MC>=11900
+        ClientCommandRegistrationCallback.EVENT.register { dispatcher, registryAccess ->
+            dispatcher.register(builder)
+        }
+        //#else
+        //$$ ClientCommandManager.DISPATCHER.register(builder)
+        //#endif
     }
 }

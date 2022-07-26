@@ -26,7 +26,7 @@ pluginManagement {
         kotlin("jvm") version(kotlin)
         kotlin("plugin.serialization") version(kotlin)
 
-        val ucgt = "1.9.2"
+        val ucgt = "1.9.4"
         id("xyz.unifycraft.gradle.multiversion-root") version(ucgt)
     }
 }

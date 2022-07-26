@@ -45,7 +45,9 @@ object ScreenshotHandler {
         this.screenshot = screenshot
         ScreenshotPreview.append(screenshot)
         if (ScreencapperConfig.autoCopy) copy()
-        if (ScreencapperConfig.uploadToggle) UDesktop.setClipboardString(upload(screenshot).toString())
+        if (ScreencapperConfig.uploadToggle) MinecraftClient.getInstance().executeTask {
+            UDesktop.setClipboardString(upload(screenshot).toString())
+        }
     }
 
     fun createText(original: Text): Text {
