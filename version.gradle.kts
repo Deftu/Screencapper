@@ -74,8 +74,10 @@ dependencies {
 }
 
 releases {
+    releaseName.set("[${mcData.versionStr}] ${modData.name} ${modData.version}")
     file.set(tasks.remapJar)
-    changelogFile.set(file("CHANGELOG.md"))
+    changelogFile.set(rootProject.file("CHANGELOG.md"))
+    version.set("${modData.version}-${mcData.versionStr}")
 
     modrinth {
         projectId.set(property("releases.modrinth.id")?.toString() ?: throw IllegalStateException("No Modrinth project ID set."))
@@ -87,7 +89,6 @@ releases {
     }
 
     curseforge {
-        releaseName.set("[${mcData.versionStr}] ${modData.name} ${modData.version}")
         projectId.set(property("releases.curseforge.id")?.toString() ?: throw IllegalStateException("No CurseForge project ID set."))
         dependencies.set(listOf(
             CurseDependency("fabric-api", true),
