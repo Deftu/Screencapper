@@ -1,5 +1,6 @@
 package xyz.deftu.screencapper
 
+import com.google.gson.JsonObject
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import gg.essential.universal.UDesktop

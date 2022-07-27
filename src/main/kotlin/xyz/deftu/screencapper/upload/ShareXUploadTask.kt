@@ -1,22 +1,23 @@
 package xyz.deftu.screencapper.upload
 
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonElement
+import com.google.gson.JsonParser
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.Formatting
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.Request
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.apache.logging.log4j.LogManager
 import xyz.deftu.screencapper.Screencapper
+import xyz.deftu.screencapper.config.RequestMethod
 import xyz.deftu.screencapper.config.RequestType
 import xyz.deftu.screencapper.config.ScreencapperConfig
 import xyz.deftu.screencapper.config.ShareXConfig
 import xyz.deftu.screencapper.utils.ChatHelper
 import xyz.deftu.screencapper.utils.Screenshot
-import java.io.FileInputStream
 import java.net.URL
 
 object ShareXUploadTask {
@@ -24,6 +25,7 @@ object ShareXUploadTask {
         .setPrettyPrinting()
         .setLenient()
         .create()
+    private val urlNameRegex = "\\\$json:(?<path>.+)\\\$".toRegex()
 
     fun upload(screenshot: Screenshot): Screenshot {
         Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.sharex.start")
@@ -36,13 +38,33 @@ object ShareXUploadTask {
         }
         val response = Screencapper.httpClient.newCall(Request.Builder()
             .url(ScreencapperConfig.shareXUploadUrl)
-            .post(handleRequestBody(screenshot))
+            .handleRequestBody(screenshot)
             .build()).execute()
         if (response.isSuccessful) {
-            val upload = gson.fromJson(response.body?.string(), UploadResponse::class.java)
-            if (upload.url != null) {
-                screenshot = Screenshot(screenshot.image, screenshot.bytes, screenshot.file, URL(upload.url))
+            val uploadJson = JsonParser.parseString(response.body?.string())
+            if (!uploadJson.isJsonObject) throw IllegalStateException("Invalid response from ShareX host. Expected a JSON object but received a ${uploadJson.javaClass.name}")
+            val upload = uploadJson.asJsonObject
+            val urlName = ShareXConfig.data.urlPath
+            val path = urlNameRegex.find(urlName)?.groups?.get("path")?.value ?: throw IllegalStateException("Invalid URL name format")
+            var url: String
+
+            fun getUrl(part: String): JsonElement {
+                return if (part.contains("[")) {
+                    val index = part.substring(part.indexOf("[") + 1, part.indexOf("]")).toInt()
+                    upload.getAsJsonArray(part.substring(0, part.indexOf("["))).get(index)
+                } else {
+                    upload.get(part)
+                }
             }
+
+            url = if (path.contains(".")) {
+                path.split(".").filter {
+                    it.isNotBlank()
+                }.fold(uploadJson) { initial, path ->
+                    getUrl(path)
+                }.asString
+            } else getUrl(path).asString
+            screenshot = Screenshot(screenshot.image, screenshot.bytes, screenshot.file, URL(url))
         } else {
             MinecraftClient.getInstance().inGameHud.chatHud.addMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.error.upload_error", response.code)
                 .formatted(Formatting.RED))
@@ -57,28 +79,32 @@ object ShareXUploadTask {
         return screenshot
     }
 
-    private fun handleRequestBody(screenshot: Screenshot): RequestBody {
-        return when (ScreencapperConfig.shareXRequestType) {
-            RequestType.NONE -> ByteArray(0).toRequestBody()
-            RequestType.JSON -> {
-                val json = ShareXConfig.json
-                json.addProperty("file", FileInputStream(screenshot.file).readBytes().toString())
-                gson.toJson(json).toRequestBody("application/json".toMediaType())
+    private fun Request.Builder.handleRequestBody(screenshot: Screenshot) = apply {
+        when (ScreencapperConfig.shareXRequestType) {
+            RequestType.NONE -> {
+                val data = ByteArray(0).toRequestBody()
+                when (ScreencapperConfig.shareXRequestMethod) {
+                    RequestMethod.POST -> post(data)
+                    RequestMethod.PUT -> put(data)
+                }
             }
             RequestType.FORM -> {
                 val multipart = MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
-                    .addFormDataPart("file", screenshot.file.name, screenshot.file.asRequestBody("application/octet-stream".toMediaType()))
-                ShareXConfig.json.entrySet().forEach {
+                    .addFormDataPart(ShareXConfig.data.fileFormName, screenshot.file.name, screenshot.file.asRequestBody("application/octet-stream".toMediaType()))
+                ShareXConfig.data.headers?.entrySet()?.forEach {
+                    if (!it.value.isJsonPrimitive) return@forEach
+                    header(it.key, it.value.asJsonPrimitive.asString)
+                }
+                ShareXConfig.data.arguments?.entrySet()?.forEach {
                     if (!it.value.isJsonPrimitive) return@forEach
                     multipart.addFormDataPart(it.key, it.value.asJsonPrimitive.asString)
                 }
-                multipart.build()
+                when (ScreencapperConfig.shareXRequestMethod) {
+                    RequestMethod.POST -> post(multipart.build())
+                    RequestMethod.PUT -> put(multipart.build())
+                }
             }
         }
     }
 }
-
-private data class UploadResponse(
-    val url: String?
-)

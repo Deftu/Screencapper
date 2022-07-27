@@ -3,6 +3,7 @@ package xyz.deftu.screencapper.config
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.google.gson.annotations.SerializedName
 import xyz.deftu.screencapper.utils.Multithreading
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -16,7 +17,7 @@ object ShareXConfig {
 
     lateinit var file: File
         private set
-    lateinit var json: JsonObject
+    lateinit var data: ShareXConfigData
         private set
 
     fun initialize(directory: File) {
@@ -29,14 +30,32 @@ object ShareXConfig {
 
     fun save() {
         if (!file.exists()) file.createNewFile()
-        if (!::json.isInitialized) json = JsonObject()
-        file.writeText(gson.toJson(json))
+        if (!::data.isInitialized) data = ShareXConfigData.createDefault()
+        file.writeText(gson.toJson(data))
     }
 
     fun load() {
         if (!file.exists()) save()
         val content = JsonParser.parseString(file.readText())
         if (!content.isJsonObject) throw IllegalStateException("sharex.json is not a JSON object!")
-        json = content.asJsonObject
+        data = gson.fromJson(content, ShareXConfigData::class.java)
+    }
+}
+
+data class ShareXConfigData(
+    var headers: JsonObject?,
+    var arguments: JsonObject?,
+    var fileFormName: String,
+    var url: String,
+    var urlPath: String
+) {
+    companion object {
+        fun createDefault() = ShareXConfigData(
+            JsonObject(),
+            JsonObject(),
+            "file",
+            "",
+            "\$json:url$"
+        )
     }
 }

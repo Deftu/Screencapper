@@ -24,6 +24,8 @@
     "screencapper.config.upload.sharex.request_type": "ShareX Request Type",
     "screencapper.config.upload.sharex.open_config": "Open ShareX Config File",
     "screencapper.config.upload.sharex.reload_config": "Reload ShareX Config File",
+    "screencapper.config.upload.sharex.sxcu_path": "SXCU File Path",
+    "screencapper.config.upload.sharex.import_sxcu": "Import SXCU File",
 
     "screencapper.config_option.general.preview_position.top_left": "Top Left",
     "screencapper.config_option.general.preview_position.top_right": "Top Right",
@@ -47,6 +49,8 @@
     "screencapper.config_description.upload.sharex.request_type": "The type of request to use when sending ShareX uploads.",
     "screencapper.config_description.upload.sharex.open_config": "Open the ShareX config file in your editor of choice.",
     "screencapper.config_description.upload.sharex.reload_config": "Reload the ShareX config file.",
+    "screencapper.config_description.upload.sharex.sxcu_path": "The path to your SXCU config file for ShareX.",
+    "screencapper.config_description.upload.sharex.import_sxcu": "Import your SXCU config file into the mod. This will automatically change all your settings to match the config file.",
 
     "screencapper.text.chat.screenshot": "Screenshot taken!",
     "screencapper.text.chat.upload": "Upload",

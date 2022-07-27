@@ -1,6 +1,4 @@
-# 1.1.0 - The Bug Fix Update
-- Fixed the "delete" and "copy" options for the chat confirmation message.
-- Added the option to disable the chat confirmation message.
-- Added the option to disable automatic uploading of screenshots.
-- Added the option to automatically copy screenshots to the clipboard.
-- Fixed a crash caused by transitive dependencies not being included.
+# 1.2.0 - The ShareX Update
+- Added the ability to import `.sxcu` files and set their values to your config automatically.
+- Added better support for different standards that ShareX hosts use.
+- Updated to the new logo.

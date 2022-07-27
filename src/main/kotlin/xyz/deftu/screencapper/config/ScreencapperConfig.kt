@@ -129,6 +129,23 @@ object ScreencapperConfig : Vigilant(
     ) fun reloadShareXConfigFile() {
         ShareXConfig.load()
     }
+    @Property(
+        type = PropertyType.TEXT,
+        name = "${Screencapper.ID}.config.upload.sharex.sxcu_path",
+        description = "${Screencapper.ID}.config_description.upload.sharex.sxcu_path",
+        category = "${Screencapper.ID}.config_category.upload"
+    ) var shareXSxcuPath = ""
+    @Property(
+        type = PropertyType.BUTTON,
+        name = "${Screencapper.ID}.config.upload.sharex.import_sxcu",
+        description = "${Screencapper.ID}.config_description.upload.sharex.import_sxcu",
+        category = "${Screencapper.ID}.config_category.upload"
+    ) fun importSxcu() {
+        if (shareXSxcuPath.isBlank()) return
+        val file = File(shareXSxcuPath)
+        if (!file.exists()) return
+        SxcuImport.import(file)
+    }
 
     // Show/hide ShareX properties
     @Property(
@@ -182,10 +199,13 @@ object ScreencapperConfig : Vigilant(
             )
         }
 
-        addDependency("_previewPosition", "showShareX")
         addDependency("shareXUploadUrl", "showShareX")
         addDependency("_shareXRequestMethod", "showShareX")
         addDependency("_shareXRequestType", "showShareX")
+        addDependency("openShareXConfigFile", "showShareX")
+        addDependency("reloadShareXConfigFile", "showShareX")
+        addDependency("shareXSxcuPath", "showShareX")
+        addDependency("importSxcu", "showShareX")
     }
 
     private fun updateShareX(uploadMode: Int) {
