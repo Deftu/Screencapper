@@ -45,8 +45,9 @@ object ScreenshotHandler {
         this.screenshot = screenshot
         ScreenshotPreview.append(screenshot)
         if (ScreencapperConfig.autoCopy) copy()
-        if (ScreencapperConfig.uploadToggle) MinecraftClient.getInstance().executeTask {
+        if (ScreencapperConfig.uploadToggle) MinecraftClient.getInstance().runTasks {
             UDesktop.setClipboardString(upload(screenshot).toString())
+            true
         }
     }
 
@@ -100,17 +101,24 @@ object ScreenshotHandler {
         try {
             screenshot?.let { scr ->
                 if (!SystemUtils.IS_OS_MAC) {
+                    // When on Windows and Linux we can
+                    // use AWT to copy the image with a
+                    // custom transferable.
                     val selection = ImageSelection(scr)
                     Multithreading.runAsync {
                         Toolkit.getDefaultToolkit().systemClipboard.setContents(selection, null)
                     }
                 } else {
+                    // When on macOS we cannot use AWT
+                    // to copy the image because it
+                    // disallows the use of AWT and GLFW
+                    // at the same time, so instead we
+                    // use "native" code to copy the image.
                     val client = Client.getInstance()
                     val url = client.sendProxy("NSURL", "fileURLWithPath:", scr.file.absolutePath)
                     val image = client.sendProxy("NSImage", "alloc")
                     image.send("initWithContentsOfURL:", url)
-                    var array = client.sendProxy("NSArray", "array")
-                    array = array.sendProxy("arrayByAddingObject:", image)
+                    val array = client.sendProxy("NSArray", "arrayWithObject:", image)
                     val pasteboard = client.sendProxy("NSPasteboard", "generalPasteboard")
                     pasteboard.send("clearContents")
                     val wasSuccessful = pasteboard.sendBoolean("writeObjects:", array)

@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 
 @Mixin({ScreenshotRecorder.class})
 public class ScreenshotRecorderMixin {
-    @Inject(method = "method_1661", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/texture/NativeImage;writeTo(Ljava/io/File;)V", shift = At.Shift.BEFORE))
+    @Inject(method = "method_1661", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/texture/NativeImage;writeTo(Ljava/io/File;)V", shift = At.Shift.AFTER))
     private static void onFileWrite(NativeImage nativeImage, File file, Consumer<Text> consumer, CallbackInfo ci) {
         try {
             byte[] bytes = nativeImage.getBytes();
