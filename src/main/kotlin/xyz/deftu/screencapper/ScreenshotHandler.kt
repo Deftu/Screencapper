@@ -29,7 +29,8 @@ import javax.imageio.ImageIO
 object ScreenshotHandler {
     private var screenshot: Screenshot? = null
 
-    private fun upload(screenshot: Screenshot): URL {
+    fun upload(): URL = upload(screenshot!!)
+    fun upload(screenshot: Screenshot): URL {
         var screenshot = screenshot
         if (screenshot.url != null) return screenshot.url!!
         screenshot = when (ScreencapperConfig.uploadMode) {
@@ -45,10 +46,7 @@ object ScreenshotHandler {
         this.screenshot = screenshot
         ScreenshotPreview.append(screenshot)
         if (ScreencapperConfig.autoCopy) copy()
-        if (ScreencapperConfig.uploadToggle) MinecraftClient.getInstance().runTasks {
-            UDesktop.setClipboardString(upload(screenshot).toString())
-            true
-        }
+        if (ScreencapperConfig.uploadToggle) UDesktop.setClipboardString(upload(screenshot).toString())
     }
 
     fun createText(original: Text): Text {
@@ -57,7 +55,7 @@ object ScreenshotHandler {
         val uploadText = ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload")
             .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.GREEN).apply {
                 styled {
-                    it.withClickEvent(ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, upload(screenshot!!).toString()))
+                    it.withClickEvent(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/screenshot upload"))
                 }
             }
         val copyText = ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.copy")
@@ -94,8 +92,15 @@ object ScreenshotHandler {
         }
     }
 
-    internal fun delete() =
-        screenshot?.file?.delete()
+    internal fun delete() {
+        if (screenshot?.file?.delete() == true) {
+            Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.delete.success")
+                .formatted(Formatting.GREEN))
+        } else {
+            Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.delete.failed")
+                .formatted(Formatting.RED))
+        }
+    }
 
     internal fun copy() {
         try {
@@ -127,8 +132,11 @@ object ScreenshotHandler {
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.copy.failed", "${e.javaClass.name}: ${e.message}"))
+            Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.copy.failed", "${e.javaClass.name}: ${e.message}")
+                .formatted(Formatting.RED))
         }
+        Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.copy.success")
+            .formatted(Formatting.GREEN))
     }
 }
 

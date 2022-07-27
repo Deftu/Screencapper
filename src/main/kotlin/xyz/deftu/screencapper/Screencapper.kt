@@ -2,6 +2,7 @@ package xyz.deftu.screencapper
 
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import gg.essential.universal.UDesktop
 import net.fabricmc.api.ClientModInitializer
 //#if MC>=11900
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
@@ -12,10 +13,14 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 //$$ import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource
 //#endif
 import net.fabricmc.loader.api.FabricLoader
+import net.minecraft.client.MinecraftClient
+import net.minecraft.text.Text
+import net.minecraft.util.Formatting
 import okhttp3.OkHttpClient
 import xyz.deftu.screencapper.config.ScreencapperConfig
 import xyz.deftu.screencapper.config.ShareXConfig
 import xyz.deftu.screencapper.gui.preview.ScreenshotPreview
+import xyz.deftu.screencapper.utils.ChatHelper
 import java.io.File
 
 object Screencapper : ClientModInitializer {
@@ -36,6 +41,10 @@ object Screencapper : ClientModInitializer {
             .then(ClientCommandManager.argument("action", StringArgumentType.word())
                 .executes { ctx ->
                     when (StringArgumentType.getString(ctx, "action").lowercase()) {
+                        "upload" -> {
+                            UDesktop.setClipboardString(ScreenshotHandler.upload().toString())
+                            1
+                        }
                         "copy" -> {
                             ScreenshotHandler.copy()
                             1
@@ -48,6 +57,16 @@ object Screencapper : ClientModInitializer {
                     }
                 }))
     }
+
+    fun sendMessage(message: Text, prefix: Boolean = true) {
+        val text = ChatHelper.createLiteralText("")
+        if (prefix) text.append(ChatHelper.createLiteralText("[$NAME]")
+            .formatted(Formatting.AQUA))
+        text.append(" ").formatted(Formatting.RESET)
+        text.append(message)
+        MinecraftClient.getInstance().inGameHud.chatHud.addMessage(text)
+    }
+    fun sendMessage(message: String, prefix: Boolean = true) = Screencapper.sendMessage(ChatHelper.createLiteralText(message), prefix)
 
     private fun registerCommand(builder: LiteralArgumentBuilder<FabricClientCommandSource>) {
         //#if MC>=11900

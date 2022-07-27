@@ -50,9 +50,16 @@
 
     "screencapper.text.chat.screenshot": "Screenshot taken!",
     "screencapper.text.chat.upload": "Upload",
+    "screencapper.text.chat.upload.imgur.start": "Uploading to Imgur...",
+    "screencapper.text.chat.upload.imgur.end": "Uploaded to Imgur!",
+    "screencapper.text.chat.upload.sharex.start": "Uploading to ShareX host...",
+    "screencapper.text.chat.upload.sharex.end": "Uploaded to ShareX host!",
     "screencapper.text.chat.copy": "Copy",
+    "screencapper.text.chat.copy.success": "Successfully copied screenshot to clipboard. ",
     "screencapper.text.chat.copy.failed": "Failed to copy screenshot to clipboard. ",
     "screencapper.text.chat.open": "Open",
     "screencapper.text.chat.open_folder": "Open Folder",
-    "screencapper.text.chat.delete": "Delete"
+    "screencapper.text.chat.delete": "Delete",
+    "screencapper.text.chat.delete.success": "Successfully deleted screenshot.",
+    "screencapper.text.chat.delete.failed": "Failed to delete screenshot."
 }

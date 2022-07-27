@@ -26,6 +26,8 @@ object ShareXUploadTask {
         .create()
 
     fun upload(screenshot: Screenshot): Screenshot {
+        Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.sharex.start")
+            .formatted(Formatting.GRAY))
         var screenshot = screenshot
         if (ScreencapperConfig.shareXUploadUrl.isEmpty()) {
             MinecraftClient.getInstance().inGameHud.chatHud.addMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.error.upload_missing_url")
@@ -50,6 +52,8 @@ object ShareXUploadTask {
             """.trimIndent())
         }
         response.close()
+        Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.sharex.end")
+            .formatted(Formatting.GREEN))
         return screenshot
     }
 
