@@ -38,6 +38,12 @@ abandoned indefinitely, so it will not be updated
 to 1.19 and newer versions. This mod will be updated
 for the forseeable future.
 
+## But [Essential][essential] has this mod built-in, why should I use this?!
+Essential's implementation is buggy at best, and causes
+incompatibilities with other mods (such as this one). I
+wouldn't recommend supporting their implementation, nor
+would I recommend supporting them in general.
+
 <div align="center">
 
 **Original [Shotify][shotify] mod by [isXander][xander]**\
@@ -48,4 +54,5 @@ for the forseeable future.
 
 [shotify]: https://curseforge.com/minecraft/mc-mods/shotify
 [xander]: https://github.com/isXander
+[essential]: https://essential.gg/
 [lgpl]: https://www.gnu.org/licenses/lgpl-3.0.en.html
