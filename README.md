@@ -1,7 +1,9 @@
 <div align="center">
+<center>
 
 # [`Screencapper`]
 
+</center>
 </div>
 
 [![Ko-Fi Badge](https://raw.githubusercontent.com/intergrav/devins-badges/v2/assets/cozy/donate/kofi-singular_64h.png)](https://ko-fi.com/Deftu)
@@ -39,15 +41,16 @@ for the forseeable future.
 ## But [Essential][essential] has this mod built-in, why should I use this?!
 Essential's implementation is buggy at best, and causes
 incompatibilities with other mods (such as this one). I
-wouldn't recommend supporting their implementation, nor
-would I recommend supporting them in general.
+wouldn't recommend using it.
 
 <div align="center">
+<center>
 
 **Original [Shotify][shotify] mod by [isXander][xander]**\
 **This project is licensed under [LGPL-3.0][lgpl]**\
 **&copy; 2022 Deftu**
 
+</center>
 </div>
 
 [shotify]: https://curseforge.com/minecraft/mc-mods/shotify
