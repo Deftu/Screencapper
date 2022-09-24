@@ -3,14 +3,14 @@
 
 # [`Screencapper`]
 
-</center>
-</div>
-
-[![Ko-Fi Badge](https://raw.githubusercontent.com/intergrav/devins-badges/v2/assets/cozy/donate/kofi-singular_64h.png)](https://ko-fi.com/Deftu)
+[![Ko-Fi Badge](https://raw.githubusercontent.com/intergrav/devins-badges/v2/assets/cozy/donate/kofi-singular_64h.png)](https://ko-fi.com/Deftu)  
+[![CurseForge Badge](https://raw.githubusercontent.com/intergrav/devins-badges/v2/assets/cozy/available/curseforge_64h.png)](https://www.curseforge.com/minecraft/mc-mods/screencapper)
+[![Modrinth Badge](https://raw.githubusercontent.com/intergrav/devins-badges/v2/assets/cozy/available/modrinth_64h.png)](https://modrinth.com/mod/screencapper)  
 [![Discord Badge](https://raw.githubusercontent.com/intergrav/devins-badges/v2/assets/cozy/social/discord-singular_64h.png)](https://shr.deftu.xyz/discord)
 [![GitHub Badge](https://raw.githubusercontent.com/intergrav/devins-badges/v2/assets/cozy/social/github-singular_64h.png)](https://github.com/Deftu/Screencapper)
-[![CurseForge Badge](https://raw.githubusercontent.com/intergrav/devins-badges/v2/assets/cozy/available/curseforge_64h.png)](https://www.curseforge.com/minecraft/mc-mods/screencapper)
-[![Modrinth Badge](https://raw.githubusercontent.com/intergrav/devins-badges/v2/assets/cozy/available/modrinth_64h.png)](https://modrinth.com/mod/screencapper)
+
+</center>
+</div>
 
 ## Taking a screenshot in vanilla Minecraft
 I take a screenshot, I need to either navigate
