@@ -11,6 +11,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.apache.logging.log4j.LogManager
+import xyz.deftu.lib.utils.TextHelper
 import xyz.deftu.screencapper.Screencapper
 import xyz.deftu.screencapper.config.RequestMethod
 import xyz.deftu.screencapper.config.RequestType
@@ -28,11 +29,12 @@ object ShareXUploadTask {
     private val urlNameRegex = "\\\$json:(?<path>.+)\\\$".toRegex()
 
     fun upload(screenshot: Screenshot): Screenshot {
-        Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.sharex.start")
+        Screencapper.sendMessage(
+            TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.sharex.start")
             .formatted(Formatting.GRAY))
         var screenshot = screenshot
         if (ScreencapperConfig.shareXUploadUrl.isEmpty()) {
-            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.error.upload_missing_url")
+            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(TextHelper.createTranslatableText("${Screencapper.ID}.error.upload_missing_url")
                 .formatted(Formatting.RED))
             return screenshot
         }
@@ -66,7 +68,7 @@ object ShareXUploadTask {
             } else getUrl(path).asString
             screenshot = Screenshot(screenshot.image, screenshot.bytes, screenshot.file, URL(url))
         } else {
-            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.error.upload_error", response.code)
+            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(TextHelper.createTranslatableText("${Screencapper.ID}.error.upload_error", response.code)
                 .formatted(Formatting.RED))
             LogManager.getLogger("Screencapper (ShareX Upload)").error("""
                 Upload failed with code ${response.code}:
@@ -74,7 +76,7 @@ object ShareXUploadTask {
             """.trimIndent())
         }
         response.close()
-        Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.sharex.end")
+        Screencapper.sendMessage(TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.sharex.end")
             .formatted(Formatting.GREEN))
         return screenshot
     }

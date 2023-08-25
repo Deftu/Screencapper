@@ -3,12 +3,12 @@ package xyz.deftu.screencapper
 import ca.weblite.objc.Client
 import dev.isxander.shotify.upload.ImgurUploadTask
 import gg.essential.universal.UDesktop
-import net.minecraft.client.MinecraftClient
 import net.minecraft.client.texture.NativeImage
 import net.minecraft.text.ClickEvent
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import org.apache.commons.lang3.SystemUtils
+import xyz.deftu.lib.utils.TextHelper
 import xyz.deftu.screencapper.config.ScreencapperConfig
 import xyz.deftu.screencapper.config.UploadMode
 import xyz.deftu.screencapper.gui.preview.ScreenshotPreview
@@ -52,37 +52,37 @@ object ScreenshotHandler {
     fun createText(original: Text): Text {
         if (!ScreencapperConfig.toggle || screenshot == null) return original
 
-        val uploadText = ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload")
+        val uploadText = TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload")
             .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.GREEN).apply {
                 styled {
                     it.withClickEvent(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/screenshot upload"))
                 }
             }
-        val copyText = ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.copy")
+        val copyText = TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.copy")
             .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.BLUE).apply {
                 styled {
                     it.withClickEvent(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/screenshot copy"))
                 }
             }
-        val openText = ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.open")
+        val openText = TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.open")
             .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.YELLOW).apply {
                 styled {
                     it.withClickEvent(ClickEvent(ClickEvent.Action.OPEN_FILE, screenshot?.file?.absolutePath))
                 }
             }
-        val openFolderText = ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.open_folder")
+        val openFolderText = TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.open_folder")
             .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.GOLD).apply {
                 styled {
                     it.withClickEvent(ClickEvent(ClickEvent.Action.OPEN_FILE, screenshot?.file?.parentFile?.absolutePath))
                 }
             }
-        val deleteText = ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.delete")
+        val deleteText = TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.delete")
             .formatted(Formatting.BOLD, Formatting.UNDERLINE, Formatting.RED).apply {
                 styled {
                     it.withClickEvent(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/screenshot delete"))
                 }
              }
-        return ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.screenshot").apply {
+        return TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.screenshot").apply {
             formatted(Formatting.WHITE).append(" ")
             if (ScreencapperConfig.chatUpload) append("[").append(uploadText).append("] ")
             if (ScreencapperConfig.chatCopy) append("[").append(copyText).append("] ")
@@ -94,10 +94,10 @@ object ScreenshotHandler {
 
     internal fun delete() {
         if (screenshot?.file?.delete() == true) {
-            Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.delete.success")
+            Screencapper.sendMessage(TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.delete.success")
                 .formatted(Formatting.GREEN))
         } else {
-            Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.delete.failed")
+            Screencapper.sendMessage(TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.delete.failed")
                 .formatted(Formatting.RED))
         }
     }
@@ -132,10 +132,10 @@ object ScreenshotHandler {
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.copy.failed", "${e.javaClass.name}: ${e.message}")
+            Screencapper.sendMessage(TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.copy.failed", "${e.javaClass.name}: ${e.message}")
                 .formatted(Formatting.RED))
         }
-        Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.copy.success")
+        Screencapper.sendMessage(TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.copy.success")
             .formatted(Formatting.GREEN))
     }
 }

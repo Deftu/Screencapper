@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import net.minecraft.util.Formatting
+import xyz.deftu.lib.utils.TextHelper
 import xyz.deftu.screencapper.Screencapper
 import xyz.deftu.screencapper.utils.ChatHelper
 import xyz.deftu.screencapper.utils.Screenshot
@@ -22,7 +23,8 @@ object ImgurUploadTask  {
     private val json = Json { ignoreUnknownKeys = true }
 
     fun upload(screenshot: Screenshot): Screenshot {
-        Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.imgur.start")
+        Screencapper.sendMessage(
+            TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.imgur.start")
             .formatted(Formatting.GRAY))
         val base64 = Base64.getEncoder().encodeToString(screenshot.bytes)
         val form = "image=${URLEncoder.encode(base64, "UTF-8")}"
@@ -38,7 +40,7 @@ object ImgurUploadTask  {
         val json = json.decodeFromString<ImgurResponse>(response.body())
 
         if (json.success) {
-            Screencapper.sendMessage(ChatHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.imgur.end")
+            Screencapper.sendMessage(TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.imgur.end")
                 .formatted(Formatting.GREEN))
             return Screenshot(screenshot.image, screenshot.bytes, screenshot.file, URL(json.data.link))
         } else {

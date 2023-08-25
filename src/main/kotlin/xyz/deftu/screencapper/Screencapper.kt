@@ -18,6 +18,7 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import okhttp3.OkHttpClient
+import xyz.deftu.lib.utils.TextHelper
 import xyz.deftu.screencapper.config.ScreencapperConfig
 import xyz.deftu.screencapper.config.ShareXConfig
 import xyz.deftu.screencapper.gui.preview.ScreenshotPreview
@@ -60,14 +61,14 @@ object Screencapper : ClientModInitializer {
     }
 
     fun sendMessage(message: Text, prefix: Boolean = true) {
-        val text = ChatHelper.createLiteralText("")
-        if (prefix) text.append(ChatHelper.createLiteralText("[$NAME]")
+        val text = TextHelper.createLiteralText("")
+        if (prefix) text.append(TextHelper.createLiteralText("[$NAME]")
             .formatted(Formatting.AQUA))
         text.append(" ").formatted(Formatting.RESET)
         text.append(message)
         MinecraftClient.getInstance().inGameHud.chatHud.addMessage(text)
     }
-    fun sendMessage(message: String, prefix: Boolean = true) = Screencapper.sendMessage(ChatHelper.createLiteralText(message), prefix)
+    fun sendMessage(message: String, prefix: Boolean = true) = Screencapper.sendMessage(TextHelper.createLiteralText(message), prefix)
 
     private fun registerCommand(builder: LiteralArgumentBuilder<FabricClientCommandSource>) {
         //#if MC>=11900

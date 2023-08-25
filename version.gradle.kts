@@ -41,6 +41,7 @@ dependencies {
     modImplementation("xyz.deftu:DeftuLib-${mcData.versionStr}-${mcData.loader.name}:1.6.0")
 
     include(api("com.squareup.okhttp3:okhttp:4.9.3")!!)
+    include(api("ca.weblite:java-objc-bridge:1.2")!!)
     include(modImplementation(libs.versions.universalcraft.map {
         "gg.essential:universalcraft-${when (mcData.version) {
             11802 -> "1.18.1-fabric"
