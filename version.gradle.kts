@@ -38,6 +38,8 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:${mcData.fabricApiVersion}")
     modImplementation("net.fabricmc:fabric-language-kotlin:1.8.2+kotlin.1.7.10")
 
+    modImplementation("xyz.deftu:DeftuLib-${mcData.versionStr}-${mcData.loader.name}:1.6.0")
+
     include(api("com.squareup.okhttp3:okhttp:4.9.3")!!)
     include(modImplementation(libs.versions.universalcraft.map {
         "gg.essential:universalcraft-${when (mcData.version) {
