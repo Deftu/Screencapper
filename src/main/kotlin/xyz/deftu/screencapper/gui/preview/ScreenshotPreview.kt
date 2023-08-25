@@ -10,12 +10,17 @@ import xyz.deftu.screencapper.config.ScreencapperConfig
 import xyz.deftu.screencapper.utils.Screenshot
 
 object ScreenshotPreview {
-    private val window = Window(ElementaVersion.V1)
+    private val window = Window(ElementaVersion.V3)
 
     fun initialize() {
-        HudRenderCallback.EVENT.register { matrices, tickDelta ->
+        HudRenderCallback.EVENT.register { ctx, tickDelta ->
             if (!ScreencapperConfig.preview) return@register
-            window.draw(UMatrixStack(matrices))
+
+            //#if MC >= 1.20
+            //$$ window.draw(UMatrixStack(ctx.matrices))
+            //#else
+            window.draw(UMatrixStack(ctx))
+            //#endif
         }
     }
 

@@ -44,21 +44,20 @@ dependencies {
     include(api("ca.weblite:java-objc-bridge:1.2")!!)
     include(modImplementation(libs.versions.universalcraft.map {
         "gg.essential:universalcraft-${when (mcData.version) {
-            11802 -> "1.18.1-fabric"
             else -> "${mcData.versionStr}-${mcData.loader.name}"
         }}:$it"
     }.get()).excludeVitals())
     include(modImplementation(libs.versions.elementa.map {
         "gg.essential:elementa-${when (mcData.version) {
+            12001 -> "1.18.1-fabric"
             11902 -> "1.18.1-fabric"
-            11802 -> "1.18.1-fabric"
             else -> "${mcData.versionStr}-${mcData.loader.name}"
         }}:$it"
     }.get()).excludeVitals())
     include(modImplementation(libs.versions.vigilance.map {
         "gg.essential:vigilance-${when (mcData.version) {
+            12001 -> "1.18.1-fabric"
             11902 -> "1.18.1-fabric"
-            11802 -> "1.18.1-fabric"
             else -> "${mcData.versionStr}-${mcData.loader.name}"
         }}:$it"
     }.get()).excludeVitals())
