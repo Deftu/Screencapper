@@ -1,21 +1,20 @@
 import com.modrinth.minotaur.dependencies.ModDependency
 import com.modrinth.minotaur.dependencies.DependencyType
-import xyz.unifycraft.gradle.tools.CurseDependency
 
 plugins {
     java
     kotlin("jvm")
     kotlin("plugin.serialization")
-    id("xyz.unifycraft.gradle.multiversion")
-    id("xyz.unifycraft.gradle.tools")
-    id("xyz.unifycraft.gradle.tools.loom")
-    id("xyz.unifycraft.gradle.tools.shadow")
-    id("xyz.unifycraft.gradle.tools.releases")
+    id("xyz.deftu.gradle.multiversion")
+    id("xyz.deftu.gradle.tools")
+    id("xyz.deftu.gradle.tools.shadow")
+    id("xyz.deftu.gradle.tools.minecraft.loom")
+    id("xyz.deftu.gradle.tools.minecraft.releases")
 }
 
-loomHelper {
-    disableRunConfigs(xyz.unifycraft.gradle.utils.GameSide.SERVER)
-}
+//loomHelper {
+//    disableRunConfigs(xyz.unifycraft.gradle.utils.GameSide.SERVER)
+//}
 
 repositories {
     maven("https://maven.terraformersmc.com/")
@@ -36,15 +35,10 @@ fun Dependency?.excludeVitals(): Dependency = apply {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${when (mcData.version) {
-        11900 -> "0.57.0+1.19"
-        11802 -> "0.57.0+1.18.2"
-        else -> throw IllegalStateException("Invalid MC version: ${mcData.version}")
-    }}")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:${mcData.fabricApiVersion}")
     modImplementation("net.fabricmc:fabric-language-kotlin:1.8.2+kotlin.1.7.10")
 
-    unishade(api("com.squareup.okhttp3:okhttp:4.9.3")!!)
-    include("com.mojang:brigadier:1.0.18")
+    include(api("com.squareup.okhttp3:okhttp:4.9.3")!!)
     include(modImplementation(libs.versions.universalcraft.map {
         "gg.essential:universalcraft-${when (mcData.version) {
             11802 -> "1.18.1-fabric"
@@ -53,31 +47,25 @@ dependencies {
     }.get()).excludeVitals())
     include(modImplementation(libs.versions.elementa.map {
         "gg.essential:elementa-${when (mcData.version) {
-            11900 -> "1.18.1-fabric"
+            11902 -> "1.18.1-fabric"
             11802 -> "1.18.1-fabric"
             else -> "${mcData.versionStr}-${mcData.loader.name}"
         }}:$it"
     }.get()).excludeVitals())
     include(modImplementation(libs.versions.vigilance.map {
         "gg.essential:vigilance-${when (mcData.version) {
-            11900 -> "1.18.1-fabric"
+            11902 -> "1.18.1-fabric"
             11802 -> "1.18.1-fabric"
             else -> "${mcData.versionStr}-${mcData.loader.name}"
         }}:$it"
     }.get()).excludeVitals())
 
-    modImplementation("com.terraformersmc:modmenu:${when (mcData.version) {
-        11900 -> "4.0.4"
-        11802 -> "3.2.3"
-        else -> throw IllegalStateException("Invalid MC version: ${mcData.version}")
-    }}")
+    modImplementation(mcData.modMenuDependency)
 }
 
-releases {
-    releaseName.set("[${mcData.versionStr}] ${modData.name} ${modData.version}")
-    file.set(tasks.remapJar)
-    changelogFile.set(rootProject.file("CHANGELOG.md"))
-    version.set("${modData.version}-${mcData.versionStr}")
+toolkitReleases {
+    val versionChangelogFile = rootProject.file("changelogs/${modData.version}.md")
+    if (versionChangelogFile.exists()) changelogFile.set(versionChangelogFile)
 
     modrinth {
         projectId.set(property("releases.modrinth.id")?.toString() ?: throw IllegalStateException("No Modrinth project ID set."))
@@ -88,24 +76,12 @@ releases {
         ))
     }
 
-    curseforge {
-        projectId.set(property("releases.curseforge.id")?.toString() ?: throw IllegalStateException("No CurseForge project ID set."))
-        dependencies.set(listOf(
-            CurseDependency("fabric-api", true),
-            CurseDependency("fabric-language-kotlin", true),
-            CurseDependency("modmenu", false)
-        ))
-    }
-}
-
-tasks {
-    compileKotlin {
-        kotlinOptions {
-            freeCompilerArgs += "-Xjvm-default=enable"
-        }
-    }
-
-    remapJar {
-        archiveBaseName.set("${modData.name}-${mcData.versionStr}")
-    }
+//    curseforge {
+//        projectId.set(property("releases.curseforge.id")?.toString() ?: throw IllegalStateException("No CurseForge project ID set."))
+//        dependencies.set(listOf(
+//            CurseDependency("fabric-api", true),
+//            CurseDependency("fabric-language-kotlin", true),
+//            CurseDependency("modmenu", false)
+//        ))
+//    }
 }

@@ -22,12 +22,12 @@ pluginManagement {
     }
 
     plugins {
-        val kotlin = "1.6.21"
+        val kotlin = "1.9.0"
         kotlin("jvm") version(kotlin)
         kotlin("plugin.serialization") version(kotlin)
 
-        val ucgt = "1.11.2-beta.10"
-        id("xyz.unifycraft.gradle.multiversion-root") version(ucgt)
+        val dgt = "1.19.1"
+        id("xyz.deftu.gradle.multiversion-root") version(dgt)
     }
 }
 
@@ -38,7 +38,7 @@ rootProject.buildFileName = "build.gradle.kts"
 
 listOf(
     "1.18.2-fabric",
-    "1.19-fabric"
+    "1.19.2-fabric"
 ).forEach { version ->
     include(":$version")
     project(":$version").apply {
