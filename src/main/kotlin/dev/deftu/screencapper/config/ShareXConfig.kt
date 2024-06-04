@@ -5,8 +5,14 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import dev.deftu.lib.DeftuLib
+import dev.deftu.screencapper.Screencapper
+import net.fabricmc.loader.api.FabricLoader
 import java.io.File
 import java.util.concurrent.TimeUnit
+
+private val legacyConfigDir by lazy {
+    File(FabricLoader.getInstance().configDir.toFile(), "Deftu")
+}
 
 object ShareXConfig {
     private var initialized = false
@@ -22,7 +28,10 @@ object ShareXConfig {
 
     fun initialize(directory: File) {
         if (initialized) return
+
+        convertLegacy()
         if (!directory.exists()) directory.mkdirs()
+
         file = File(directory, "sharex.json")
         DeftuLib.multithreader.schedule(this::load, 0, 5, TimeUnit.MINUTES)
         initialized = true
@@ -35,9 +44,28 @@ object ShareXConfig {
     }
 
     fun load() {
-        if (!file.exists()) save()
+        if (!file.exists()) {
+            data = ShareXConfigData.createDefault()
+            save()
+            return
+        }
+
+        loadFrom(file)
+    }
+
+    fun convertLegacy() {
+        val file = File(legacyConfigDir, "sharex.json")
+        if (!file.exists()) return
+
+        loadFrom(file)
+        save()
+        file.delete()
+    }
+
+    private fun loadFrom(file: File) {
         val content = JsonParser.parseString(file.readText())
-        if (!content.isJsonObject) throw IllegalStateException("sharex.json is not a JSON object!")
+        if (!content.isJsonObject) throw IllegalStateException("${file.name} is not a JSON object!")
+
         data = gson.fromJson(content, ShareXConfigData::class.java)
     }
 }

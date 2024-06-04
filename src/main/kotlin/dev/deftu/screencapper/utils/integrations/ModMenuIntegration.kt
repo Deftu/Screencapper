@@ -5,7 +5,9 @@ import com.terraformersmc.modmenu.api.ModMenuApi
 import dev.deftu.screencapper.config.ScreencapperConfig
 
 class ModMenuIntegration : ModMenuApi {
-    override fun getModConfigScreenFactory() = ConfigScreenFactory {
+
+    override fun getModConfigScreenFactory() = ConfigScreenFactory { _ ->
         ScreencapperConfig.gui()
     }
+
 }

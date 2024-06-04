@@ -10,7 +10,7 @@ import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.utils.Screenshot
 
 object ScreenshotPreview {
-    private val window = Window(ElementaVersion.V3)
+    private val window = Window(ElementaVersion.V5)
 
     fun initialize() {
         HudRenderCallback.EVENT.register { ctx, tickDelta ->
@@ -27,6 +27,6 @@ object ScreenshotPreview {
     fun append(screenshot: Screenshot) {
         val preview by ScreenshotPreviewComponent(screenshot)
         preview childOf window
-        preview.animate()
+        preview.flashIn()
     }
 }

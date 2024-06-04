@@ -22,7 +22,10 @@ class ScreenshotPreviewComponent(
     companion object {
         @JvmStatic
         val COLLAPSE_ANIMATION = Animations.IN_OUT_SIN
+
+        const val FLASH_DURATION = 0.1f
         const val COLLAPSE_DURATION = 0.5f
+        const val SWIPE_OUT_DURATION = 0.5f
     }
 
     private val image by UIImage.ofNativeImage(screenshot.image).constrain {
@@ -41,41 +44,48 @@ class ScreenshotPreviewComponent(
         } effect OutlineEffect(Color.WHITE, 0.75f)
     }
 
-    fun animate() {
+    fun flashIn() {
         flash.animate {
-            setColorAnimation(Animations.IN_SIN, 0.1f, Color(255, 255, 255, 200).toConstraint()).onComplete {
-                flash.animate {
-                    setColorAnimation(Animations.OUT_SIN, 0.1f, Color(255, 255, 255, 0).toConstraint()).onComplete {
-                        collapse()
-                    }
-                }
+            setColorAnimation(Animations.IN_SIN, FLASH_DURATION, Color(255, 255, 255, 200).toConstraint())
+            onComplete {
+                flashOut()
             }
         }
     }
 
-    private fun collapse() {
-        animate {
-            val positions: Pair<XConstraint, YConstraint> = when (ScreencapperConfig.previewPosition) {
-                PreviewPosition.TOP_LEFT -> 2.percent to basicYConstraint { 2.percent.getXPositionImpl(it) }
-                PreviewPosition.TOP_RIGHT -> 68.percent to basicYConstraint { 2.percent.getXPositionImpl(it) }
-                PreviewPosition.BOTTOM_LEFT -> 2.percent to 0.pixels(alignOpposite = true) - basicYConstraint { 2.percent.getXPositionImpl(it) }
-                PreviewPosition.BOTTOM_RIGHT -> 68.percent to 0.pixels(alignOpposite = true) - basicYConstraint { 2.percent.getXPositionImpl(it) }
+    private fun flashOut() {
+        flash.animate {
+            setColorAnimation(Animations.OUT_SIN, FLASH_DURATION, Color(255, 255, 255, 0).toConstraint())
+            onComplete {
+                collapseDown()
             }
+        }
+    }
+
+    private fun collapseDown() {
+        val positions: Pair<XConstraint, YConstraint> = when (ScreencapperConfig.previewPosition) {
+            PreviewPosition.TOP_LEFT -> 2.percent to basicYConstraint { 2.percent.getXPositionImpl(it) }
+            PreviewPosition.TOP_RIGHT -> 68.percent to basicYConstraint { 2.percent.getXPositionImpl(it) }
+            PreviewPosition.BOTTOM_LEFT -> 2.percent to 0.pixels(alignOpposite = true) - basicYConstraint { 2.percent.getXPositionImpl(it) }
+            PreviewPosition.BOTTOM_RIGHT -> 68.percent to 0.pixels(alignOpposite = true) - basicYConstraint { 2.percent.getXPositionImpl(it) }
+        }
+
+        animate {
             setXAnimation(COLLAPSE_ANIMATION, COLLAPSE_DURATION, positions.first)
             setYAnimation(COLLAPSE_ANIMATION, COLLAPSE_DURATION, positions.second)
             setWidthAnimation(COLLAPSE_ANIMATION, COLLAPSE_DURATION, 30.percent)
             setHeightAnimation(COLLAPSE_ANIMATION, COLLAPSE_DURATION, ChildBasedMaxSizeConstraint())
 
             onComplete {
-                remove()
+                swipeOut()
             }
         }
     }
 
-    private fun remove() {
+    private fun swipeOut() {
         animate {
             val x = if (ScreencapperConfig.previewPosition.isLeft()) (-30).percent else 100.percent
-            setXAnimation(Animations.OUT_SIN, 0.5f, x, ScreencapperConfig.previewTime.toFloat()).onComplete {
+            setXAnimation(Animations.OUT_SIN, SWIPE_OUT_DURATION, x, ScreencapperConfig.previewTime.toFloat()).onComplete {
                 hide()
             }
         }

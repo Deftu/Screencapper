@@ -8,11 +8,19 @@ import gg.essential.vigilance.data.PropertyType
 import net.minecraft.client.resource.language.I18n
 import dev.deftu.screencapper.Screencapper
 import dev.deftu.screencapper.gui.preview.PreviewPosition
+import net.fabricmc.loader.api.FabricLoader
 import java.io.File
 
-private val configFile = File(dev.deftu.screencapper.Screencapper.configDirectory, "screencapper.toml").apply {
-    if (!parentFile.exists()) parentFile.mkdirs()
-    if (!exists()) createNewFile()
+val deftuDir by lazy {
+    val deftuDir = File(FabricLoader.getInstance().gameDir.toFile(), "Deftu")
+    if (!deftuDir.exists() && !deftuDir.mkdirs())
+        throw IllegalStateException("Could not create Deftu directory!")
+
+    deftuDir
+}
+
+private val configFile by lazy {
+    File(deftuDir, "@MOD_ID@.toml")
 }
 
 object ScreencapperConfig : Vigilant(

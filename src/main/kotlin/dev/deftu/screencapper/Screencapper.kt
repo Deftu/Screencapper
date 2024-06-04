@@ -4,30 +4,23 @@ import com.mojang.brigadier.arguments.StringArgumentType
 import dev.deftu.lib.client.ClientCommandHelper
 import gg.essential.universal.UDesktop
 import net.fabricmc.api.ClientModInitializer
-import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
-import okhttp3.OkHttpClient
 import dev.deftu.lib.utils.TextHelper
 import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.config.ShareXConfig
+import dev.deftu.screencapper.config.deftuDir
 import dev.deftu.screencapper.gui.preview.ScreenshotPreview
-import java.io.File
 
 object Screencapper : ClientModInitializer {
-    const val NAME = "Screencapper"
-    const val ID = "screencapper"
 
-    val httpClient = OkHttpClient.Builder()
-        .addInterceptor {
-            it.proceed(it.request().newBuilder().addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36").build())
-        }.build()
-    val configDirectory = File(FabricLoader.getInstance().configDir.toFile(), "Deftu")
+    const val NAME = "@MOD_NAME@"
+    const val ID = "@MOD_ID@"
 
     override fun onInitializeClient() {
         ScreencapperConfig.initialize()
-        ShareXConfig.initialize(dev.deftu.screencapper.Screencapper.configDirectory)
+        ShareXConfig.initialize(deftuDir)
         ScreenshotPreview.initialize()
 
         ClientCommandHelper.register(
@@ -67,5 +60,4 @@ object Screencapper : ClientModInitializer {
         MinecraftClient.getInstance().inGameHud.chatHud.addMessage(text)
     }
 
-    fun sendMessage(message: String, prefix: Boolean = true) = dev.deftu.screencapper.Screencapper.sendMessage(TextHelper.createLiteralText(message), prefix)
 }
