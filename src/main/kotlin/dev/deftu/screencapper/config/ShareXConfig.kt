@@ -4,7 +4,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
-import dev.deftu.screencapper.utils.Multithreading
+import dev.deftu.lib.DeftuLib
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -24,7 +24,7 @@ object ShareXConfig {
         if (initialized) return
         if (!directory.exists()) directory.mkdirs()
         file = File(directory, "sharex.json")
-        Multithreading.schedule(this::load, 0, 5, TimeUnit.MINUTES)
+        DeftuLib.multithreader.schedule(this::load, 0, 5, TimeUnit.MINUTES)
         initialized = true
     }
 

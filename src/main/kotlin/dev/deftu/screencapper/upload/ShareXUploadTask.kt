@@ -17,7 +17,6 @@ import dev.deftu.screencapper.config.RequestMethod
 import dev.deftu.screencapper.config.RequestType
 import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.config.ShareXConfig
-import dev.deftu.screencapper.utils.ChatHelper
 import dev.deftu.screencapper.utils.Screenshot
 import java.net.URL
 

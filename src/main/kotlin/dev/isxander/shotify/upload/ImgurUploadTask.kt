@@ -14,7 +14,6 @@ import kotlinx.serialization.json.Json
 import net.minecraft.util.Formatting
 import dev.deftu.lib.utils.TextHelper
 import dev.deftu.screencapper.Screencapper
-import dev.deftu.screencapper.utils.ChatHelper
 import dev.deftu.screencapper.utils.Screenshot
 
 object ImgurUploadTask  {

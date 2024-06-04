@@ -1,6 +1,7 @@
 package dev.deftu.screencapper
 
 import ca.weblite.objc.Client
+import dev.deftu.lib.DeftuLib
 import dev.isxander.shotify.upload.ImgurUploadTask
 import gg.essential.universal.UDesktop
 import net.minecraft.client.texture.NativeImage
@@ -13,8 +14,6 @@ import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.config.UploadMode
 import dev.deftu.screencapper.gui.preview.ScreenshotPreview
 import dev.deftu.screencapper.upload.ShareXUploadTask
-import dev.deftu.screencapper.utils.ChatHelper
-import dev.deftu.screencapper.utils.Multithreading
 import dev.deftu.screencapper.utils.Screenshot
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -110,7 +109,7 @@ object ScreenshotHandler {
                     // use AWT to copy the image with a
                     // custom transferable.
                     val selection = ImageSelection(scr)
-                    Multithreading.runAsync {
+                    DeftuLib.multithreader.runAsync {
                         Toolkit.getDefaultToolkit().systemClipboard.setContents(selection, null)
                     }
                 } else {
