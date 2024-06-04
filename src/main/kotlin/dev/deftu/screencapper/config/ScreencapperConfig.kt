@@ -25,31 +25,31 @@ private val configFile by lazy {
 
 object ScreencapperConfig : Vigilant(
     file = configFile,
-    guiTitle = "${ChatColor.AQUA}${dev.deftu.screencapper.Screencapper.NAME}"
+    guiTitle = "${ChatColor.AQUA}${Screencapper.NAME}"
 ) {
     @Property(
         type = PropertyType.SWITCH,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.general.toggle",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.general.toggle",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.general"
+        name = "${Screencapper.ID}.config.general.toggle",
+        description = "${Screencapper.ID}.config_description.general.toggle",
+        category = "${Screencapper.ID}.config_category.general"
     ) var toggle = true
     @Property(
         type = PropertyType.SWITCH,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.general.auto_copy",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.general.auto_copy",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.general"
+        name = "${Screencapper.ID}.config.general.auto_copy",
+        description = "${Screencapper.ID}.config_description.general.auto_copy",
+        category = "${Screencapper.ID}.config_category.general"
     ) var autoCopy = true
     @Property(
         type = PropertyType.SWITCH,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.general.preview",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.general.preview",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.general"
+        name = "${Screencapper.ID}.config.general.preview",
+        description = "${Screencapper.ID}.config_description.general.preview",
+        category = "${Screencapper.ID}.config_category.general"
     ) var preview = true
     @Property(
         type = PropertyType.NUMBER,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.general.preview_time",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.general.preview_time",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.general",
+        name = "${Screencapper.ID}.config.general.preview_time",
+        description = "${Screencapper.ID}.config_description.general.preview_time",
+        category = "${Screencapper.ID}.config_category.general",
         max = 60,
         min = 1
     ) var previewTime = 5
@@ -62,40 +62,40 @@ object ScreencapperConfig : Vigilant(
 
     @Property(
         type = PropertyType.SWITCH,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.chat.upload",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.chat.upload",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.chat"
+        name = "${Screencapper.ID}.config.chat.upload",
+        description = "${Screencapper.ID}.config_description.chat.upload",
+        category = "${Screencapper.ID}.config_category.chat"
     ) var chatUpload = true
     @Property(
         type = PropertyType.SWITCH,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.chat.copy",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.chat.copy",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.chat"
+        name = "${Screencapper.ID}.config.chat.copy",
+        description = "${Screencapper.ID}.config_description.chat.copy",
+        category = "${Screencapper.ID}.config_category.chat"
     ) var chatCopy = true
     @Property(
         type = PropertyType.SWITCH,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.chat.open",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.chat.open",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.chat"
+        name = "${Screencapper.ID}.config.chat.open",
+        description = "${Screencapper.ID}.config_description.chat.open",
+        category = "${Screencapper.ID}.config_category.chat"
     ) var chatOpen = true
     @Property(
         type = PropertyType.SWITCH,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.chat.open_folder",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.chat.open_folder",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.chat"
+        name = "${Screencapper.ID}.config.chat.open_folder",
+        description = "${Screencapper.ID}.config_description.chat.open_folder",
+        category = "${Screencapper.ID}.config_category.chat"
     ) var chatOpenFolder = true
     @Property(
         type = PropertyType.SWITCH,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.chat.delete",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.chat.delete",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.chat"
+        name = "${Screencapper.ID}.config.chat.delete",
+        description = "${Screencapper.ID}.config_description.chat.delete",
+        category = "${Screencapper.ID}.config_category.chat"
     ) var chatDelete = true
 
     @Property(
         type = PropertyType.SWITCH,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.upload.toggle",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.upload.toggle",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.upload"
+        name = "${Screencapper.ID}.config.upload.toggle",
+        description = "${Screencapper.ID}.config_description.upload.toggle",
+        category = "${Screencapper.ID}.config_category.upload"
     ) var uploadToggle = true
     private var _uploadMode = UploadMode.IMGUR.ordinal
     var uploadMode: UploadMode
@@ -105,9 +105,9 @@ object ScreencapperConfig : Vigilant(
         }
     @Property(
         type = PropertyType.TEXT,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.upload.sharex.url",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.upload.sharex.url",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.upload"
+        name = "${Screencapper.ID}.config.upload.sharex.url",
+        description = "${Screencapper.ID}.config_description.upload.sharex.url",
+        category = "${Screencapper.ID}.config_category.upload"
     ) var shareXUploadUrl = ""
     private var _shareXRequestMethod = RequestMethod.POST.ordinal
     var shareXRequestMethod: RequestMethod
@@ -123,31 +123,31 @@ object ScreencapperConfig : Vigilant(
         }
     @Property(
         type = PropertyType.BUTTON,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.upload.sharex.open_config",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.upload.sharex.open_config",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.upload"
+        name = "${Screencapper.ID}.config.upload.sharex.open_config",
+        description = "${Screencapper.ID}.config_description.upload.sharex.open_config",
+        category = "${Screencapper.ID}.config_category.upload"
     ) fun openShareXConfigFile() {
         UDesktop.open(ShareXConfig.file)
     }
     @Property(
         type = PropertyType.BUTTON,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.upload.sharex.reload_config",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.upload.sharex.reload_config",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.upload"
+        name = "${Screencapper.ID}.config.upload.sharex.reload_config",
+        description = "${Screencapper.ID}.config_description.upload.sharex.reload_config",
+        category = "${Screencapper.ID}.config_category.upload"
     ) fun reloadShareXConfigFile() {
         ShareXConfig.load()
     }
     @Property(
         type = PropertyType.TEXT,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.upload.sharex.sxcu_path",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.upload.sharex.sxcu_path",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.upload"
+        name = "${Screencapper.ID}.config.upload.sharex.sxcu_path",
+        description = "${Screencapper.ID}.config_description.upload.sharex.sxcu_path",
+        category = "${Screencapper.ID}.config_category.upload"
     ) var shareXSxcuPath = ""
     @Property(
         type = PropertyType.BUTTON,
-        name = "${dev.deftu.screencapper.Screencapper.ID}.config.upload.sharex.import_sxcu",
-        description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.upload.sharex.import_sxcu",
-        category = "${dev.deftu.screencapper.Screencapper.ID}.config_category.upload"
+        name = "${Screencapper.ID}.config.upload.sharex.import_sxcu",
+        description = "${Screencapper.ID}.config_description.upload.sharex.import_sxcu",
+        category = "${Screencapper.ID}.config_category.upload"
     ) fun importSxcu() {
         if (shareXSxcuPath.isBlank()) return
         val file = File(shareXSxcuPath)
@@ -165,22 +165,22 @@ object ScreencapperConfig : Vigilant(
 
     init {
         updateShareX(_uploadMode)
-        category("${dev.deftu.screencapper.Screencapper.ID}.config_category.general") {
+        category("${Screencapper.ID}.config_category.general") {
             selector(
                 field = ::_previewPosition,
-                name = "${dev.deftu.screencapper.Screencapper.ID}.config.general.preview_position",
-                description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.general.preview_position",
+                name = "${Screencapper.ID}.config.general.preview_position",
+                description = "${Screencapper.ID}.config_description.general.preview_position",
                 options = PreviewPosition.values().map {
                     I18n.translate(it.displayName)
                 }
             )
         }
 
-        category("${dev.deftu.screencapper.Screencapper.ID}.config_category.upload") {
+        category("${Screencapper.ID}.config_category.upload") {
             selector(
                 field = ::_uploadMode,
-                name = "${dev.deftu.screencapper.Screencapper.ID}.config.upload.mode",
-                description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.upload.mode",
+                name = "${Screencapper.ID}.config.upload.mode",
+                description = "${Screencapper.ID}.config_description.upload.mode",
                 options = UploadMode.values().map {
                     it.type
                 },
@@ -190,8 +190,8 @@ object ScreencapperConfig : Vigilant(
 
             selector(
                 field = ::_shareXRequestMethod,
-                name = "${dev.deftu.screencapper.Screencapper.ID}.config.upload.sharex.request_method",
-                description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.upload.sharex.request_method",
+                name = "${Screencapper.ID}.config.upload.sharex.request_method",
+                description = "${Screencapper.ID}.config_description.upload.sharex.request_method",
                 options = RequestMethod.values().map {
                     it.name
                 }
@@ -199,8 +199,8 @@ object ScreencapperConfig : Vigilant(
 
             selector(
                 field = ::_shareXRequestType,
-                name = "${dev.deftu.screencapper.Screencapper.ID}.config.upload.sharex.request_type",
-                description = "${dev.deftu.screencapper.Screencapper.ID}.config_description.upload.sharex.request_type",
+                name = "${Screencapper.ID}.config.upload.sharex.request_type",
+                description = "${Screencapper.ID}.config_description.upload.sharex.request_type",
                 options = RequestType.values().map {
                     it.name
                 }

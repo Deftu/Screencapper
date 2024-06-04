@@ -29,19 +29,17 @@ object Screencapper : ClientModInitializer {
                     .executes { ctx ->
                         when (StringArgumentType.getString(ctx, "action").lowercase()) {
                             "upload" -> {
-                                UDesktop.setClipboardString(
-                                    dev.deftu.screencapper.ScreenshotHandler.upload().toString()
-                                )
+                                UDesktop.setClipboardString(ScreenshotHandler.upload().toString())
                                 1
                             }
 
                             "copy" -> {
-                                dev.deftu.screencapper.ScreenshotHandler.copy()
+                                ScreenshotHandler.copy()
                                 1
                             }
 
                             "delete" -> {
-                                dev.deftu.screencapper.ScreenshotHandler.delete()
+                                ScreenshotHandler.delete()
                                 1
                             }
 
