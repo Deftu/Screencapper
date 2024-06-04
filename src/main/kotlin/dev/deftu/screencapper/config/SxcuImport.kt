@@ -1,4 +1,4 @@
-package xyz.deftu.screencapper.config
+package dev.deftu.screencapper.config
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject

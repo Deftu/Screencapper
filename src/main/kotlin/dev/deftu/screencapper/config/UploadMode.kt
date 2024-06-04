@@ -1,4 +1,4 @@
-package xyz.deftu.screencapper.config
+package dev.deftu.screencapper.config
 
 enum class UploadMode(
     val type: String

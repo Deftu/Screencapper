@@ -1,4 +1,4 @@
-package xyz.deftu.screencapper.utils
+package dev.deftu.screencapper.utils
 
 import net.minecraft.client.texture.NativeImage
 import java.io.File

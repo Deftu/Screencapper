@@ -1,4 +1,4 @@
-package xyz.deftu.screencapper.mixins;
+package dev.deftu.screencapper.mixins;
 
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.ScreenshotRecorder;
@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import xyz.deftu.screencapper.ScreenshotHandler;
+import dev.deftu.screencapper.ScreenshotHandler;
 
 import java.io.File;
 import java.util.function.Consumer;

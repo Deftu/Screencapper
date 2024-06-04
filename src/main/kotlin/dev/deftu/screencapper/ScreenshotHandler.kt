@@ -1,4 +1,4 @@
-package xyz.deftu.screencapper
+package dev.deftu.screencapper
 
 import ca.weblite.objc.Client
 import dev.isxander.shotify.upload.ImgurUploadTask
@@ -8,14 +8,14 @@ import net.minecraft.text.ClickEvent
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import org.apache.commons.lang3.SystemUtils
-import xyz.deftu.lib.utils.TextHelper
-import xyz.deftu.screencapper.config.ScreencapperConfig
-import xyz.deftu.screencapper.config.UploadMode
-import xyz.deftu.screencapper.gui.preview.ScreenshotPreview
-import xyz.deftu.screencapper.upload.ShareXUploadTask
-import xyz.deftu.screencapper.utils.ChatHelper
-import xyz.deftu.screencapper.utils.Multithreading
-import xyz.deftu.screencapper.utils.Screenshot
+import dev.deftu.lib.utils.TextHelper
+import dev.deftu.screencapper.config.ScreencapperConfig
+import dev.deftu.screencapper.config.UploadMode
+import dev.deftu.screencapper.gui.preview.ScreenshotPreview
+import dev.deftu.screencapper.upload.ShareXUploadTask
+import dev.deftu.screencapper.utils.ChatHelper
+import dev.deftu.screencapper.utils.Multithreading
+import dev.deftu.screencapper.utils.Screenshot
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable

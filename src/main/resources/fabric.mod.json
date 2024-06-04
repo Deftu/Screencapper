@@ -12,7 +12,7 @@
     ],
     "icon": "assets/screencapper/logo.png",
     "contact": {
-        "homepage": "https://www.deftu.xyz/",
+        "homepage": "https://deftu.dev/",
         "issues": "https://github.com/Deftu/${mod_name}/issues",
         "sources": "https://github.com/Deftu/${mod_name}"
     },
@@ -22,13 +22,13 @@
         "client": [
             {
                 "adapter": "kotlin",
-                "value": "xyz.deftu.screencapper.Screencapper"
+                "value": "dev.deftu.screencapper.Screencapper"
             }
         ],
         "modmenu": [
             {
                 "adapter": "kotlin",
-                "value": "xyz.deftu.screencapper.utils.integrations.ModMenuIntegration"
+                "value": "dev.deftu.screencapper.utils.integrations.ModMenuIntegration"
             }
         ]
     },
@@ -37,10 +37,10 @@
     ],
     "depends": {
         "fabric": "*",
-        "fabricloader": ">=0.14.8",
-        "fabric-language-kotlin": ">=1.8.1+kotlin.1.7.0",
+        "fabricloader": ">=0.15.11",
+        "fabric-language-kotlin": ">=1.7.4+kotlin.1.6.21",
         "minecraft": "~${mc_version}",
         "java": ">=17",
-        "deftulib": ">=1.6.0"
+        "deftulib": ">=1.8.0"
     }
 }

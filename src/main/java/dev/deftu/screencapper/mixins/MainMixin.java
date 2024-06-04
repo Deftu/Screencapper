@@ -1,4 +1,4 @@
-package xyz.deftu.screencapper.mixins;
+package dev.deftu.screencapper.mixins;
 
 import net.minecraft.client.main.Main;
 import org.apache.commons.lang3.SystemUtils;

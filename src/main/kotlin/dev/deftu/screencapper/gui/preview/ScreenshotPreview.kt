@@ -1,4 +1,4 @@
-package xyz.deftu.screencapper.gui.preview
+package dev.deftu.screencapper.gui.preview
 
 import gg.essential.elementa.ElementaVersion
 import gg.essential.elementa.components.Window
@@ -6,8 +6,8 @@ import gg.essential.elementa.dsl.childOf
 import gg.essential.elementa.dsl.provideDelegate
 import gg.essential.universal.UMatrixStack
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
-import xyz.deftu.screencapper.config.ScreencapperConfig
-import xyz.deftu.screencapper.utils.Screenshot
+import dev.deftu.screencapper.config.ScreencapperConfig
+import dev.deftu.screencapper.utils.Screenshot
 
 object ScreenshotPreview {
     private val window = Window(ElementaVersion.V3)

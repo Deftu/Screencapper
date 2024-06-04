@@ -1,4 +1,4 @@
-package xyz.deftu.screencapper.gui.preview
+package dev.deftu.screencapper.gui.preview
 
 import dev.isxander.shotify.util.ofNativeImage
 import gg.essential.elementa.components.UIBlock
@@ -12,8 +12,8 @@ import gg.essential.elementa.constraints.animation.Animations
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.effects.OutlineEffect
 import gg.essential.elementa.utils.withAlpha
-import xyz.deftu.screencapper.config.ScreencapperConfig
-import xyz.deftu.screencapper.utils.Screenshot
+import dev.deftu.screencapper.config.ScreencapperConfig
+import dev.deftu.screencapper.utils.Screenshot
 import java.awt.Color
 
 class ScreenshotPreviewComponent(

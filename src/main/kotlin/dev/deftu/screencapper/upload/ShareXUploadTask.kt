@@ -1,4 +1,4 @@
-package xyz.deftu.screencapper.upload
+package dev.deftu.screencapper.upload
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
@@ -11,14 +11,14 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.apache.logging.log4j.LogManager
-import xyz.deftu.lib.utils.TextHelper
-import xyz.deftu.screencapper.Screencapper
-import xyz.deftu.screencapper.config.RequestMethod
-import xyz.deftu.screencapper.config.RequestType
-import xyz.deftu.screencapper.config.ScreencapperConfig
-import xyz.deftu.screencapper.config.ShareXConfig
-import xyz.deftu.screencapper.utils.ChatHelper
-import xyz.deftu.screencapper.utils.Screenshot
+import dev.deftu.lib.utils.TextHelper
+import dev.deftu.screencapper.Screencapper
+import dev.deftu.screencapper.config.RequestMethod
+import dev.deftu.screencapper.config.RequestType
+import dev.deftu.screencapper.config.ScreencapperConfig
+import dev.deftu.screencapper.config.ShareXConfig
+import dev.deftu.screencapper.utils.ChatHelper
+import dev.deftu.screencapper.utils.Screenshot
 import java.net.URL
 
 object ShareXUploadTask {
@@ -29,16 +29,16 @@ object ShareXUploadTask {
     private val urlNameRegex = "\\\$json:(?<path>.+)\\\$".toRegex()
 
     fun upload(screenshot: Screenshot): Screenshot {
-        Screencapper.sendMessage(
-            TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.sharex.start")
+        dev.deftu.screencapper.Screencapper.sendMessage(
+            TextHelper.createTranslatableText("${dev.deftu.screencapper.Screencapper.ID}.text.chat.upload.sharex.start")
             .formatted(Formatting.GRAY))
         var screenshot = screenshot
         if (ScreencapperConfig.shareXUploadUrl.isEmpty()) {
-            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(TextHelper.createTranslatableText("${Screencapper.ID}.error.upload_missing_url")
+            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(TextHelper.createTranslatableText("${dev.deftu.screencapper.Screencapper.ID}.error.upload_missing_url")
                 .formatted(Formatting.RED))
             return screenshot
         }
-        val response = Screencapper.httpClient.newCall(Request.Builder()
+        val response = dev.deftu.screencapper.Screencapper.httpClient.newCall(Request.Builder()
             .url(ScreencapperConfig.shareXUploadUrl)
             .handleRequestBody(screenshot)
             .build()).execute()
@@ -68,7 +68,7 @@ object ShareXUploadTask {
             } else getUrl(path).asString
             screenshot = Screenshot(screenshot.image, screenshot.bytes, screenshot.file, URL(url))
         } else {
-            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(TextHelper.createTranslatableText("${Screencapper.ID}.error.upload_error", response.code)
+            MinecraftClient.getInstance().inGameHud.chatHud.addMessage(TextHelper.createTranslatableText("${dev.deftu.screencapper.Screencapper.ID}.error.upload_error", response.code)
                 .formatted(Formatting.RED))
             LogManager.getLogger("Screencapper (ShareX Upload)").error("""
                 Upload failed with code ${response.code}:
@@ -76,7 +76,7 @@ object ShareXUploadTask {
             """.trimIndent())
         }
         response.close()
-        Screencapper.sendMessage(TextHelper.createTranslatableText("${Screencapper.ID}.text.chat.upload.sharex.end")
+        dev.deftu.screencapper.Screencapper.sendMessage(TextHelper.createTranslatableText("${dev.deftu.screencapper.Screencapper.ID}.text.chat.upload.sharex.end")
             .formatted(Formatting.GREEN))
         return screenshot
     }

@@ -1,10 +1,10 @@
-package xyz.deftu.screencapper.config
+package dev.deftu.screencapper.config
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
-import xyz.deftu.screencapper.utils.Multithreading
+import dev.deftu.screencapper.utils.Multithreading
 import java.io.File
 import java.util.concurrent.TimeUnit
 
