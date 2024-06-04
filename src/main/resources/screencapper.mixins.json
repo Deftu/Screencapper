@@ -5,8 +5,8 @@
     "injectors": {
         "defaultRequire": 1
     },
-    "mixins": [
-        "dev.deftu.screencapper.mixins.MainMixin",
-        "dev.deftu.screencapper.mixins.ScreenshotRecorderMixin"
+    "client": [
+        "MainMixin",
+        "ScreenshotRecorderMixin"
     ]
 }
