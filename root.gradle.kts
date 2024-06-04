@@ -18,3 +18,19 @@ preprocess {
     fabric_1_19_04.link(fabric_1_19_02)
     fabric_1_19_02.link(fabric_1_18_02)
 }
+
+val versions = listOf(
+    "1.18.2-fabric",
+    "1.19.2-fabric",
+    "1.19.4-fabric",
+    "1.20.1-fabric",
+    "1.20.2-fabric",
+    "1.20.4-fabric",
+    "1.20.6-fabric"
+)
+
+project.tasks.register("buildVersions") {
+    group = "deftu"
+
+    dependsOn(versions.map { ":$it:build" })
+}
