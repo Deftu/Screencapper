@@ -28,11 +28,10 @@ object ShareXConfig {
 
     fun initialize(directory: File) {
         if (initialized) return
-
-        convertLegacy()
         if (!directory.exists()) directory.mkdirs()
 
         file = File(directory, "sharex.json")
+        convertLegacy()
         DeftuLib.multithreader.schedule(this::load, 0, 5, TimeUnit.MINUTES)
         initialized = true
     }
