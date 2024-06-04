@@ -10,7 +10,8 @@ plugins {
     kotlin("plugin.serialization")
     id("dev.deftu.gradle.multiversion")
     id("dev.deftu.gradle.tools")
-    id("dev.deftu.gradle.tools.shadow")
+    id("dev.deftu.gradle.tools.resources")
+    id("dev.deftu.gradle.tools.blossom")
     id("dev.deftu.gradle.tools.minecraft.loom")
     id("dev.deftu.gradle.tools.minecraft.releases")
 }
