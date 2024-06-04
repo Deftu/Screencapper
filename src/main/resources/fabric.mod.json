@@ -16,7 +16,7 @@
         "issues": "https://github.com/Deftu/${mod_name}/issues",
         "sources": "https://github.com/Deftu/${mod_name}"
     },
-    "license": "GPLv3.0",
+    "license": "LGPL-3.0-or-later",
     "environment": "client",
     "entrypoints": {
         "client": [
