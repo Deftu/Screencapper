@@ -28,6 +28,15 @@ import javax.imageio.ImageIO
 object ScreenshotHandler {
     private var screenshot: Screenshot? = null
 
+    fun capture(image: NativeImage, file: File) {
+        try {
+            val bytes = image.bytes
+            handle(image, bytes, file)
+        } catch (t: Throwable) {
+            t.printStackTrace()
+        }
+    }
+
     fun upload(): URL = upload(screenshot!!)
     fun upload(screenshot: Screenshot): URL {
         var screenshot = screenshot
@@ -37,15 +46,6 @@ object ScreenshotHandler {
             UploadMode.SHAREX -> ShareXUploadTask.upload(screenshot)
         }
         return screenshot.url!!
-    }
-
-    fun handle(image: NativeImage, bytes: ByteArray, file: File) {
-        if (!ScreencapperConfig.toggle) return
-        var screenshot = Screenshot(image, bytes, file)
-        this.screenshot = screenshot
-        ScreenshotPreview.append(screenshot)
-        if (ScreencapperConfig.autoCopy) copy()
-        if (ScreencapperConfig.uploadToggle) UDesktop.setClipboardString(upload(screenshot).toString())
     }
 
     fun createText(original: Text): Text {
@@ -89,6 +89,15 @@ object ScreenshotHandler {
             if (ScreencapperConfig.chatOpenFolder) screenshot?.file?.parent?.let { append("[").append(openFolderText).append("] ") }
             if (ScreencapperConfig.chatDelete) append("[").append(deleteText).append("] ")
         }
+    }
+
+    private fun handle(image: NativeImage, bytes: ByteArray, file: File) {
+        if (!ScreencapperConfig.toggle) return
+        var screenshot = Screenshot(image, bytes, file)
+        this.screenshot = screenshot
+        ScreenshotPreview.append(screenshot)
+        if (ScreencapperConfig.autoCopy) copy()
+        if (ScreencapperConfig.uploadToggle) UDesktop.setClipboardString(upload(screenshot).toString())
     }
 
     internal fun delete() {
