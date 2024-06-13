@@ -17,9 +17,9 @@ object ScreenshotPreview {
             if (!ScreencapperConfig.preview) return@register
 
             //#if MC >= 1.20
-            //$$ window.draw(UMatrixStack(ctx.matrices))
+            window.draw(UMatrixStack(ctx.matrices))
             //#else
-            window.draw(UMatrixStack(ctx))
+            //$$ window.draw(UMatrixStack(ctx))
             //#endif
         }
     }
