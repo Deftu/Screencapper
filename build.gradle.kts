@@ -7,11 +7,10 @@ import dev.deftu.gradle.utils.GameSide
 plugins {
     java
     kotlin("jvm")
-    kotlin("plugin.serialization")
     id("dev.deftu.gradle.multiversion")
     id("dev.deftu.gradle.tools")
     id("dev.deftu.gradle.tools.resources")
-    id("dev.deftu.gradle.tools.blossom")
+    id("dev.deftu.gradle.tools.bloom")
     id("dev.deftu.gradle.tools.minecraft.loom")
     id("dev.deftu.gradle.tools.minecraft.releases")
 }
@@ -36,7 +35,7 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:${mcData.fabricApiVersion}")
     modImplementation(mcData.modMenuDependency)
     modImplementation("net.fabricmc:fabric-language-kotlin:1.7.4+kotlin.1.6.21")
-    modImplementation("dev.deftu:DeftuLib-${mcData.versionStr}-${mcData.loader.name}:1.8.0")
+    modImplementation("dev.deftu:DeftuLib-${mcData.versionStr}-${mcData.loader.name}:1.8.2")
 
     api(include("ca.weblite:java-objc-bridge:1.2")!!)
 }

@@ -41,6 +41,6 @@
         "fabric-language-kotlin": ">=1.7.4+kotlin.1.6.21",
         "minecraft": "~${mc_version}",
         "java": ">=17",
-        "deftulib": ">=1.8.0"
+        "deftulib": ">=1.8.2"
     }
 }
