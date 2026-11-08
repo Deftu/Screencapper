@@ -25,13 +25,23 @@ I take a screenshot, I get to see a preview of it,
 I can automatically upload it to my image hosting
 service or copy it to my clipboard.
 
+Screencapper uses [OneConfig][oneconfig]. Its settings live
+in the OneConfig menu, and it adds a Screenshots page to the
+OneConfig sidebar where you can browse, copy, upload, open and
+delete every screenshot you've taken. Run `/screenshots` to
+open it.
+
+You can upload to Imgur or to your own host. Any host that
+accepts an image over HTTP works, and you can import a ShareX
+`.sxcu` file to fill in the settings for you.
+
 ## Why use this instead of Shotify?
 This mod was mostly rewritten using Shotify
 as a somewhat sturdy base. It has a few slight
 performance improvements, a few small feature
 tweaks and additions and adds support for
-uploading your screenshots to ShareX image
-hosts.
+uploading your screenshots to your own image
+host.
 
 The original Shotify mod has also been effectively
 abandoned indefinitely, so it will not be updated
@@ -56,4 +66,5 @@ wouldn't recommend using it.
 [shotify]: https://curseforge.com/minecraft/mc-mods/shotify
 [xander]: https://github.com/isXander
 [essential]: https://essential.gg/
+[oneconfig]: https://polyfrost.org/projects/oneconfig
 [lgpl]: https://www.gnu.org/licenses/lgpl-3.0.en.html
