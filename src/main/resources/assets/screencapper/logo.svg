@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="1024" height="1024">
+    <defs>
+        <linearGradient id="camera" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#E7928F"/>
+            <stop offset="0.5" stop-color="#C33F3F"/>
+            <stop offset="1" stop-color="#7A2323"/>
+        </linearGradient>
+    </defs>
+    <rect x="2" y="2" width="124" height="124" rx="30" fill="#28282B"/>
+    <path d="M2 32A30 30 0 0 1 32 2h46c-10 18-26 30-50 34-12 2-20 4-26 10z" fill="#363639"/>
+    <path d="M26 50a10 10 0 0 1 10-10h12l6-8h20l6 8h12a10 10 0 0 1 10 10v34a10 10 0 0 1-10 10H36a10 10 0 0 1-10-10z" fill="url(#camera)"/>
+    <circle cx="64" cy="67" r="17" fill="#28282B"/>
+    <circle cx="64" cy="67" r="9" fill="url(#camera)"/>
+</svg>
