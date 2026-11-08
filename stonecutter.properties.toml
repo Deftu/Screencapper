@@ -1,7 +1,7 @@
 mod.id = "screencapper"
 mod.name = "Screencapper"
 mod.group = "dev.deftu"
-mod.version = "2.0.0"
+mod.version = "2.0.1"
 mod.description = "A highly advanced screenshot mod."
 
 deps.fabric_loader = "0.19.3"
