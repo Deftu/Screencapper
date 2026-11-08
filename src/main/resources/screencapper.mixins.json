@@ -1,12 +1,14 @@
 {
-    "required": true,
-    "package": "dev.deftu.screencapper.mixins",
-    "compatibilityLevel": "JAVA_17",
-    "injectors": {
-        "defaultRequire": 1
-    },
-    "client": [
-        "MainMixin",
-        "ScreenshotRecorderMixin"
-    ]
+  "required": true,
+  "compatibilityLevel": "${java}",
+  "minVersion": "0.8",
+  "package": "dev.deftu.screencapper.mixin",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "ChatAccessor",
+    "ChatMixin",
+    "ScreenshotMixin"
+  ]
 }
