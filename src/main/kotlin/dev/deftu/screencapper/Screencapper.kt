@@ -54,6 +54,7 @@ object Screencapper : ClientModInitializer {
                     .then(CommandManager.argument("screenshot", StringArgumentType.greedyString()).executes { ScreenshotActions.openFolder(); 1 }))
                 .then(action("upload") { ScreenshotActions.upload(it) })
                 .then(action("copy") { ScreenshotActions.copy(it) })
+                .then(action("copy-link") { ScreenshotActions.copyLink(it) })
                 .then(action("open") { ScreenshotActions.open(it) })
                 .then(action("delete") { ScreenshotActions.delete(it) })
                 .then(action("view") { ScreenshotActions.openManager(it) })

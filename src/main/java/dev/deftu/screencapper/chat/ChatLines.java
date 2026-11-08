@@ -97,7 +97,13 @@ public final class ChatLines {
     private static Object display(Component text) {
         List<Object> messages = messages();
         Object head = messages == null || messages.isEmpty() ? null : messages.get(0);
+        //? if >=1.21 {
         Platform.compatibility().displayChatMessage(text);
+        //?} else {
+        /*ChatAccessor chat = chat();
+        if (chat == null) return null;
+        ((net.minecraft.client.gui.chat.ChatGui) chat).addMessage(LegacyText.convert(text));
+        *///?}
         if (messages == null || messages.isEmpty()) return null;
         Object added = messages.get(0);
         return added == head ? null : added;

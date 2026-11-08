@@ -130,7 +130,7 @@ object ChatCards {
             .append(
                 Component.text("Copy link", NamedTextColor.WHITE)
                     .hoverEvent(HoverEvent.showText(Component.text("Copy the link to your clipboard", NamedTextColor.WHITE)))
-                    .clickEvent(ClickEvent.copyToClipboard(link.url)),
+                    .clickEvent(ClickEvent.runCommand(command("copy-link", screenshot))),
             )
     }
 

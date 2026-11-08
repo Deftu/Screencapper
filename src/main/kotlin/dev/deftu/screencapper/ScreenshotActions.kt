@@ -43,6 +43,12 @@ object ScreenshotActions {
         }
     }
 
+    fun copyLink(screenshot: Screenshot) {
+        val link = UploadHistory.latest(screenshot) ?: return notifyError("No link yet", "${screenshot.name} hasn't been uploaded.")
+        ClipboardHelper.setString(link.url)
+        notifySuccess("Link copied", link.url)
+    }
+
     fun upload(screenshot: Screenshot, profile: UploaderProfile? = null, onDone: (String?) -> Unit = {}) {
         if (!uploading.add(screenshot.name)) {
             notifyError("Already uploading", "${screenshot.name} is still uploading.")
