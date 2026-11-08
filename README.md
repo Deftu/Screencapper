@@ -12,46 +12,22 @@
 </center>
 </div>
 
-## Taking a screenshot in vanilla Minecraft
-I take a screenshot, I need to either navigate
-to the screenshot folder myself, copy my screenshot
-to my clipboard and send it wherever I want. But
-sometimes, you can't even send the image directly,
-so you need to upload it to an image hosting service
-first.
+## What it does
+In vanilla Minecraft, sharing a screenshot means opening the screenshots folder, finding the file, and copying it somewhere. If the place you're sending it to won't take an image directly, you also have to upload it to an image host first.
 
-## Taking a screenshot using Screencapper
-I take a screenshot, I get to see a preview of it,
-I can automatically upload it to my image hosting
-service or copy it to my clipboard.
+With Screencapper, a preview of each screenshot pops up as soon as you take it. You can have it copied to your clipboard or uploaded to your image host automatically, or use the buttons on the chat message to view, copy, upload, open or delete it.
 
-Screencapper uses [OneConfig][oneconfig]. Its settings live
-in the OneConfig menu, and it adds a Screenshots page to the
-OneConfig sidebar where you can browse, copy, upload, open and
-delete every screenshot you've taken. Run `/screenshots` to
-open it.
+Screencapper needs [OneConfig][oneconfig], and its settings are in the OneConfig menu. It also adds a Screenshots page to the OneConfig sidebar where you can browse, search, copy, upload, open and delete every screenshot you've taken. Run `/screenshots` to open it.
 
-You can upload to Imgur or to your own host. Any host that
-accepts an image over HTTP works, and you can import a ShareX
-`.sxcu` file to fill in the settings for you.
+Imgur works out of the box. You can also add your own hosts: any host that accepts an image over HTTP works, and a ShareX `.sxcu` file fills in the settings for you. Screencapper remembers every link a screenshot was uploaded to.
 
 ## Why use this instead of Shotify?
-This mod was mostly rewritten using Shotify
-as a somewhat sturdy base. It has a few slight
-performance improvements, a few small feature
-tweaks and additions and adds support for
-uploading your screenshots to your own image
-host.
+Screencapper started from Shotify's code and has since been mostly rewritten. It runs a bit faster, has extra features, and can upload to your own image host.
 
-The original Shotify mod has also been effectively
-abandoned indefinitely, so it will not be updated
-to 1.19 and newer versions. This mod will be updated
-for the forseeable future.
+Shotify itself has been abandoned and won't be updated to 1.19 or newer. Screencapper will keep getting updates.
 
-## But [Essential][essential] has this mod built-in, why should I use this?!
-Essential's implementation is buggy at best, and causes
-incompatibilities with other mods (such as this one). I
-wouldn't recommend using it.
+## But [Essential][essential] has this built in, why should I use this?!
+Essential's version is buggy and breaks other mods, including this one. I wouldn't recommend it.
 
 <div align="center">
 <center>
