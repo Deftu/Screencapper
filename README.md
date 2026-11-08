@@ -57,7 +57,7 @@ wouldn't recommend using it.
 <center>
 
 **Original [Shotify][shotify] mod by [isXander][xander]**\
-**This project is licensed under [LGPL-3.0][lgpl]**\
+**This project is licensed under [AGPL-3.0-or-later][agpl]**\
 **&copy; 2022 Deftu**
 
 </center>
@@ -67,4 +67,4 @@ wouldn't recommend using it.
 [xander]: https://github.com/isXander
 [essential]: https://essential.gg/
 [oneconfig]: https://polyfrost.org/projects/oneconfig
-[lgpl]: https://www.gnu.org/licenses/lgpl-3.0.en.html
+[agpl]: https://www.gnu.org/licenses/agpl-3.0.en.html
