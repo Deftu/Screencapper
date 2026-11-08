@@ -1,52 +1,32 @@
-import groovy.lang.MissingPropertyException
-
 pluginManagement {
     repositories {
-        // Snapshots
-        maven("https://maven.deftu.dev/snapshots")
-        maven("https://s01.oss.sonatype.org/content/groups/public/")
-        mavenLocal()
-
-        // Repositories
-        maven("https://maven.deftu.dev/releases")
-        maven("https://maven.fabricmc.net")
-        maven("https://maven.architectury.dev/")
-        maven("https://maven.minecraftforge.net")
-        maven("https://repo.essential.gg/repository/maven-public")
-        maven("https://server.bbkr.space/artifactory/libs-release/")
-        maven("https://jitpack.io/")
-
-        // Default repositories
-        gradlePluginPortal()
         mavenCentral()
+        gradlePluginPortal()
+        maven("https://maven.fabricmc.net/")
+        maven("https://maven.ornithemc.net/releases")
+        maven("https://maven.kikugie.dev/releases") { name = "KikuGie Releases" }
+        maven("https://maven.kikugie.dev/snapshots") { name = "KikuGie Snapshots" }
+        maven("https://maven.deftu.dev/releases")
+        maven("https://maven.deftu.dev/snapshots")
+        maven("https://maven.architectury.dev")
+        maven("https://repo.polyfrost.org/releases")
+        maven("https://repo.polyfrost.org/snapshots")
+        maven("https://jitpack.io/")
     }
+}
 
-    plugins {
-        val kotlin = "2.0.0"
-        kotlin("jvm") version(kotlin)
+plugins {
+    id("dev.kikugie.stonecutter") version "0.9.7"
+    id("dev.kikugie.loom-back-compat") version "0.4.2"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
 
-        val dgt = "1.28.1"
-        id("dev.deftu.gradle.multiversion-root") version(dgt)
+stonecutter {
+    create(rootProject) {
+        versions("1.8.9", "1.21.1", "1.21.4", "1.21.5", "1.21.8", "1.21.10", "1.21.11", "26.1", "26.2", "26.3")
+
+        vcsVersion = "26.3"
     }
 }
 
-val projectName: String = extra["mod.name"]?.toString() ?: throw MissingPropertyException("mod.name has not been set.")
-rootProject.name = projectName
-rootProject.buildFileName = "root.gradle.kts"
-
-listOf(
-    "1.18.2-fabric",
-    "1.19.2-fabric",
-    "1.19.4-fabric",
-    "1.20.1-fabric",
-    "1.20.2-fabric",
-    "1.20.4-fabric",
-    "1.20.6-fabric",
-    "1.21-fabric"
-).forEach { version ->
-    include(":$version")
-    project(":$version").apply {
-        projectDir = file("versions/$version")
-        buildFileName = "../../build.gradle.kts"
-    }
-}
+rootProject.name = "Screencapper"
