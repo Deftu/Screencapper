@@ -98,15 +98,27 @@ object FastCapture {
         save(file, image.width, image.height, { image.argb }, {}, onDone, kind, metadata)
 
     private fun write(file: File, image: CapturedImage, kind: CaptureKind, metadata: Map<String, String>) {
-        val temp = File(file.parentFile, ".${file.name}.tmp")
-        try {
-            BufferedOutputStream(Files.newOutputStream(temp.toPath()), 1 shl 16).use { out ->
-                ScreenshotEncoding.encode(image, kind, metadata, out)
+        fun writeAtomically(target: File, encode: (java.io.OutputStream) -> Unit) {
+            val temp = File(target.parentFile, ".${target.name}.tmp")
+            try {
+                BufferedOutputStream(Files.newOutputStream(temp.toPath()), 1 shl 16).use(encode)
+                // Moved into place in one step, so nothing ever sees a half-written screenshot.
+                Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+            } finally {
+                temp.delete()
             }
-            // Moved into place in one step, so nothing ever sees a half-written screenshot.
-            Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-        } finally {
-            temp.delete()
+        }
+
+        writeAtomically(file) { out -> ScreenshotEncoding.encode(image, kind, metadata, out) }
+
+        val profile = dev.deftu.screencapper.screenshot.capture.compression.CompressionProfiles.forKind(kind)
+        if (profile.keepOriginal && !profile.isLossless) {
+            runCatching {
+                val directory = File(file.parentFile, "original").apply { mkdirs() }
+                writeAtomically(File(directory, "${file.nameWithoutExtension}.png")) { out ->
+                    dev.deftu.screencapper.screenshot.capture.compression.ImageCompressor.encodeOriginal(image, metadata, out)
+                }
+            }.onFailure { Screencapper.LOGGER.warn("Couldn't keep the original of {}", file.name, it) }
         }
     }
 

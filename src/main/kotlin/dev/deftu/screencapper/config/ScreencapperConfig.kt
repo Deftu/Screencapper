@@ -12,6 +12,7 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
     private const val GENERAL = "General"
     private const val CAPTURE = "Capture"
     private const val CHAT = "Chat"
+    private const val COMPRESSION = "Compression"
 
     var enabled by masterToggle()
 
@@ -126,6 +127,56 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
         addMetadata("hidden", true)
     }
 
+    val compressionPresets by info(
+        name = "Presets",
+        description = "Lossless: PNG with every pixel kept. The largest files.\n" +
+            "Smaller PNG: fewer colours. Looks the same at a glance, often about half the size.\n" +
+            "Balanced: high quality JPEG. Hard to tell apart, about 15% of the size.\n" +
+            "Small: JPEG at most 1920 pixels wide. About 7% of the size.\n" +
+            "Tiny: JPEG at most 1280 pixels wide. About 2% of the size, for quick sharing.\n" +
+            "Custom shows every option. Sizes are rough and depend on the scene.",
+        category = COMPRESSION,
+        subcategory = "Presets",
+    )
+
+    var normalChoice by dropdown(name = "Save as", defaultOption = dev.deftu.screencapper.screenshot.capture.compression.CompressionChoice.LOSSLESS, options = dev.deftu.screencapper.screenshot.capture.compression.CompressionChoice.FOR_SAVING, description = "How normal screenshots are saved.", category = COMPRESSION, subcategory = "Normal screenshots", stringTransformer = { it.label })
+    var normalFormat by dropdown(name = "Format", defaultOption = dev.deftu.screencapper.screenshot.capture.compression.ImageFormat.PNG, options = dev.deftu.screencapper.screenshot.capture.compression.ImageFormat.entries.toTypedArray(), description = "PNG keeps text and edges sharp. JPEG is far smaller but slightly soft.", category = COMPRESSION, subcategory = "Normal screenshots", stringTransformer = { it.displayName })
+    var normalQuality by slider(name = "Quality", def = 90f, description = "Higher looks better and makes bigger files.", category = COMPRESSION, subcategory = "Normal screenshots", min = 10f, max = 100f, step = 5f)
+    var normalColours by dropdown(name = "Colours", defaultOption = 0, options = arrayOf(0, 256, 128, 64), description = "Fewer colours make smaller files. 256 looks the same at a glance.", category = COMPRESSION, subcategory = "Normal screenshots", stringTransformer = { if (it == 0) "All colours" else "$it colours" })
+    var normalDither by switch(name = "Dithering", def = true, description = "Mixes nearby colours so smooth gradients, like the sky, don't show bands.", category = COMPRESSION, subcategory = "Normal screenshots")
+    var normalResize by dropdown(name = "Resize", defaultOption = dev.deftu.screencapper.screenshot.capture.compression.ResizeMode.NONE, options = dev.deftu.screencapper.screenshot.capture.compression.ResizeMode.entries.toTypedArray(), description = "Smaller images make much smaller files.", category = COMPRESSION, subcategory = "Normal screenshots", stringTransformer = { it.displayName })
+    var normalScale by slider(name = "Scale", def = 50f, description = "The size to save at, as a share of the original.", category = COMPRESSION, subcategory = "Normal screenshots", unit = "%", min = 10f, max = 100f, step = 5f)
+    var normalMaxWidth by number(name = "Max width", def = 1920f, description = "Wider images are scaled down to this width. Narrower ones are left alone.", category = COMPRESSION, subcategory = "Normal screenshots", unit = "px", min = 160f, max = 16384f)
+    var normalKeepOriginal by switch(name = "Keep the original", def = false, description = "Also saves an untouched PNG in screenshots/original.", category = COMPRESSION, subcategory = "Normal screenshots")
+
+    val normalCompressionFields: dev.deftu.screencapper.screenshot.capture.compression.CompressionFields
+        get() = dev.deftu.screencapper.screenshot.capture.compression.CompressionFields(::normalChoice, ::normalFormat, ::normalQuality, ::normalColours, ::normalDither, ::normalResize, ::normalScale, ::normalMaxWidth, ::normalKeepOriginal)
+
+    var highResChoice by dropdown(name = "Save as", defaultOption = dev.deftu.screencapper.screenshot.capture.compression.CompressionChoice.LOSSLESS, options = dev.deftu.screencapper.screenshot.capture.compression.CompressionChoice.FOR_SAVING, description = "How high-res screenshots are saved. Lossless high-res shots can be very large.", category = COMPRESSION, subcategory = "High-res screenshots", stringTransformer = { it.label })
+    var highResFormat by dropdown(name = "Format", defaultOption = dev.deftu.screencapper.screenshot.capture.compression.ImageFormat.PNG, options = dev.deftu.screencapper.screenshot.capture.compression.ImageFormat.entries.toTypedArray(), description = "PNG keeps text and edges sharp. JPEG is far smaller but slightly soft.", category = COMPRESSION, subcategory = "High-res screenshots", stringTransformer = { it.displayName })
+    var highResQuality by slider(name = "Quality", def = 90f, description = "Higher looks better and makes bigger files.", category = COMPRESSION, subcategory = "High-res screenshots", min = 10f, max = 100f, step = 5f)
+    var highResColours by dropdown(name = "Colours", defaultOption = 0, options = arrayOf(0, 256, 128, 64), description = "Fewer colours make smaller files. 256 looks the same at a glance.", category = COMPRESSION, subcategory = "High-res screenshots", stringTransformer = { if (it == 0) "All colours" else "$it colours" })
+    var highResDither by switch(name = "Dithering", def = true, description = "Mixes nearby colours so smooth gradients, like the sky, don't show bands.", category = COMPRESSION, subcategory = "High-res screenshots")
+    var highResResize by dropdown(name = "Resize", defaultOption = dev.deftu.screencapper.screenshot.capture.compression.ResizeMode.NONE, options = dev.deftu.screencapper.screenshot.capture.compression.ResizeMode.entries.toTypedArray(), description = "Smaller images make much smaller files.", category = COMPRESSION, subcategory = "High-res screenshots", stringTransformer = { it.displayName })
+    var highResScale by slider(name = "Scale", def = 50f, description = "The size to save at, as a share of the original.", category = COMPRESSION, subcategory = "High-res screenshots", unit = "%", min = 10f, max = 100f, step = 5f)
+    var highResMaxWidth by number(name = "Max width", def = 1920f, description = "Wider images are scaled down to this width. Narrower ones are left alone.", category = COMPRESSION, subcategory = "High-res screenshots", unit = "px", min = 160f, max = 16384f)
+    var highResKeepOriginal by switch(name = "Keep the original", def = false, description = "Also saves an untouched PNG in screenshots/original.", category = COMPRESSION, subcategory = "High-res screenshots")
+
+    val highResCompressionFields: dev.deftu.screencapper.screenshot.capture.compression.CompressionFields
+        get() = dev.deftu.screencapper.screenshot.capture.compression.CompressionFields(::highResChoice, ::highResFormat, ::highResQuality, ::highResColours, ::highResDither, ::highResResize, ::highResScale, ::highResMaxWidth, ::highResKeepOriginal)
+
+    var uploadChoice by dropdown(name = "Upload as", defaultOption = dev.deftu.screencapper.screenshot.capture.compression.CompressionChoice.BALANCED, options = dev.deftu.screencapper.screenshot.capture.compression.CompressionChoice.FOR_UPLOADS, description = "How screenshots are re-encoded before uploading. Files are shrunk further when a host's size limit needs it.", category = COMPRESSION, subcategory = "Uploads", stringTransformer = { it.label })
+    var uploadFormat by dropdown(name = "Format", defaultOption = dev.deftu.screencapper.screenshot.capture.compression.ImageFormat.PNG, options = dev.deftu.screencapper.screenshot.capture.compression.ImageFormat.entries.toTypedArray(), description = "PNG keeps text and edges sharp. JPEG is far smaller but slightly soft.", category = COMPRESSION, subcategory = "Uploads", stringTransformer = { it.displayName })
+    var uploadQuality by slider(name = "Quality", def = 90f, description = "Higher looks better and makes bigger files.", category = COMPRESSION, subcategory = "Uploads", min = 10f, max = 100f, step = 5f)
+    var uploadColours by dropdown(name = "Colours", defaultOption = 0, options = arrayOf(0, 256, 128, 64), description = "Fewer colours make smaller files. 256 looks the same at a glance.", category = COMPRESSION, subcategory = "Uploads", stringTransformer = { if (it == 0) "All colours" else "$it colours" })
+    var uploadDither by switch(name = "Dithering", def = true, description = "Mixes nearby colours so smooth gradients, like the sky, don't show bands.", category = COMPRESSION, subcategory = "Uploads")
+    var uploadResize by dropdown(name = "Resize", defaultOption = dev.deftu.screencapper.screenshot.capture.compression.ResizeMode.NONE, options = dev.deftu.screencapper.screenshot.capture.compression.ResizeMode.entries.toTypedArray(), description = "Smaller images make much smaller files.", category = COMPRESSION, subcategory = "Uploads", stringTransformer = { it.displayName })
+    var uploadScale by slider(name = "Scale", def = 50f, description = "The size to save at, as a share of the original.", category = COMPRESSION, subcategory = "Uploads", unit = "%", min = 10f, max = 100f, step = 5f)
+    var uploadMaxWidth by number(name = "Max width", def = 1920f, description = "Wider images are scaled down to this width. Narrower ones are left alone.", category = COMPRESSION, subcategory = "Uploads", unit = "px", min = 160f, max = 16384f)
+
+    val uploadCompressionFields: dev.deftu.screencapper.screenshot.capture.compression.CompressionFields
+        get() = dev.deftu.screencapper.screenshot.capture.compression.CompressionFields(::uploadChoice, ::uploadFormat, ::uploadQuality, ::uploadColours, ::uploadDither, ::uploadResize, ::uploadScale, ::uploadMaxWidth, null)
+
     init {
         hideIf(::holdThreshold) { !holdForMenu }
         addCallback(::holdForMenu) { refreshHidden(); false }
@@ -134,6 +185,12 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
     init {
         listOf(::chatView, ::chatUpload, ::chatCopy, ::chatOpen, ::chatOpenFolder, ::chatDelete, ::confirmChatDeletes, ::chatUploadLinks).forEach { hideIf(it) { !replaceMessage } }
         addCallback(::replaceMessage) { refreshHidden(); false }
+    }
+
+    init {
+        for (fields in listOf(normalCompressionFields, highResCompressionFields, uploadCompressionFields)) {
+            fields.registerVisibility(hideIf = { prop, condition -> hideIf(prop, condition) }, refreshOn = { prop -> addCallback(prop.name, Runnable { refreshHidden() }) })
+        }
     }
 
     val profiles: List<UploaderProfile>

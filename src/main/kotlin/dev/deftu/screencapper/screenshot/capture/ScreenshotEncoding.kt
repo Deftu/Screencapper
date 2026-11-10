@@ -1,5 +1,7 @@
 package dev.deftu.screencapper.screenshot.capture
 
+import dev.deftu.screencapper.screenshot.capture.compression.CompressionProfiles
+import dev.deftu.screencapper.screenshot.capture.compression.ImageCompressor
 import java.io.OutputStream
 
 /**
@@ -10,10 +12,10 @@ import java.io.OutputStream
  */
 object ScreenshotEncoding {
     /** The file extension, without a dot, for screenshots of [kind] */
-    fun extension(kind: CaptureKind): String = "png"
+    fun extension(kind: CaptureKind): String = CompressionProfiles.forKind(kind).format.extension
 
     /** Writes [image] to [out]; [text] goes into the file as metadata where the format allows it */
     fun encode(image: CapturedImage, kind: CaptureKind, text: Map<String, String>, out: OutputStream) {
-        PngEncoder.encode(image.argb, image.width, image.height, 4, FastCapture.encoderPool, FastCapture.encoderThreads, out, text)
+        ImageCompressor.encode(image, CompressionProfiles.forKind(kind), text, out)
     }
 }

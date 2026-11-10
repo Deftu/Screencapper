@@ -10,7 +10,7 @@ import java.util.zip.CRC32
 import java.util.zip.Deflater
 
 /**
- * Writes opaque RGB PNGs, compressing horizontal strips of the image in parallel.
+ * Writes opaque RGB or indexed PNGs, compressing horizontal strips of the image in parallel.
  *
  * Each strip is deflated on its own and flushed to a byte boundary, so the strips concatenate into one valid zlib
  * stream. Screenshots have no useful alpha, so it's dropped, which also makes the file smaller.
@@ -19,17 +19,65 @@ object PngEncoder {
     private val SIGNATURE = byteArrayOf(0x89.toByte(), 'P'.code.toByte(), 'N'.code.toByte(), 'G'.code.toByte(), 13, 10, 26, 10)
     private const val MIN_STRIP_ROWS = 64
     private const val ADLER_MOD = 65521L
+    private const val COLOR_RGB = 2
+    private const val COLOR_INDEXED = 3
 
     /** [argb] holds [width] x [height] pixels, top row first */
     fun encode(argb: IntArray, width: Int, height: Int, level: Int, pool: ExecutorService?, threads: Int, out: OutputStream, text: Map<String, String> = emptyMap()) {
         require(argb.size >= width * height) { "Not enough pixels for a ${width}x$height image" }
+        write(width, height, COLOR_RGB, null, 1 + width * 3, level, pool, threads, out, text) { y, raw, start ->
+            // Sub filter: each byte minus the same channel of the pixel to its left. Cheap, and screenshots shrink a lot.
+            raw[start] = 1
+            var offset = start + 1
+            val row = y * width
+            var previous = 0
+            for (x in 0 until width) {
+                val pixel = argb[row + x]
+                raw[offset] = ((pixel shr 16) - (previous shr 16)).toByte()
+                raw[offset + 1] = ((pixel shr 8) - (previous shr 8)).toByte()
+                raw[offset + 2] = (pixel - previous).toByte()
+                offset += 3
+                previous = pixel
+            }
+        }
+    }
 
+    /** [indices] holds one palette index per pixel, top row first; [palette] holds 1-256 RGB colours */
+    fun encodeIndexed(indices: ByteArray, palette: IntArray, width: Int, height: Int, level: Int, pool: ExecutorService?, threads: Int, out: OutputStream, text: Map<String, String> = emptyMap()) {
+        require(indices.size >= width * height) { "Not enough pixels for a ${width}x$height image" }
+        require(palette.size in 1..256) { "A PNG palette holds 1-256 colours, not ${palette.size}" }
+        val plte = ByteArray(palette.size * 3)
+        palette.forEachIndexed { i, colour ->
+            plte[i * 3] = (colour shr 16).toByte()
+            plte[i * 3 + 1] = (colour shr 8).toByte()
+            plte[i * 3 + 2] = colour.toByte()
+        }
+        // No filter: the PNG spec advises it for indexed images, where neighbouring indices don't predict each other.
+        write(width, height, COLOR_INDEXED, plte, 1 + width, level, pool, threads, out, text) { y, raw, start ->
+            raw[start] = 0
+            System.arraycopy(indices, y * width, raw, start + 1, width)
+        }
+    }
+
+    private fun write(
+        width: Int,
+        height: Int,
+        colorType: Int,
+        plte: ByteArray?,
+        stride: Int,
+        level: Int,
+        pool: ExecutorService?,
+        threads: Int,
+        out: OutputStream,
+        text: Map<String, String>,
+        fillRow: (y: Int, raw: ByteArray, offset: Int) -> Unit,
+    ) {
         val strips = if (pool == null) 1 else (height / MIN_STRIP_ROWS).coerceIn(1, threads.coerceAtLeast(1))
         val rowsPerStrip = (height + strips - 1) / strips
         val tasks = (0 until strips).map { index ->
             val from = index * rowsPerStrip
             val to = minOf(height, from + rowsPerStrip)
-            Callable { compressStrip(argb, width, from, to, level, last = to == height) }
+            Callable { compressStrip(stride, from, to, level, last = to == height, fillRow) }
         }
         val parts = if (pool == null) tasks.map { it.call() } else pool.invokeAll(tasks).map { it.get() }
 
@@ -40,12 +88,13 @@ object PngEncoder {
                 writeInt(width)
                 writeInt(height)
                 writeByte(8)
-                writeByte(2)
+                writeByte(colorType)
                 writeByte(0)
                 writeByte(0)
                 writeByte(0)
             }
         }.toByteArray())
+        if (plte != null) chunk(data, "PLTE", plte)
 
         for ((keyword, value) in text) chunk(data, "iTXt", textChunk(keyword, value))
 
@@ -63,24 +112,9 @@ object PngEncoder {
 
     private class Strip(val deflated: ByteArray, val adler: Long, val rawLength: Long)
 
-    private fun compressStrip(argb: IntArray, width: Int, from: Int, to: Int, level: Int, last: Boolean): Strip {
-        val stride = 1 + width * 3
+    private fun compressStrip(stride: Int, from: Int, to: Int, level: Int, last: Boolean, fillRow: (Int, ByteArray, Int) -> Unit): Strip {
         val raw = ByteArray(stride * (to - from))
-        var offset = 0
-        for (y in from until to) {
-            // Sub filter: each byte minus the same channel of the pixel to its left. Cheap, and screenshots shrink a lot.
-            raw[offset++] = 1
-            val row = y * width
-            var previous = 0
-            for (x in 0 until width) {
-                val pixel = argb[row + x]
-                raw[offset] = ((pixel shr 16) - (previous shr 16)).toByte()
-                raw[offset + 1] = ((pixel shr 8) - (previous shr 8)).toByte()
-                raw[offset + 2] = (pixel - previous).toByte()
-                offset += 3
-                previous = pixel
-            }
-        }
+        for (y in from until to) fillRow(y, raw, (y - from) * stride)
 
         val adler = Adler32().apply { update(raw) }.value
         val deflater = Deflater(level, true)
