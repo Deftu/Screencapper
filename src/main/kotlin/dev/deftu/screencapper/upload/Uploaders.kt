@@ -2,6 +2,7 @@ package dev.deftu.screencapper.upload
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
+import dev.deftu.screencapper.Screencapper
 import dev.deftu.screencapper.config.RequestBody
 import dev.deftu.screencapper.screenshot.Screenshot
 import java.io.ByteArrayOutputStream
@@ -28,7 +29,7 @@ object Uploaders {
     }
 
     fun upload(screenshot: Screenshot, profile: UploaderProfile): String =
-        if (profile.isBuiltIn) uploadToImgur(screenshot) else uploadToCustomHost(screenshot, profile)
+        if (profile.id == UploaderProfile.IMGUR_ID) uploadToImgur(screenshot) else uploadToCustomHost(screenshot, profile)
 
     private fun uploadToImgur(screenshot: Screenshot): String {
         val base64 = Base64.getEncoder().encodeToString(screenshot.readBytes())
@@ -49,6 +50,7 @@ object Uploaders {
         if (url.isEmpty()) throw UploadException("${profile.name} has no upload URL set.")
 
         val builder = HttpRequest.newBuilder(URI(url)).timeout(TIMEOUT)
+        if (profile.headers.none { it.first.trim().equals("User-Agent", true) }) builder.header("User-Agent", "Screencapper/${Screencapper.VERSION}")
         for ((key, value) in profile.headers) {
             if (key.trim().lowercase() !in MANAGED_HEADERS) builder.header(key.trim(), value)
         }

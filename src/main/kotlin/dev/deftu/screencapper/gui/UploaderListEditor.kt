@@ -135,7 +135,7 @@ private fun UploaderCard(
             IconAction(if (isDefault) "star-filled" else "star", if (isDefault) "Default uploader" else "Make default", active = isDefault, onClick = onDefault)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(profile.name.ifBlank { "Unnamed uploader" }, Modifier, theme.textColor, 14.sp, FontWeight.Medium)
-                Text(if (profile.isBuiltIn) "Built in · imgur.com" else "${profile.method.name} · ${profile.host}", Modifier, theme.textColorSecondary, 12.sp)
+                Text(if (profile.isBuiltIn) "Built in · ${profile.host}" else "${profile.method.name} · ${profile.host}", Modifier, theme.textColorSecondary, 12.sp)
             }
             if (isDefault) StatusTag("DEFAULT")
             if (!profile.isBuiltIn) {

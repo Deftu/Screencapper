@@ -18,15 +18,32 @@ data class UploaderProfile(
     val headers: List<Pair<String, String>> = emptyList(),
     val formFields: List<Pair<String, String>> = emptyList(),
 ) {
-    val isBuiltIn: Boolean get() = id == IMGUR_ID
+    val isBuiltIn: Boolean get() = BUILT_IN.any { it.id == id }
 
     val host: String
-        get() = if (isBuiltIn) "imgur.com" else runCatching { java.net.URI(url).host }.getOrNull() ?: url.ifBlank { "No URL set" }
+        get() = when (id) {
+            IMGUR_ID -> "imgur.com"
+            CATBOX_ID -> "catbox.moe"
+            else -> runCatching { java.net.URI(url).host }.getOrNull() ?: url.ifBlank { "No URL set" }
+        }
 
     companion object {
         const val IMGUR_ID = "imgur"
+        const val CATBOX_ID = "catbox"
 
         val IMGUR = UploaderProfile(id = IMGUR_ID, name = "Imgur", url = "https://api.imgur.com/3/image")
+
+        /** catbox.moe's anonymous upload API answers with the file's link as plain text */
+        val CATBOX = UploaderProfile(
+            id = CATBOX_ID,
+            name = "Catbox",
+            url = "https://catbox.moe/user/api.php",
+            fileField = "fileToUpload",
+            responseUrl = "",
+            formFields = listOf("reqtype" to "fileupload"),
+        )
+
+        val BUILT_IN = listOf(IMGUR, CATBOX)
 
         fun decodeList(json: String): List<UploaderProfile> = runCatching {
             JsonParser.parseString(json).asJsonArray.mapNotNull { runCatching { decode(it.asJsonObject) }.getOrNull() }

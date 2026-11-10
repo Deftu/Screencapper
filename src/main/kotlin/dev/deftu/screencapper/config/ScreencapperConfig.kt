@@ -70,7 +70,7 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
     )
 
     var uploaders by Provider(
-        "[]", "Uploaders", "Imgur is built in. Add your own hosts, or import a ShareX .sxcu file. The starred uploader is used by default.", GENERAL, "Uploaders",
+        "[]", "Uploaders", "Imgur and Catbox are built in. Add your own hosts, or import a ShareX .sxcu file. The starred uploader is used by default.", GENERAL, "Uploaders",
         String::class.java, Visualizer { prop -> UploaderListEditor(prop) },
     ).fullWidth()
 
@@ -84,7 +84,7 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
     }
 
     val profiles: List<UploaderProfile>
-        get() = listOf(UploaderProfile.IMGUR) + UploaderProfile.decodeList(uploaders)
+        get() = UploaderProfile.BUILT_IN + UploaderProfile.decodeList(uploaders)
 
     val defaultProfile: UploaderProfile
         get() = profiles.firstOrNull { it.id == defaultUploader } ?: UploaderProfile.IMGUR

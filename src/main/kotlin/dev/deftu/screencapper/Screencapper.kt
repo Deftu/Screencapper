@@ -19,6 +19,7 @@ import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPages
 object Screencapper : ClientModInitializer {
     const val NAME = "@MOD_NAME@"
     const val ID = "@MOD_ID@"
+    const val VERSION = "@MOD_VERSION@"
 
     @JvmField
     val LOGGER: Logger = LogManager.getLogger(NAME)
