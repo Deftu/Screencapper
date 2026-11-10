@@ -447,7 +447,17 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
             }
         }
 
+        /** Shows a screenshot straight from its captured pixels, before its file is written */
+        fun showCaptured(file: java.io.File, argb: IntArray, width: Int, height: Int) {
+            val order = shown.incrementAndGet()
+            val image = java.awt.image.BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_RGB)
+            image.raster.setDataElements(0, 0, width, height, argb)
+            val bitmap = PolyBitmap.fromAwt(Thumbnails.downscale(image, MAX_WIDTH))
+            if (shown.get() == order) active = ActivePreview(Screenshot(file), bitmap, System.currentTimeMillis())
+        }
+
         fun show(screenshot: Screenshot) {
+            if (active?.screenshot?.name == screenshot.name) return
             val order = shown.incrementAndGet()
             Multithreading.submit {
                 // The file can still be settling on disk right after the save message, so give it a few tries.

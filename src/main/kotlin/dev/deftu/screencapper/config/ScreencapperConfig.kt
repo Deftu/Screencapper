@@ -22,6 +22,14 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
         subcategory = "Capture",
     )
 
+    var fastCapture by switch(
+        name = "Fast saving",
+        def = true,
+        description = "Saves screenshots on Screencapper's own threads with a faster PNG encoder, so taking one never stalls the game. Turn this off if another mod needs vanilla's screenshot saving.",
+        category = GENERAL,
+        subcategory = "Capture",
+    )
+
     val openScreenshots by button(
         name = "Screenshots",
         description = "Browse, copy, upload and delete your screenshots. The preview's settings are in the HUD editor.",
