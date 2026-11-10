@@ -39,6 +39,26 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
         text = "Open",
     ) { ScreenshotActions.openManager() }
 
+    var holdForMenu by switch(
+        name = "Hold for capture wheel",
+        def = true,
+        description = "Holding the screenshot key in a world opens a wheel with high-res, no HUD and timer shots. Tapping it still takes a normal screenshot. Needs fast saving.",
+        category = CAPTURE,
+        subcategory = "Capture wheel",
+    )
+
+    var holdThreshold by slider(
+        name = "Hold time",
+        def = 300f,
+        description = "How long the screenshot key must be held to open the capture wheel.",
+        category = CAPTURE,
+        subcategory = "Capture wheel",
+        unit = "ms",
+        min = 150f,
+        max = 1000f,
+        step = 50f,
+    )
+
     var highResWidth by number(name = "Width", def = 3840f, description = "Width of custom high-res screenshots, in pixels.", category = CAPTURE, subcategory = "High-res", unit = "px", min = 16f, max = 16384f)
     var highResHeight by number(name = "Height", def = 2160f, description = "Height of custom high-res screenshots, in pixels.", category = CAPTURE, subcategory = "High-res", unit = "px", min = 16f, max = 16384f)
     var highResDelay by slider(name = "Delay", def = 3f, description = "Frames to wait at the new size before capturing, so the frame can settle.", category = CAPTURE, subcategory = "High-res", min = 1f, max = 20f, step = 1f)
@@ -104,6 +124,11 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
 
     var defaultUploader by Provider(UploaderProfile.IMGUR_ID, null, null, null, null, String::class.java, Visualizer.TextVisualizer()) {
         addMetadata("hidden", true)
+    }
+
+    init {
+        hideIf(::holdThreshold) { !holdForMenu }
+        addCallback(::holdForMenu) { refreshHidden(); false }
     }
 
     init {

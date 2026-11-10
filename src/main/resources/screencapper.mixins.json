@@ -13,6 +13,11 @@
     "highres.HighResGameRendererMixin",
     "highres.HighResMinecraftMixin",
     "highres.HighResWindowAccessor",
-    "highres.HighResWindowMixin"
+    "highres.HighResWindowMixin",
+    "input.CaptureOverlayMixin",
+    "input.KeyInputMixin",
+    "input.MouseButtonMixin",
+    "input.MouseMoveMixin",
+    "input.ScreenshotKeyMixin"
   ]
 }

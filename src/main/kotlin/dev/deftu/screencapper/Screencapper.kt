@@ -7,6 +7,7 @@ import dev.deftu.screencapper.gui.ScreenshotPreviewHud
 import dev.deftu.screencapper.gui.ScreenshotsPage
 import dev.deftu.screencapper.screenshot.Screenshot
 import dev.deftu.screencapper.screenshot.ScreenshotLibrary
+import dev.deftu.screencapper.screenshot.capture.input.CaptureInput
 import net.fabricmc.api.ClientModInitializer
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -29,6 +30,7 @@ object Screencapper : ClientModInitializer {
         ScreencapperConfig.preload()
         LegacyConfigMigration.run()
         HudManager.register(ScreenshotPreviewHud(), ScreencapperConfig.id, "/assets/screencapper/screencapper.svg")
+        CaptureInput.install()
         if (OneConfigPages.byId(ScreenshotsPage.id) == null) OneConfigPages.register(ScreenshotsPage)
         registerCommands()
     }
