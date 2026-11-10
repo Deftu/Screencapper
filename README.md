@@ -1,6 +1,6 @@
 # Screencapper
 
-Screenshot previews, uploads and a screenshot manager for Minecraft.
+Faster screenshots, high-res shots, uploads and a searchable screenshot manager for Minecraft.
 
 ---
 
@@ -18,7 +18,18 @@ With Screencapper, a preview of each screenshot pops up as soon as you take it. 
 
 Screencapper needs [OneConfig][oneconfig], and its settings are in the OneConfig menu. It also adds a Screenshots page to the OneConfig sidebar where you can browse, search, copy, upload, open and delete every screenshot you've taken. Run `/screenshots` to open it.
 
-Imgur works out of the box. You can also add your own hosts: any host that accepts an image over HTTP works, and a ShareX `.sxcu` file fills in the settings for you. Screencapper remembers every link a screenshot was uploaded to.
+Imgur and Catbox are built in. To use another image host, add it in the settings or import its ShareX `.sxcu` file. Screencapper keeps every link a screenshot has been uploaded to, and if a file is too big for a host, it's made smaller before uploading.
+
+### Taking screenshots
+Tap the screenshot key for a normal screenshot. It's saved in the background, so the game doesn't freeze while the file is written.
+
+Hold the key instead and a capture wheel opens. Point at an option with the mouse and let go of the key to take it. The wheel has high-res shots at 4K, 8K or a size you set, a shot with the HUD hidden, and a timer that counts down for 3 seconds before taking the shot.
+
+### Saving smaller files
+Screenshots can be saved with one of a few presets, ranging from lossless PNG to small JPEGs that are easy to share. Normal shots, high-res shots and uploads each have their own setting. Custom lets you set the format, quality, colours and size yourself, and you can also keep an untouched copy of every shot.
+
+### Finding screenshots later
+Screencapper can store details inside each screenshot file: when it was taken, the world or server, the dimension and the biome. You can also turn on your coordinates and recent chat, which are off by default. The Screenshots page searches all of these, and uploads strip the private ones unless you allow them.
 
 ---
 
@@ -38,6 +49,10 @@ Essential's version is buggy and breaks other mods, including this one. I wouldn
 
 - [isXander](https://github.com/isXander)
   - The original [Shotify](https://curseforge.com/minecraft/mc-mods/shotify) mod, which Screencapper started from
+- [ramidzkh](https://github.com/ramidzkh)
+  - [Fabrishot](https://github.com/ramidzkh/fabrishot) (MIT), which high-res capture is based on
+- [Polyfrost](https://github.com/Polyfrost)
+  - PolyPlus's radial wheel (GPL-3.0), which the capture wheel is adapted from
 
 ---
 
