@@ -17,6 +17,9 @@ data class UploaderProfile(
     val responseUrl: String = "url",
     val headers: List<Pair<String, String>> = emptyList(),
     val formFields: List<Pair<String, String>> = emptyList(),
+    /** Largest upload the host takes, in megabytes; blank for no limit */
+    val sizeLimitMb: String = "",
+    val keepMetadata: Boolean = false,
 ) {
     val isBuiltIn: Boolean get() = BUILT_IN.any { it.id == id }
 
@@ -25,6 +28,14 @@ data class UploaderProfile(
             IMGUR_ID -> "imgur.com"
             CATBOX_ID -> "catbox.moe"
             else -> runCatching { java.net.URI(url).host }.getOrNull() ?: url.ifBlank { "No URL set" }
+        }
+
+    /** The host's upload limit in bytes, or null for none */
+    val sizeLimitBytes: Long?
+        get() = when (id) {
+            IMGUR_ID -> 20_000_000L
+            CATBOX_ID -> 200_000_000L
+            else -> sizeLimitMb.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 }?.let { (it * 1_000_000).toLong() }
         }
 
     companion object {
@@ -63,6 +74,8 @@ data class UploaderProfile(
             responseUrl = json.get("responseUrl")?.asString ?: "url",
             headers = pairs(json.getAsJsonArray("headers")),
             formFields = pairs(json.getAsJsonArray("formFields")),
+            sizeLimitMb = json.get("sizeLimitMb")?.asString.orEmpty(),
+            keepMetadata = json.get("keepMetadata")?.asBoolean ?: false,
         )
 
         private fun encode(profile: UploaderProfile): JsonObject = JsonObject().apply {
@@ -75,6 +88,8 @@ data class UploaderProfile(
             addProperty("responseUrl", profile.responseUrl)
             add("headers", pairsJson(profile.headers))
             add("formFields", pairsJson(profile.formFields))
+            addProperty("sizeLimitMb", profile.sizeLimitMb)
+            addProperty("keepMetadata", profile.keepMetadata)
         }
 
         private fun pairs(array: JsonArray?): List<Pair<String, String>> =

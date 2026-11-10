@@ -32,12 +32,14 @@ import dev.deftu.screencapper.config.RequestMethod
 import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.upload.SxcuImporter
 import dev.deftu.screencapper.upload.UploaderProfile
+import dev.deftu.screencapper.upload.Uploaders
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
 import org.polyfrost.oneconfig.api.ui.v1.components.Chip
 import org.polyfrost.oneconfig.api.ui.v1.components.Icon
 import org.polyfrost.oneconfig.api.ui.v1.components.Text
+import org.polyfrost.oneconfig.api.ui.v1.components.ToggleRow
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.utils.v1.Multithreading
 import kotlinx.coroutines.delay
@@ -137,17 +139,28 @@ private fun UploaderCard(
                 Text(profile.name.ifBlank { "Unnamed uploader" }, Modifier, theme.textColor, 14.sp, FontWeight.Medium)
                 Text(if (profile.isBuiltIn) "Built in · ${profile.host}" else "${profile.method.name} · ${profile.host}", Modifier, theme.textColorSecondary, 12.sp)
             }
-            if (isDefault) StatusTag("DEFAULT")
-            if (!profile.isBuiltIn) {
-                IconAction(if (isExpanded) "up" else "down", if (isExpanded) "Collapse" else "Edit", onClick = onToggle)
-                IconAction("trash", "Remove uploader", destructive = true, onClick = onDelete)
-            }
+            if (isDefault) StatusTag("DEFAULT", overImage = false)
+            IconAction(if (isExpanded) "up" else "down", if (isExpanded) "Collapse" else "Edit", onClick = onToggle)
+            if (!profile.isBuiltIn) IconAction("trash", "Remove uploader", destructive = true, onClick = onDelete)
         }
 
-        if (isExpanded && !profile.isBuiltIn) {
+        if (isExpanded) {
             Spacer(Modifier.padding(top = 12.dp))
-            ProfileForm(profile, onChange)
+            if (profile.isBuiltIn) BuiltInForm(profile) else ProfileForm(profile, onChange)
         }
+    }
+}
+
+@Composable
+private fun BuiltInForm(profile: UploaderProfile) {
+    var keepMetadata by remember(profile.id) { mutableStateOf(Uploaders.keepsMetadata(profile)) }
+    Column(Modifier.fillMaxWidth().padding(start = 36.dp, bottom = 4.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        ToggleRow("Keep metadata", keepMetadata, Modifier.width(220.dp)) {
+            keepMetadata = !keepMetadata
+            Uploaders.setKeepsMetadata(profile, keepMetadata)
+        }
+        val limit = profile.sizeLimitBytes
+        if (limit != null) Text("Uploads over ${limit / 1_000_000} MB are shrunk to fit.", Modifier, OneConfigTheme.current.textColorSecondary, 12.sp)
     }
 }
 
@@ -199,6 +212,13 @@ private fun ProfileForm(profile: UploaderProfile, onChange: (UploaderProfile) ->
                 FieldLabel("Form fields")
                 KeyValueList(profile.formFields, "Field", "Value", "Add field") { onChange(profile.copy(formFields = it)) }
             }
+        }
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.width(220.dp)) {
+                FieldLabel("Size limit (MB)")
+                TextField(profile.sizeLimitMb, "No limit") { value -> onChange(profile.copy(sizeLimitMb = value.filter { it.isDigit() || it == '.' || it == ',' })) }
+            }
+            ToggleRow("Keep metadata", profile.keepMetadata, Modifier.width(220.dp)) { onChange(profile.copy(keepMetadata = !profile.keepMetadata)) }
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Icon("info", OneConfigTheme.current.textColorSecondary, Modifier.size(14.dp))

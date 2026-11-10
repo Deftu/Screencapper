@@ -99,19 +99,23 @@ fun SmallButton(
     }
 }
 
-/** The design system's Dark Tag: a fixed 18px capsule for status, never an action */
+/** The design system's Dark Tag: a fixed 18px capsule for status, never an action. Over a screenshot it stays dark; elsewhere it takes theme surface colours so it reads in light themes. */
 @Composable
-fun StatusTag(label: String, modifier: Modifier = Modifier) {
-    val shape = OneConfigTheme.current.checkBoxShape
+fun StatusTag(label: String, modifier: Modifier = Modifier, overImage: Boolean = true) {
+    val theme = OneConfigTheme.current
+    val shape = theme.checkBoxShape
+    val fill = if (overImage) Color.Black.copy(alpha = 0.3f) else theme.componentBackground
+    val border = if (overImage) Color(0xFF6B7280).copy(alpha = 0.7f) else theme.borderColor
+    val text = if (overImage) Color.White else theme.textColorSecondary
     Box(
         modifier
             .height(18.dp)
-            .background(Color.Black.copy(alpha = 0.3f), shape)
-            .border(1.dp, Color(0xFF6B7280).copy(alpha = 0.7f), shape)
+            .background(fill, shape)
+            .border(1.dp, border, shape)
             .padding(horizontal = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, Modifier, Color.White, 10.sp, FontWeight.Medium)
+        Text(label, Modifier, text, 10.sp, FontWeight.Medium)
     }
 }
 

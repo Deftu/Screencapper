@@ -684,7 +684,7 @@ private fun UploaderMenu(profiles: List<UploaderProfile>, defaultProfile: Upload
                     Text(profile.name, Modifier, theme.textColor, 12.sp, FontWeight.Medium)
                     Text(profile.host, Modifier, theme.textColorSecondary, 11.sp)
                 }
-                if (profile.id == defaultProfile.id) StatusTag("DEFAULT")
+                if (profile.id == defaultProfile.id) StatusTag("DEFAULT", overImage = false)
             }
         }
     }

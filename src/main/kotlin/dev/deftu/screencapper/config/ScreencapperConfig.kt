@@ -177,6 +177,11 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
     val uploadCompressionFields: dev.deftu.screencapper.screenshot.capture.compression.CompressionFields
         get() = dev.deftu.screencapper.screenshot.capture.compression.CompressionFields(::uploadChoice, ::uploadFormat, ::uploadQuality, ::uploadColours, ::uploadDither, ::uploadResize, ::uploadScale, ::uploadMaxWidth, null)
 
+    /** Comma-separated ids of the built-in uploaders that keep metadata */
+    var builtInUploaderMetadata by Provider("", null, null, null, null, String::class.java, Visualizer.TextVisualizer()) {
+        addMetadata("hidden", true)
+    }
+
     init {
         hideIf(::holdThreshold) { !holdForMenu }
         addCallback(::holdForMenu) { refreshHidden(); false }
