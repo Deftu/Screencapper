@@ -12,6 +12,7 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
     private const val GENERAL = "General"
     private const val CAPTURE = "Capture"
     private const val CHAT = "Chat"
+    private const val UPLOADING = "Uploading"
     private const val COMPRESSION = "Compression"
 
     var enabled by masterToggle()
@@ -114,12 +115,12 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
         name = "Upload new screenshots",
         def = false,
         description = "Uploads each new screenshot to your default uploader and copies its link.",
-        category = GENERAL,
+        category = UPLOADING,
         subcategory = "Uploading",
     )
 
     var uploaders by Provider(
-        "[]", "Uploaders", "Imgur and Catbox are built in. Add your own hosts, or import a ShareX .sxcu file. The starred uploader is used by default.", GENERAL, "Uploaders",
+        "[]", "Uploaders", "Imgur and Catbox are built in. Add your own hosts, or import a ShareX .sxcu file. The starred uploader is used by default.", UPLOADING, "Uploaders",
         String::class.java, Visualizer { prop -> UploaderListEditor(prop) },
     ).fullWidth()
 

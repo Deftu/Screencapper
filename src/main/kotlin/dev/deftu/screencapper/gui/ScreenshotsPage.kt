@@ -16,7 +16,13 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -493,16 +499,21 @@ private fun Viewer(screenshot: Screenshot, list: List<Screenshot>, onNavigate: (
                 Spacer(Modifier.weight(1f))
                 if (index >= 0) Text("${index + 1} of ${list.size}", Modifier, theme.textColorSecondary, 12.sp)
             }
-            Box(
-                Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .clip(theme.modCardShape)
-                    .background(Color.Black.copy(alpha = 0.35f))
-                    .border(1.dp, theme.borderColor, theme.modCardShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                ScreenshotImage(screenshot, VIEWER_WIDTH, Modifier.fillMaxSize().padding(12.dp), ContentScale.Fit, background = false)
+            val aspect by produceState(Thumbnails.peek(screenshot, VIEWER_WIDTH)?.let { it.width.toFloat() / it.height } ?: 16f / 9f, screenshot) {
+                withContext(Dispatchers.IO) { imageAspect(screenshot) }?.let { value = it }
+            }
+            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                // The frame hugs the screenshot, so there's no letterboxing inside it.
+                val frameWidth = minOf(maxWidth, maxHeight * aspect)
+                Box(
+                    Modifier
+                        .size(frameWidth, frameWidth / aspect)
+                        .clip(theme.modCardShape)
+                        .background(theme.componentBackground)
+                        .border(1.dp, theme.borderColor, theme.modCardShape),
+                ) {
+                    ScreenshotImage(screenshot, VIEWER_WIDTH, Modifier.fillMaxSize(), ContentScale.Crop, background = false)
+                }
                 if (previous != null) NavButton("left-arrow", Modifier.align(Alignment.CenterStart).padding(12.dp)) { onNavigate(previous) }
                 if (next != null) NavButton("right-arrow", Modifier.align(Alignment.CenterEnd).padding(12.dp)) { onNavigate(next) }
             }
@@ -538,30 +549,75 @@ private fun NavButton(icon: String, modifier: Modifier, onClick: () -> Unit) {
 @Composable
 private fun FilmStrip(list: List<Screenshot>, current: Screenshot, onNavigate: (Screenshot) -> Unit) {
     val index = list.indexOfFirst { it.name == current.name }.coerceAtLeast(0)
-    val start = (index - 4).coerceAtLeast(0)
-    val window = list.subList(start, (start + 9).coerceAtMost(list.size))
-    val theme = OneConfigTheme.current
-    Row(Modifier.fillMaxWidth().height(56.dp), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)) {
-        for (item in window) key(item.name) {
-            val isCurrent = item.name == current.name
-            val interaction = rememberInteractionSource()
-            val hovered by interaction.collectIsHoveredAsState()
-            Box(
-                Modifier
-                    .fillMaxHeight()
-                    .aspectRatio(16f / 9f)
-                    .clip(theme.buttonShape)
-                    .alpha(if (isCurrent || hovered) 1f else 0.55f)
-                    .hoverable(interaction)
-                    .pointerHoverIcon(PointerIcon.Hand)
-                    .onClick(interaction) { onNavigate(item) },
-            ) {
-                ScreenshotImage(item, 160, Modifier.fillMaxSize(), ContentScale.Crop)
-                Box(Modifier.fillMaxSize().border(if (isCurrent) 2.dp else 1.dp, if (isCurrent) OneConfigTheme.accent else theme.borderColor, theme.buttonShape))
+
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        // Fixed pages of whole tiles; a short last page is centred, and the arrows never move.
+        val usable = maxWidth - (FILM_ARROW + FILM_GAP) * 2
+        val count = ((usable + FILM_GAP) / (FILM_MIN_WIDTH + FILM_GAP)).toInt().coerceIn(1, 9)
+        val tileWidth = (usable - FILM_GAP * (count - 1)) / count
+        val tileHeight = tileWidth * 9f / 16f
+        val pages = (list.size + count - 1) / count
+        var page by remember { mutableStateOf(index / count) }
+
+        LaunchedEffect(current.name, count) { page = index / count }
+
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(FILM_GAP)) {
+            IconAction("left-arrow", "Earlier screenshots", enabled = page > 0) { page = (page - 1).coerceAtLeast(0) }
+            AnimatedContent(
+                targetState = page.coerceIn(0, (pages - 1).coerceAtLeast(0)),
+                modifier = Modifier.size(usable, tileHeight).clipToBounds(),
+                transitionSpec = {
+                    val forward = targetState > initialState
+                    slideInHorizontally { if (forward) it else -it } togetherWith slideOutHorizontally { if (forward) -it else it }
+                },
+            ) { shown ->
+                Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(FILM_GAP, Alignment.CenterHorizontally)) {
+                    for (item in list.subList(shown * count, minOf(list.size, (shown + 1) * count))) {
+                        key(item.name) {
+                            FilmTile(item, item.name == current.name, Modifier.size(tileWidth, tileHeight)) { onNavigate(item) }
+                        }
+                    }
+                }
             }
+            IconAction("right-arrow", "Later screenshots", enabled = page < pages - 1) { page = (page + 1).coerceAtMost(pages - 1) }
         }
     }
 }
+
+@Composable
+private fun FilmTile(item: Screenshot, isCurrent: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    val theme = OneConfigTheme.current
+    val interaction = rememberInteractionSource()
+    val hovered by interaction.collectIsHoveredAsState()
+    Box(
+        modifier
+            .clip(theme.buttonShape)
+            .alpha(if (isCurrent || hovered) 1f else 0.55f)
+            .hoverable(interaction)
+            .pointerHoverIcon(PointerIcon.Hand)
+            .onClick(interaction) { onClick() },
+    ) {
+        ScreenshotImage(item, THUMBNAIL_WIDTH, Modifier.fillMaxSize(), ContentScale.Crop)
+        Box(Modifier.fillMaxSize().border(if (isCurrent) 2.dp else 1.dp, if (isCurrent) OneConfigTheme.accent else theme.borderColor, theme.buttonShape))
+    }
+}
+
+/** The screenshot's width over height, read from the file header without decoding it */
+private fun imageAspect(screenshot: Screenshot): Float? = runCatching {
+    javax.imageio.ImageIO.createImageInputStream(screenshot.file).use { stream ->
+        val reader = javax.imageio.ImageIO.getImageReaders(stream ?: return null).asSequence().firstOrNull() ?: return null
+        try {
+            reader.input = stream
+            reader.getWidth(0).toFloat() / reader.getHeight(0)
+        } finally {
+            reader.dispose()
+        }
+    }
+}.getOrNull()?.takeIf { it.isFinite() && it > 0f }
+
+private val FILM_MIN_WIDTH = 104.dp
+private val FILM_ARROW = 28.dp
+private val FILM_GAP = 6.dp
 
 @Composable
 private fun DetailsPanel(screenshot: Screenshot, onDeleted: () -> Unit) {
