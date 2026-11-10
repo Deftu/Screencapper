@@ -3,6 +3,7 @@ package dev.deftu.screencapper
 import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.gui.ScreenshotPreviewHud
 import dev.deftu.screencapper.gui.ScreenshotsPage
+import dev.deftu.screencapper.metadata.MetadataIndex
 import dev.deftu.screencapper.screenshot.Screenshot
 import dev.deftu.screencapper.screenshot.ScreenshotLibrary
 import dev.deftu.screencapper.screenshot.UploadHistory
@@ -100,6 +101,7 @@ object ScreenshotActions {
         val deleted = screenshot.file.delete()
         if (deleted) {
             UploadHistory.forget(screenshot)
+            MetadataIndex.forget(screenshot.name)
             ScreenshotLibrary.changed()
             ScreenshotPreviewHud.dismiss(screenshot)
             ChatCards.deleted(screenshot)

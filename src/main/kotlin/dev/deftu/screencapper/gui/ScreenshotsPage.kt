@@ -71,6 +71,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.deftu.screencapper.ScreenshotActions
 import dev.deftu.screencapper.config.ScreencapperConfig
+import dev.deftu.screencapper.metadata.MetadataIndex
+import dev.deftu.screencapper.metadata.MetadataKeys
+import dev.deftu.screencapper.metadata.SearchEntry
+import dev.deftu.screencapper.metadata.SearchQuery
 import dev.deftu.screencapper.screenshot.Screenshot
 import dev.deftu.screencapper.screenshot.ScreenshotLibrary
 import dev.deftu.screencapper.screenshot.UploadHistory
@@ -99,6 +103,7 @@ import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import java.time.Instant
 import java.time.LocalDate
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -158,14 +163,16 @@ private fun ScreenshotManager() {
         }
     }
     val all = listed.orEmpty()
-    val shown = remember(all, sort, query) {
-        val filtered = if (query.isEmpty()) all else all.filter { it.name.contains(query, ignoreCase = true) }
-        when (sort) {
-            SortMode.NEWEST -> filtered
-            SortMode.OLDEST -> filtered.reversed()
-            SortMode.LARGEST -> filtered.sortedByDescending { it.size }
-            SortMode.NAME -> filtered.sortedBy { it.name.lowercase() }
-        }
+    val indexRevision = MetadataIndex.revision
+    val search = remember(query) { SearchQuery.parse(query) }
+    // Filtering reads the index, so it runs off the render thread; typing cancels the previous run.
+    var filtered by remember { mutableStateOf<List<Screenshot>?>(null) }
+    LaunchedEffect(all, sort, search, indexRevision) {
+        filtered = withContext(Dispatchers.Default) { filterAndSort(all, sort, search) }
+    }
+    val shown = filtered.orEmpty()
+    LaunchedEffect(all) {
+        if (all.isNotEmpty()) MetadataIndex.backfill(all.map { it.file })
     }
 
     LaunchedEffect(ScreenshotsPage.pendingFocus) {
@@ -186,7 +193,7 @@ private fun ScreenshotManager() {
         Column(Modifier.fillMaxSize().padding(start = 24.dp, end = 24.dp, top = 12.dp)) {
             Toolbar(all, shown.size, sort, { sort = it }, gridSize, { gridSize = it })
             Spacer(Modifier.height(16.dp))
-            if (listed == null) {
+            if (listed == null || filtered == null) {
                 Spacer(Modifier.weight(1f))
             } else if (shown.isEmpty()) {
                 EmptyState(all.isEmpty())
@@ -219,6 +226,23 @@ private fun ScreenshotManager() {
         }
     }
 }
+
+private fun filterAndSort(all: List<Screenshot>, sort: SortMode, search: SearchQuery): List<Screenshot> {
+    val filtered = if (search.isEmpty) all else all.filter { screenshot ->
+        val fields = MetadataIndex.fields(screenshot.name).orEmpty()
+        search.matches(SearchEntry(screenshot.name, fields, takenOn(screenshot, fields)))
+    }
+    return when (sort) {
+        SortMode.NEWEST -> filtered
+        SortMode.OLDEST -> filtered.reversed()
+        SortMode.LARGEST -> filtered.sortedByDescending { it.size }
+        SortMode.NAME -> filtered.sortedBy { it.name.lowercase() }
+    }
+}
+
+private fun takenOn(screenshot: Screenshot, fields: Map<String, String>): LocalDate =
+    fields[MetadataKeys.TIME]?.let { runCatching { OffsetDateTime.parse(it).toLocalDate() }.getOrNull() }
+        ?: Instant.ofEpochMilli(screenshot.modified).atZone(ZONE).toLocalDate()
 
 private fun toggle(selection: MutableList<String>, name: String) {
     if (!selection.remove(name)) selection.add(name)
@@ -314,6 +338,7 @@ private fun ScreenshotTile(screenshot: Screenshot, selected: Boolean, selecting:
     val revision = ScreenshotLibrary.revision
     val uploading = remember(revision, screenshot.name) { ScreenshotActions.isUploading(screenshot) }
     val uploaded = remember(revision, screenshot.name) { UploadHistory.latest(screenshot) != null }
+    val metadata = remember(MetadataIndex.revision, screenshot.name) { MetadataIndex.peek(screenshot.name) }
     val overlay by animateFloatAsState(if (hovered || selected) 1f else 0f)
     val border by animateColorAsState(
         when {
@@ -345,6 +370,10 @@ private fun ScreenshotTile(screenshot: Screenshot, selected: Boolean, selecting:
         Column(Modifier.align(Alignment.BottomStart).padding(12.dp).alpha(overlay), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(screenshot.file.nameWithoutExtension, Modifier, Color.White, 12.sp, null, BaselineShift.None, FontWeight.Medium, TextAlign.Start, 1, TextOverflow.Ellipsis)
             Text("${timeLabel(screenshot.modified)} · ${sizeLabel(screenshot.size)}", Modifier, Color.White.copy(alpha = 0.7f), 11.sp)
+        }
+
+        if (!hovered) {
+            MetadataTags(metadata, Modifier.align(Alignment.TopEnd).padding(8.dp))
         }
 
         if (hovered && !selecting) {
@@ -542,6 +571,7 @@ private fun DetailsPanel(screenshot: Screenshot, onDeleted: () -> Unit) {
     val uploading = remember(revision, screenshot.name) { ScreenshotActions.isUploading(screenshot) }
     val profiles = remember(revision) { ScreencapperConfig.profiles }
     val defaultProfile = remember(revision) { ScreencapperConfig.defaultProfile }
+    val metadata = remember(MetadataIndex.revision, screenshot.name) { MetadataIndex.peek(screenshot.name) }
     var confirmDelete by remember(screenshot.name) { mutableStateOf(false) }
     val thumbnail by produceState(Thumbnails.peek(screenshot, VIEWER_WIDTH), screenshot) {
         value = Thumbnails.peek(screenshot, VIEWER_WIDTH)
@@ -567,6 +597,7 @@ private fun DetailsPanel(screenshot: Screenshot, onDeleted: () -> Unit) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(screenshot.file.nameWithoutExtension, Modifier, theme.textColor, 16.sp, null, BaselineShift.None, FontWeight.Medium, TextAlign.Start, 2, TextOverflow.Ellipsis)
             Text(fullTimeLabel(screenshot.modified), Modifier, theme.textColorSecondary, 12.sp)
+            MetadataTags(metadata, Modifier.padding(top = 4.dp), overImage = false)
         }
 
         Section("Actions") {
@@ -612,7 +643,63 @@ private fun DetailsPanel(screenshot: Screenshot, onDeleted: () -> Unit) {
                 InfoRow("File", screenshot.name)
             }
         }
+
+        val game = metadataRows(metadata.orEmpty())
+        if (game.isNotEmpty()) {
+            Section("In game") {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for ((label, value) in game) InfoRow(label, value)
+                }
+            }
+        }
+
+        val chat = metadata?.get(MetadataKeys.CHAT)?.takeIf { it.isNotBlank() }
+        if (chat != null) {
+            Section("Chat") {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(theme.componentBackground, theme.buttonShape)
+                        .border(1.dp, theme.borderColor, theme.buttonShape)
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    for (line in chat.lines()) Text(line, Modifier, theme.textColor, 11.sp)
+                }
+            }
+        }
     }
+}
+
+@Composable
+private fun MetadataTags(metadata: Map<String, String>?, modifier: Modifier = Modifier, overImage: Boolean = true) {
+    val coords = !metadata?.get(MetadataKeys.COORDINATES).isNullOrBlank()
+    val chat = !metadata?.get(MetadataKeys.CHAT).isNullOrBlank()
+    if (!coords && !chat) return
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (coords) StatusTag("COORDS", overImage = overImage)
+        if (chat) StatusTag("CHAT", overImage = overImage)
+    }
+}
+
+private fun metadataRows(fields: Map<String, String>): List<Pair<String, String>> = listOfNotNull(
+    fields[MetadataKeys.TIME]?.let { time ->
+        "Taken" to (runCatching { FULL_FORMAT.format(OffsetDateTime.parse(time)) }.getOrNull() ?: time)
+    },
+    fields[MetadataKeys.WORLD]?.let { "World" to it },
+    fields[MetadataKeys.SERVER]?.let { "Server" to it },
+    fields[MetadataKeys.SERVER_ADDRESS]?.let { "Address" to it },
+    fields[MetadataKeys.DIMENSION]?.let { "Dimension" to idLabel(it) },
+    fields[MetadataKeys.BIOME]?.let { "Biome" to idLabel(it) },
+    fields[MetadataKeys.COORDINATES]?.let { "Coordinates" to it },
+    fields[MetadataKeys.PLAYER]?.let { "Player" to it },
+    fields[MetadataKeys.VERSION]?.let { "Version" to it },
+).filter { it.second.isNotBlank() }
+
+/** `minecraft:cherry_grove` reads as "Cherry grove"; other namespaces stay visible */
+private fun idLabel(id: String): String {
+    val path = id.removePrefix("minecraft:").replace('_', ' ')
+    return path.replaceFirstChar { it.titlecase(Locale.ROOT) }
 }
 
 @Composable
@@ -758,7 +845,7 @@ private fun EmptyState(noScreenshots: Boolean) {
         Text(if (noScreenshots) "No screenshots yet" else "No screenshots match that search", Modifier, theme.textColor, 16.sp, FontWeight.Medium)
         Spacer(Modifier.height(6.dp))
         Text(
-            if (noScreenshots) "Press your screenshot key in game and it shows up here." else "Try another name or date.",
+            if (noScreenshots) "Press your screenshot key in game and it shows up here." else "Try another word, or a filter like server:, biome: or before:2026-10.",
             Modifier, theme.textColorSecondary, 12.sp,
         )
         if (noScreenshots) {

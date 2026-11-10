@@ -182,8 +182,22 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
         addMetadata("hidden", true)
     }
 
+    private const val METADATA = "Metadata"
+
+    var metadataTime by switch(name = "Date and time", def = true, description = "Saves when the screenshot was taken inside the file, so date search keeps working after the file is copied.", category = METADATA, subcategory = "Saved with screenshots")
+    var metadataVersion by switch(name = "Game version", def = true, description = "Saves the Minecraft version.", category = METADATA, subcategory = "Saved with screenshots")
+    var metadataPlayer by switch(name = "Player name", def = true, description = "Saves your username. Uploads strip this by default.", category = METADATA, subcategory = "Saved with screenshots")
+    var metadataPlace by switch(name = "World or server", def = true, description = "Saves the singleplayer world name, or the server's name and address. Uploads strip this by default.", category = METADATA, subcategory = "Location")
+    var metadataDimension by switch(name = "Dimension", def = true, description = "Saves the dimension you were in.", category = METADATA, subcategory = "Location")
+    var metadataBiome by switch(name = "Biome", def = true, description = "Saves the biome you were standing in.", category = METADATA, subcategory = "Location")
+    var metadataCoordinates by switch(name = "Coordinates", def = false, description = "Saves your block coordinates. Anyone with the original file can read them; uploads strip them by default.", category = METADATA, subcategory = "Location")
+    var metadataChat by switch(name = "Recent chat", def = false, description = "Saves the last chat lines so you can search them later. Anyone with the original file can read them; uploads strip them by default.", category = METADATA, subcategory = "Chat")
+    var metadataChatLines by slider(name = "Chat lines", def = 10f, description = "How many recent chat lines to save.", category = METADATA, subcategory = "Chat", min = 1f, max = 50f, step = 1f)
+
     init {
+        hideIf(::metadataChatLines) { !metadataChat }
         hideIf(::holdThreshold) { !holdForMenu }
+        addCallback(::metadataChat) { refreshHidden(); false }
         addCallback(::holdForMenu) { refreshHidden(); false }
     }
 

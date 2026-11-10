@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import dev.deftu.screencapper.MainThread
+import dev.deftu.screencapper.metadata.MetadataIndex
 import net.fabricmc.loader.api.FabricLoader
 import java.io.File
 
@@ -31,13 +32,20 @@ object ScreenshotLibrary {
         return Screenshot(file)
     }
 
+    /**
+     * The screenshot a vanilla "saved" message names. Every finished save passes through here (vanilla's message
+     * consumer and Screencapper's own saves both end in `ScreenshotCapture.onMessage`), so it's also where new files
+     * enter the metadata index.
+     */
     fun findJustSaved(message: String): Screenshot? {
         val cutoff = System.currentTimeMillis() - JUST_SAVED_WINDOW_MS
-        return directory.listFiles { file -> message.contains(file.name) && isScreenshot(file) }
+        val found = directory.listFiles { file -> message.contains(file.name) && isScreenshot(file) }
             .orEmpty()
             .map(::Screenshot)
             .filter { it.modified >= cutoff && it.size > 0 }
             .maxByOrNull { it.modified }
+        if (found != null) MetadataIndex.record(found.file)
+        return found
     }
 
     /** Tells open views to reload. Safe to call from any thread */
