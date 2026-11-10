@@ -9,6 +9,10 @@
   "client": [
     "ChatAccessor",
     "ChatMixin",
-    "ScreenshotMixin"
+    "ScreenshotMixin",
+    "highres.HighResGameRendererMixin",
+    "highres.HighResMinecraftMixin",
+    "highres.HighResWindowAccessor",
+    "highres.HighResWindowMixin"
   ]
 }

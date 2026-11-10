@@ -10,6 +10,7 @@ import org.polyfrost.oneconfig.api.config.v1.Visualizer
 
 object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Category.QOL, "/assets/screencapper/screencapper.svg") {
     private const val GENERAL = "General"
+    private const val CAPTURE = "Capture"
     private const val CHAT = "Chat"
 
     var enabled by masterToggle()
@@ -37,6 +38,25 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
         subcategory = "Capture",
         text = "Open",
     ) { ScreenshotActions.openManager() }
+
+    var highResWidth by number(name = "Width", def = 3840f, description = "Width of custom high-res screenshots, in pixels.", category = CAPTURE, subcategory = "High-res", unit = "px", min = 16f, max = 16384f)
+    var highResHeight by number(name = "Height", def = 2160f, description = "Height of custom high-res screenshots, in pixels.", category = CAPTURE, subcategory = "High-res", unit = "px", min = 16f, max = 16384f)
+    var highResDelay by slider(name = "Delay", def = 3f, description = "Frames to wait at the new size before capturing, so the frame can settle.", category = CAPTURE, subcategory = "High-res", min = 1f, max = 20f, step = 1f)
+    var highResHideHud by switch(
+        name = "Hide HUD",
+        def = false,
+        description = "Hides the HUD in high-res screenshots.",
+        category = CAPTURE,
+        subcategory = "High-res",
+    )
+
+    var highResFileName by text(
+        name = "File name",
+        def = "huge_%time%",
+        description = "Name for high-res screenshots. %time% is the date and time, %world% the world or server name.",
+        category = CAPTURE,
+        subcategory = "High-res",
+    )
 
     var replaceMessage by switch(
         name = "Replace screenshot message",
