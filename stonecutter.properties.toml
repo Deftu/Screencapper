@@ -7,7 +7,7 @@ mod.description = "A highly advanced screenshot mod."
 deps.fabric_loader = "0.19.3"
 deps.oneconfig = "1.6.2"
 
-loomx.loom_version = "1.17-SNAPSHOT"
+loomx.loom_version = "1.19-SNAPSHOT"
 
 publish.modrinth = "yzNFLSqx"
 publish.curseforge = "640948"
