@@ -62,6 +62,7 @@ object CaptureInput {
         if (!FastCapture.isActive()) return false
         hookFrames()
         if (busy()) return true
+        if (gesture.active && key == heldKey) return true
         if (!holdable || !ScreencapperConfig.holdForMenu) {
             captureNow()
             return true

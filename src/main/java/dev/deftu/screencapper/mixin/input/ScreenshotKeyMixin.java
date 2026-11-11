@@ -28,6 +28,7 @@ import java.io.File;
 import java.util.function.Consumer;
 *///?} else {
 /*import dev.deftu.screencapper.chat.LegacyChatSuppression;
+import dev.deftu.screencapper.screenshot.capture.FastCapture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.render.pipeline.RenderTarget;
 import net.minecraft.text.LiteralText;
@@ -69,7 +70,8 @@ public class ScreenshotKeyMixin {
     /*@WrapOperation(method = "handleGuiKeyBindings", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Screenshot;take(Ljava/io/File;IILnet/minecraft/client/render/pipeline/RenderTarget;)Lnet/minecraft/text/Text;"))
     private Text screencapper$onScreenshotKey(File gameDir, int width, int height, RenderTarget target, Operation<Text> original) {
         int key = Keyboard.getEventKey();
-        if (!CaptureInput.onScreenshotKey(key, key != 0)) return original.call(gameDir, width, height, target);
+        boolean repeat = Keyboard.isRepeatEvent() && FastCapture.isActive();
+        if (!repeat && !CaptureInput.onScreenshotKey(key, key != 0)) return original.call(gameDir, width, height, target);
 
         Text placeholder = new LiteralText("");
         LegacyChatSuppression.suppress(placeholder);
