@@ -188,7 +188,7 @@ object HighResRenderer {
     }
 
     @JvmStatic
-    fun prependTileToProjection() {
+    fun prependTileToProjection(captured: FloatArray?) {
         val tile = tile ?: return
         GlStateManager.matrixMode(GL11.GL_PROJECTION)
         matrix.clear()
@@ -205,6 +205,7 @@ object HighResRenderer {
         matrix.flip()
         GL11.glLoadMatrix(matrix)
         GlStateManager.matrixMode(GL11.GL_MODELVIEW)
+        if (captured != null && captured.size >= 16) m.copyInto(captured)
     }
     *///?}
 

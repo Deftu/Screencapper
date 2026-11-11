@@ -58,7 +58,7 @@ public class HighResGameRendererMixin {
     @WrapOperation(method = "render(IFJ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/Frustum;getInstance()Lnet/minecraft/client/render/FrustumData;"))
     private FrustumData screencapper$tileAfterCulling(Operation<FrustumData> original) {
         FrustumData frustum = original.call();
-        HighResRenderer.prependTileToProjection();
+        HighResRenderer.prependTileToProjection(frustum.projectionMatrix);
         return frustum;
     }
 
