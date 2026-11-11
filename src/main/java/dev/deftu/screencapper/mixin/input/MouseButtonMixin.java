@@ -10,9 +10,10 @@ import net.minecraft.client.MouseHandler;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 //?} else {
-/*import net.minecraft.client.Minecraft;
+/*import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.client.Minecraft;
 import org.lwjgl.input.Mouse;
-import org.spongepowered.asm.mixin.injection.Redirect;
 *///?}
 //? if >=1.21.9
 import net.minecraft.client.input.MouseButtonInfo;
@@ -48,9 +49,9 @@ public class MouseButtonMixin {
         return true;
     }
     //?} else {
-    /*@Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;next()Z", remap = false))
-    private boolean screencapper$clickWheel() {
-        while (Mouse.next()) {
+    /*@WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Mouse;next()Z", remap = false))
+    private boolean screencapper$clickWheel(Operation<Boolean> original) {
+        while (original.call()) {
             if (!CaptureInput.blocksInput()) return true;
             int button = Mouse.getEventButton();
             if (!Mouse.getEventButtonState()) {

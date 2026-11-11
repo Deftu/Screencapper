@@ -41,7 +41,7 @@ public class CaptureOverlayMixin {
         CaptureOverlay.render(graphics);
     }
     *///?} else {
-    /*@Inject(method = "render(FJ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiler/Profiler;pop()V", ordinal = 1))
+    /*@Inject(method = "render(FJ)V", at = @At("TAIL"))
     private void screencapper$drawOverlay(float tickDelta, long nanoTime, CallbackInfo ci) {
         CaptureOverlay.render(null);
     }

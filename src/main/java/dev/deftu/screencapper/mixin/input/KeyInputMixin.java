@@ -9,9 +9,10 @@ import net.minecraft.client.KeyboardHandler;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 //?} else {
-/*import net.minecraft.client.Minecraft;
+/*import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.client.Minecraft;
 import org.lwjgl.input.Keyboard;
-import org.spongepowered.asm.mixin.injection.Redirect;
 *///?}
 //? if >=1.21.9
 import net.minecraft.client.input.KeyEvent;
@@ -33,9 +34,9 @@ public class KeyInputMixin {
         if (action != 0 && CaptureInput.blocksInput()) ci.cancel();
     }
     *///?} else {
-    /*@Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Keyboard;next()Z", remap = false))
-    private boolean screencapper$blockKeys() {
-        while (Keyboard.next()) {
+    /*@WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Keyboard;next()Z", remap = false))
+    private boolean screencapper$blockKeys(Operation<Boolean> original) {
+        while (original.call()) {
             if (!Keyboard.getEventKeyState() || !CaptureInput.blocksInput()) return true;
         }
         return false;
