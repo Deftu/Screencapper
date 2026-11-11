@@ -2,6 +2,7 @@ package dev.deftu.screencapper.config
 
 import dev.deftu.screencapper.Screencapper
 import dev.deftu.screencapper.ScreenshotActions
+import dev.deftu.screencapper.gui.ScreenshotKey
 import dev.deftu.screencapper.gui.UploaderListEditor
 import dev.deftu.screencapper.upload.UploaderProfile
 import org.polyfrost.oneconfig.api.config.v1.KtConfig
@@ -40,6 +41,12 @@ object ScreencapperConfig : KtConfig("screencapper.json", Screencapper.NAME, Cat
         subcategory = "Capture",
         text = "Open",
     ) { ScreenshotActions.openManager() }
+
+    @Suppress("unused")
+    private val screenshotKey by Provider(
+        null, "Screenshot key", "Takes screenshots, and opens the capture wheel when held. This is vanilla's Take Screenshot key, so changing it here changes it in Controls too.", CAPTURE, "Capture wheel",
+        Void::class.java, ScreenshotKey.visualizer,
+    )
 
     var holdForMenu by switch(
         name = "Hold for capture wheel",
