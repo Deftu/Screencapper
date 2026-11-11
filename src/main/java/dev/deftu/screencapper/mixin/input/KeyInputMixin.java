@@ -26,18 +26,19 @@ public class KeyInputMixin {
     //? if >=1.21.9 {
     @Inject(method = "keyPress", at = @At("HEAD"), cancellable = true)
     private void screencapper$blockKeys(long window, int action, KeyEvent event, CallbackInfo ci) {
-        if (action != 0 && CaptureInput.blocksInput()) ci.cancel();
+        if (CaptureInput.onKey(event.key(), action)) ci.cancel();
     }
     //?} else if >=1.21 {
     /*@Inject(method = "keyPress", at = @At("HEAD"), cancellable = true)
     private void screencapper$blockKeys(long window, int key, int scancode, int action, int modifiers, CallbackInfo ci) {
-        if (action != 0 && CaptureInput.blocksInput()) ci.cancel();
+        if (CaptureInput.onKey(key, action)) ci.cancel();
     }
     *///?} else {
     /*@WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Keyboard;next()Z", remap = false))
     private boolean screencapper$blockKeys(Operation<Boolean> original) {
         while (original.call()) {
-            if (!Keyboard.getEventKeyState() || !CaptureInput.blocksInput()) return true;
+            int action = !Keyboard.getEventKeyState() ? 0 : Keyboard.isRepeatEvent() ? 2 : 1;
+            if (!CaptureInput.onKey(Keyboard.getEventKey(), action)) return true;
         }
         return false;
     }

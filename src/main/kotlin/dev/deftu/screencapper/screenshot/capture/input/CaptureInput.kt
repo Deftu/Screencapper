@@ -4,6 +4,7 @@ import dev.deftu.screencapper.Screencapper
 import dev.deftu.screencapper.ScreenshotActions
 import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.gui.wheel.CaptureOverlay
+import dev.deftu.screencapper.gui.wheel.WheelClick
 import dev.deftu.screencapper.gui.wheel.WheelEntry
 import dev.deftu.screencapper.metadata.MetadataCollector
 import dev.deftu.screencapper.screenshot.capture.CaptureKind
@@ -19,6 +20,7 @@ import java.util.function.Supplier
 object CaptureInput {
     private const val SETTLE_FRAMES = 2
     private const val TIMER_MS = 3_000L
+    private const val NO_KEY = Int.MIN_VALUE
 
     private class Frame(val width: Int, val height: Int, val pixels: Supplier<IntArray>, val release: Runnable)
 
@@ -39,7 +41,8 @@ object CaptureInput {
     private var settleFrames = -1
     private var settleAction: (() -> Unit)? = null
     private var restoreHud: Boolean? = null
-    private var lastDigit = -1
+
+    private var swallowedKey = NO_KEY
 
     @JvmStatic
     fun install() {
@@ -91,10 +94,35 @@ object CaptureInput {
     }
 
     @JvmStatic
-    fun onMouseButton(primary: Boolean) {
+    fun onMouseButton(button: Int) {
         if (!CaptureOverlay.isOpen) return
-        if (primary) confirmMenu() else closeMenu()
+        when (InputBridge.wheelClick(button)) {
+            WheelClick.PICK -> confirmMenu()
+            WheelClick.CANCEL -> closeMenu()
+            WheelClick.NONE -> return
+        }
         gesture.reset()
+    }
+
+    @JvmStatic
+    fun onKey(key: Int, action: Int): Boolean {
+        if (action == 0) {
+            if (key == swallowedKey) swallowedKey = NO_KEY
+            return false
+        }
+        if (key == swallowedKey) return true
+        if (!CaptureOverlay.isOpen) return false
+        if (action == 1) {
+            val digit = InputBridge.digitOf(key)
+            if (InputBridge.isEscape(key)) {
+                closeMenu()
+                swallowedKey = key
+            } else if (digit in wheelChoices.indices) {
+                pickDirectly(digit)
+                swallowedKey = key
+            }
+        }
+        return true
     }
 
     private fun busy(): Boolean = CaptureOverlay.isOpen || timerEndsAt >= 0 || settleAction != null || HighResCapture.isCapturing
@@ -108,6 +136,8 @@ object CaptureInput {
 
     private fun frame() {
         val now = System.currentTimeMillis()
+        if (CaptureOverlay.isOpen && !CaptureOverlay.canStayOpen()) closeMenu()
+
         if (gesture.active) {
             when (gesture.update(now, InputBridge.isKeyDown(heldKey))) {
                 HoldGesture.Outcome.TAP -> settlePending(true)
@@ -119,16 +149,6 @@ object CaptureInput {
                 HoldGesture.Outcome.RELEASED -> confirmMenu()
                 HoldGesture.Outcome.NONE -> {}
             }
-        }
-
-        if (CaptureOverlay.isOpen) {
-            val digit = InputBridge.digitDown()
-            if (digit >= 0 && digit != lastDigit && digit < wheelChoices.size) {
-                pickDirectly(digit)
-            } else if (InputBridge.escapeDown() || !CaptureOverlay.canStayOpen()) {
-                closeMenu()
-            }
-            lastDigit = digit
         }
 
         if (timerEndsAt >= 0 && now >= timerEndsAt) {
@@ -149,7 +169,6 @@ object CaptureInput {
     }
 
     private fun openMenu(): Boolean {
-        lastDigit = InputBridge.digitDown()
         val (choices, entries) = wheelEntries().unzip()
         if (!CaptureOverlay.open(entries)) return false
         wheelChoices = choices

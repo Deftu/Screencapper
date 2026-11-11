@@ -2,10 +2,14 @@ package dev.deftu.screencapper.screenshot.capture.input
 
 import net.minecraft.client.Minecraft
 import org.polyfrost.oneconfig.api.platform.v1.Platform
+import dev.deftu.screencapper.gui.wheel.WheelClick
+import dev.deftu.screencapper.gui.wheel.wheelClick
 import java.io.File
 
 //? if >=1.21 {
 import com.mojang.blaze3d.platform.InputConstants
+import org.lwjgl.system.Platform as LwjglPlatform
+import org.lwjgl.system.windows.User32
 //?} else {
 /*import org.lwjgl.input.Keyboard
 *///?}
@@ -43,21 +47,33 @@ internal object InputBridge {
         *///?}
     }
 
-    fun digitDown(): Int = DIGITS.indexOfFirst(::isKeyDown)
+    fun digitOf(key: Int): Int = DIGITS.indexOf(key)
 
-    fun escapeDown(): Boolean = isKeyDown(ESCAPE)
+    fun isEscape(key: Int): Boolean = key == ESCAPE
+
+    fun wheelClick(button: Int): WheelClick {
+        //? if >=1.21 {
+        return wheelClick(button, InputConstants.MOUSE_BUTTON_LEFT, InputConstants.MOUSE_BUTTON_RIGHT, buttonsSwapped())
+        //?} else {
+        /*return wheelClick(button, 0, 1, false)
+        *///?}
+    }
+
+    //? if >=1.21 {
+    private fun buttonsSwapped(): Boolean = runCatching {
+        LwjglPlatform.get() == LwjglPlatform.WINDOWS && User32.GetSystemMetrics(User32.SM_SWAPBUTTON) != 0
+    }.getOrDefault(false)
+    //?}
 
     val screenOpen: Boolean get() = Platform.screen().current<Any?>() != null
 
-    fun sensitivityGain(): Double = runCatching {
+    fun sensitivity(): Double = runCatching {
         //? if >=1.21 {
-        val sensitivity = minecraft.options.sensitivity().get()
+        minecraft.options.sensitivity().get()
         //?} else {
-        /*val sensitivity = minecraft.options.mouseSensitivity.toDouble()
+        /*minecraft.options.mouseSensitivity.toDouble()
         *///?}
-        val f = sensitivity * 0.6 + 0.2
-        f * f * f * 8.0
-    }.getOrDefault(1.0)
+    }.getOrDefault(0.5)
 
     var hudHidden: Boolean
         //? if >=26.2 {

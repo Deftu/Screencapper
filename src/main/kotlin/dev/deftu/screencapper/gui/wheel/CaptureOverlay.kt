@@ -76,7 +76,6 @@ internal class WheelSession(val entries: List<WheelEntry>) {
 }
 
 internal object CaptureOverlay {
-    private const val PULL_GAIN = 1.9
     private const val TITLE = "Capture"
     private const val COUNTDOWN_CAPTION = "Screenshot in"
 
@@ -113,7 +112,7 @@ internal object CaptureOverlay {
 
     fun steer(dx: Double, dy: Double) {
         val current = session ?: return
-        val scale = PULL_GAIN * InputBridge.sensitivityGain() / host.density.coerceAtLeast(0.01f)
+        val scale = steerScale(InputBridge.sensitivity(), host.density)
         current.steer((dx * scale).toFloat(), (dy * scale).toFloat())
     }
 

@@ -5,7 +5,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 //? if >=1.21 {
-import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.MouseHandler;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -44,8 +43,7 @@ public class MouseButtonMixin {
 
     private static boolean screencapper$takeClick(int button, int action) {
         if (!CaptureInput.blocksInput()) return false;
-        if (action == 1 && button == InputConstants.MOUSE_BUTTON_LEFT) CaptureInput.onMouseButton(true);
-        else if (action == 1 && button == InputConstants.MOUSE_BUTTON_RIGHT) CaptureInput.onMouseButton(false);
+        if (action == 1) CaptureInput.onMouseButton(button);
         return true;
     }
     //?} else {
@@ -58,8 +56,7 @@ public class MouseButtonMixin {
                 if (button >= 0) return true;
                 continue;
             }
-            if (button == 0) CaptureInput.onMouseButton(true);
-            else if (button == 1) CaptureInput.onMouseButton(false);
+            if (button >= 0) CaptureInput.onMouseButton(button);
         }
         return false;
     }
