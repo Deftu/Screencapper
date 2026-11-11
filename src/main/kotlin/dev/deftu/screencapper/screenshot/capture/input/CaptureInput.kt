@@ -16,14 +16,7 @@ import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 
-/**
- * Tap and hold on vanilla's screenshot key.
- *
- * Key-down reads the frame straight away and keeps it pending. Letting go within the hold time saves it; holding longer
- * drops it and opens the capture wheel ([CaptureOverlay]). Runs on the render thread: the key hooks and [onFrame] both do.
- */
 object CaptureInput {
-    /** The frames a hidden or changed overlay needs before a read sees it gone */
     private const val SETTLE_FRAMES = 2
     private const val TIMER_MS = 3_000L
 
@@ -35,7 +28,6 @@ object CaptureInput {
     private var heldKey = 0
     private var pending: PendingShot<Frame>? = null
 
-    /** When the timer fires, in [System.currentTimeMillis] terms, or -1 */
     private var timerEndsAt = -1L
         set(value) {
             field = value
@@ -49,7 +41,6 @@ object CaptureInput {
     private var restoreHud: Boolean? = null
     private var lastDigit = -1
 
-    /** Registers the per-frame hook. Call once from the mod initializer */
     @JvmStatic
     fun install() {
         if (!installed.compareAndSet(false, true)) return
@@ -62,19 +53,13 @@ object CaptureInput {
         }
     }
 
-    /** Whether the wheel is open, so the game should ignore key presses, clicks, scrolling and mouse movement */
     @JvmStatic
     fun blocksInput(): Boolean = CaptureOverlay.isOpen
 
-    /**
-     * The screenshot key went down on [key], where vanilla would take its screenshot. Returns true when this took it
-     * over, so vanilla's screenshot must be skipped. [holdable] is false for keys whose release can't be polled.
-     */
     @JvmStatic
     @JvmOverloads
     fun onScreenshotKey(key: Int, holdable: Boolean = true): Boolean {
         if (!FastCapture.isActive()) return false
-        // A pending shot is only ever settled from the frame hook, so make sure it runs even before install().
         hookFrames()
         if (busy()) return true
         if (!holdable || !ScreencapperConfig.holdForMenu) {
@@ -98,14 +83,12 @@ object CaptureInput {
         return true
     }
 
-    /** Mouse movement in window pixels while the wheel is open; the caller then drops it */
     @JvmStatic
     fun onMouseDelta(dx: Double, dy: Double) {
         if (dx == 0.0 && dy == 0.0) return
         CaptureOverlay.steer(dx, dy)
     }
 
-    /** A mouse button went down while the wheel is open: the primary button takes the aimed wedge, the secondary cancels */
     @JvmStatic
     fun onMouseButton(primary: Boolean) {
         if (!CaptureOverlay.isOpen) return
@@ -128,7 +111,6 @@ object CaptureInput {
             when (gesture.update(now, InputBridge.isKeyDown(heldKey))) {
                 HoldGesture.Outcome.TAP -> settlePending(true)
                 HoldGesture.Outcome.HOLD -> {
-                    // With a screen open or no world the wheel can't open, so the hold stays a plain shot.
                     val opened = openMenu()
                     settlePending(!opened)
                     if (!opened) gesture.reset()
@@ -238,7 +220,6 @@ object CaptureInput {
         }
     }
 
-    /** A normal shot of the frame as it is now */
     private fun captureNow() {
         val metadata = MetadataCollector.collect()
         val file = FastCapture.nextFile(InputBridge.gameDirectory, null)

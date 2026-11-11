@@ -1,6 +1,5 @@
 package dev.deftu.screencapper.screenshot.capture.compression
 
-/** What one use (normal shots, high-res shots, uploads) is compressed with */
 enum class CompressionChoice(val label: String, val preset: CompressionProfile?) {
     AS_SAVED("Send the file as saved", null),
     LOSSLESS("Lossless", CompressionProfile.LOSSLESS),
@@ -16,7 +15,6 @@ enum class CompressionChoice(val label: String, val preset: CompressionProfile?)
         val FOR_SAVING: Array<CompressionChoice> = (PRESETS + CUSTOM).toTypedArray()
         val FOR_UPLOADS: Array<CompressionChoice> = (listOf(AS_SAVED) + PRESETS + CUSTOM).toTypedArray()
 
-        /** The preset that writes the same pixels as [profile], if any */
         fun matching(profile: CompressionProfile): CompressionChoice? =
             if (profile.isLossless) LOSSLESS else PRESETS.firstOrNull { it.preset!!.looksLike(profile) }
     }

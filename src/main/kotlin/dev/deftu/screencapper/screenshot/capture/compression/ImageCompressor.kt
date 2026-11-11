@@ -15,14 +15,9 @@ import javax.imageio.metadata.IIOMetadataNode
 import javax.imageio.stream.MemoryCacheImageOutputStream
 import kotlin.math.roundToInt
 
-/** Applies a [CompressionProfile] to captured pixels */
 object ImageCompressor {
     private const val JPEG_METADATA_FORMAT = "javax_imageio_jpeg_image_1.0"
 
-    /**
-     * Writes [image] to [out] following [profile]. [extraScale] shrinks it further on top of the profile's own resize.
-     * [text] is kept in PNGs; JPEGs carry none.
-     */
     fun encode(image: CapturedImage, profile: CompressionProfile, text: Map<String, String>, out: OutputStream, extraScale: Double = 1.0) {
         val scaled = resize(image, profile, extraScale)
         when (profile.format) {
@@ -40,7 +35,6 @@ object ImageCompressor {
     fun encodeBytes(image: CapturedImage, profile: CompressionProfile, text: Map<String, String>, extraScale: Double = 1.0): ByteArray =
         ByteArrayOutputStream().also { encode(image, profile, text, it, extraScale) }.toByteArray()
 
-    /** Saves [image] untouched as a lossless PNG */
     fun encodeOriginal(image: CapturedImage, text: Map<String, String>, out: OutputStream) =
         PngEncoder.encode(image.argb, image.width, image.height, CompressionProfile.LOSSLESS.pngLevel, FastCapture.encoderPool, FastCapture.encoderThreads, out, text)
 
@@ -69,10 +63,6 @@ object ImageCompressor {
         return CapturedImage(areaAverage(image, width, height), width, height)
     }
 
-    /**
-     * Downscales by averaging every source pixel each output pixel covers, weighted by how much of it is covered.
-     * Sharp and alias-free for any ratio, and needs only one source row of scratch space.
-     */
     private fun areaAverage(image: CapturedImage, width: Int, height: Int): IntArray {
         val sourceWidth = image.width
         val sourceHeight = image.height
@@ -129,7 +119,6 @@ object ImageCompressor {
         }
     }
 
-    /** The source pixels output pixel i covers, from [start], with weights summing to 1 */
     private class Span(val start: Int, val weights: FloatArray)
 
     private fun spans(sourceSize: Int, targetSize: Int): Array<Span> {
@@ -160,7 +149,6 @@ object ImageCompressor {
             }
             val metadata = writer.getDefaultImageMetadata(ImageTypeSpecifier.createFromRenderedImage(buffered), param)
             val tree = metadata.getAsTree(JPEG_METADATA_FORMAT) as IIOMetadataNode
-            // Sampling factors live on the frame header's components: luma first, then the two chroma channels.
             val components = tree.getElementsByTagName("componentSpec")
             for (i in 0 until components.length) {
                 val factor = if (i == 0 && chroma == ChromaSubsampling.HALF) "2" else "1"

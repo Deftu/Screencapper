@@ -64,7 +64,6 @@ public class ScreenshotMixin {
         CaptureSource.read(target, width, height, (outWidth, outHeight, pixels, release) ->
             FastCapture.save(file, outWidth, outHeight, pixels, release, error -> CaptureResults.deliver(file, error), CaptureKind.NORMAL, metadata));
 
-        // Vanilla prints whatever this returns straight away, so it gets an empty line that chat drops.
         Text placeholder = new LiteralText("");
         LegacyChatSuppression.suppress(placeholder);
         cir.setReturnValue(placeholder);

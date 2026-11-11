@@ -49,7 +49,6 @@ fun UploaderListEditor(prop: Property<*>) {
     var profiles by remember(prop) { mutableStateOf(ScreencapperConfig.profiles) }
     var defaultId by remember(prop) { mutableStateOf(ScreencapperConfig.defaultProfile.id) }
     var expanded by remember(prop) { mutableStateOf<String?>(null) }
-    // Picks up changes made outside this editor, such as a config reset or profile switch, before they get overwritten.
     LaunchedEffect(prop) {
         while (true) {
             delay(1000)

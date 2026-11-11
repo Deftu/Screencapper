@@ -32,7 +32,6 @@ class WheelSteeringTest {
     fun aimSticksAcrossABorderUntilPastTheHysteresis() {
         val wheel = steering(count = 4)
         assertEquals(0, wheel.steer(0f, -80f))
-        // The border between wedges 0 and 1 is at 45 degrees; 48 is still within the hysteresis.
         val r = 80f
         val inside = Math.toRadians(48.0 - 90.0)
         wheel.reset()
@@ -69,7 +68,6 @@ class WheelSteeringTest {
         assertTrue(max(abs(x), abs(y)) <= 100f)
         assertTrue(hypot(x, y) > 100f, "a square wheel reaches into its corners")
         wheel.reset()
-        // 15, 15 is outside a round dead zone of 20 but inside a square one.
         assertEquals(-1, wheel.steer(15f, 15f))
     }
 

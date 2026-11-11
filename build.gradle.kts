@@ -196,7 +196,6 @@ val curseforgeId = listOf("oneconfig.publish.curseforge", "publish.curseforge")
 val curseforgeToken = listOf("oneconfig.publish.curseforge.token", "publish.curseforge.token", "curseforge.token")
     .firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
 
-// Each release's notes live in changelogs/<version>.md and become that release's description
 val changelogFile = rootProject.file("changelogs/$modversion.md")
 val changelogText = changelogFile.takeIf { it.isFile }?.readText()?.trim().orEmpty()
 

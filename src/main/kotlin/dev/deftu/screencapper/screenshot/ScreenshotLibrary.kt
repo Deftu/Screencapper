@@ -32,11 +32,6 @@ object ScreenshotLibrary {
         return Screenshot(file)
     }
 
-    /**
-     * The screenshot a vanilla "saved" message names. Every finished save passes through here (vanilla's message
-     * consumer and Screencapper's own saves both end in `ScreenshotCapture.onMessage`), so it's also where new files
-     * enter the metadata index.
-     */
     fun findJustSaved(message: String): Screenshot? {
         val cutoff = System.currentTimeMillis() - JUST_SAVED_WINDOW_MS
         val found = directory.listFiles { file -> message.contains(file.name) && isScreenshot(file) }
@@ -48,7 +43,6 @@ object ScreenshotLibrary {
         return found
     }
 
-    /** Tells open views to reload. Safe to call from any thread */
     fun changed() {
         MainThread.run { revision++ }
     }

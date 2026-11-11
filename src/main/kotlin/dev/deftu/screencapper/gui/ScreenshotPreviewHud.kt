@@ -302,7 +302,6 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
 
     private fun pillRadius(height: Float) = if (square) 0f else height / 2f
 
-    /** Shrinks [preferred] until [labels] plus [chrome] (padding, icons and gaps at that size) fit in [available] */
     private fun fitLabel(labels: List<String>, preferred: Float, available: Float, chrome: (Float, Int) -> Float): Float {
         var size = preferred
         repeat(3) {
@@ -322,7 +321,6 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
 
     private fun measureLabel(text: String, size: Float): Float = labelFont(size).measureTextWidth(cased(text))
 
-    /** Draws [text] with the HUD's font, colour, case and shadow settings, vertically centred on [centerY] */
     private fun RenderContext.drawLabel(text: String, x: Float, centerY: Float, size: Float, alpha: Float) {
         val value = cased(text)
         val font = labelFont(size)
@@ -352,7 +350,6 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
     }
 
     private fun RenderContext.localMouse(): Pair<Float, Float>? {
-        // Only chat: clicks on the preview also reach the screen underneath, which is harmless there.
         if (mouseX < 0f || Platform.screen().current<Any?>() !is ChatScreen) return null
         val transform = deviceTransform() ?: return null
         val ratio = Platform.screen().pixelRatio()
@@ -371,7 +368,6 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
 
         private const val HOVER_STALE_MS = 250L
 
-        /** What the cursor was over the last time the preview drew, tied to that preview */
         private class Hover(val preview: ActivePreview, val action: PreviewAction)
 
         @Volatile
@@ -447,7 +443,6 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
             }
         }
 
-        /** Shows a screenshot straight from its captured pixels, before its file is written */
         fun showCaptured(file: java.io.File, argb: IntArray, width: Int, height: Int) {
             val order = shown.incrementAndGet()
             val image = java.awt.image.BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_RGB)
@@ -460,7 +455,6 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
             if (active?.screenshot?.name == screenshot.name) return
             val order = shown.incrementAndGet()
             Multithreading.submit {
-                // The file can still be settling on disk right after the save message, so give it a few tries.
                 var image: java.awt.image.BufferedImage? = null
                 for (attempt in 0 until 5) {
                     image = runCatching { screenshot.readImage() }.getOrNull()

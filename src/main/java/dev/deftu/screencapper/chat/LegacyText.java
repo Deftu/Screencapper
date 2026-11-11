@@ -17,12 +17,6 @@ import net.minecraft.text.Text;
 
 import java.util.Locale;
 
-/^*
- * Converts Adventure components to 1.8.9 chat text.
- * <p>
- * The Adventure bridge on 1.8.9 keeps colours but loses click and hover events, so chat cards build the vanilla text
- * themselves.
- *^/
 public final class LegacyText {
     private LegacyText() {
     }
@@ -90,7 +84,6 @@ public final class LegacyText {
     }
 }
 *///?} else {
-/** Only used on 1.8.9 */
 public final class LegacyText {
     private LegacyText() {
     }

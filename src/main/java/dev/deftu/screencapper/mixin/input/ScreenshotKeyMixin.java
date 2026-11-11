@@ -23,18 +23,6 @@ import org.lwjgl.input.Keyboard;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 *///?}
 
-/**
- * Takes over vanilla's screenshot key at the exact call where vanilla would take its screenshot, so every check before
- * it (key binding screens, the debug modifier, the debug panorama) behaves as vanilla.
- * <p>
- * The call sites, per version:
- * 26.2+: {@code Minecraft.handleGlobalKeyPress} calls {@code Screenshot.grab(Minecraft, boolean)}, which also handles
- * the debug panorama (Ctrl with {@code SharedConstants.DEBUG_PANORAMA_SCREENSHOT}), left to vanilla here.
- * 1.21-26.1: {@code KeyboardHandler.keyPress} calls {@code Screenshot.grab(File, RenderTarget, Consumer)} on a press of
- * {@code options.keyScreenshot}; the debug panorama is a separate branch that never reaches that call.
- * 1.8.9: {@code Minecraft.handleGuiKeyBindings} calls {@code Screenshot.take(File, int, int, RenderTarget)} on a press of
- * {@code options.screenshotKey}.
- */
 //? if >=26.2 {
 @Mixin(Minecraft.class)
 //?} else if >=1.21 {
@@ -47,7 +35,6 @@ public class ScreenshotKeyMixin {
     @Inject(method = "handleGlobalKeyPress", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Screenshot;grab(Lnet/minecraft/client/Minecraft;Z)V"), cancellable = true)
     private void screencapper$onScreenshotKey(InputConstants.Key key, boolean controlDown, CallbackInfoReturnable<Boolean> cir) {
         if (controlDown && SharedConstants.DEBUG_PANORAMA_SCREENSHOT) return;
-        // A mouse button's release can't be polled the way a key's can, so mouse-bound screenshot keys only tap.
         boolean holdable = key.getType() != InputConstants.Type.MOUSE;
         if (CaptureInput.onScreenshotKey(key.getValue(), holdable)) cir.setReturnValue(true);
     }
@@ -64,7 +51,6 @@ public class ScreenshotKeyMixin {
     *///?} else {
     /*@Inject(method = "handleGuiKeyBindings", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Screenshot;take(Ljava/io/File;IILnet/minecraft/client/render/pipeline/RenderTarget;)Lnet/minecraft/text/Text;"), cancellable = true)
     private void screencapper$onScreenshotKey(CallbackInfo ci) {
-        // Keys LWJGL only reports as a character can't be polled, so those only tap.
         int key = Keyboard.getEventKey();
         if (CaptureInput.onScreenshotKey(key, key != 0)) ci.cancel();
     }

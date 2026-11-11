@@ -16,12 +16,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 import java.util.function.Supplier
 
-/**
- * Saves screenshots without touching the render thread or the game's shared IO pool.
- *
- * The render thread only hands over the captured pixels. Everything after that (pixel conversion, the preview, PNG
- * encoding and the write) runs on Screencapper's own threads, so a busy IO pool on a modded client can't delay it.
- */
 object FastCapture {
     internal val encoderThreads = (Runtime.getRuntime().availableProcessors() - 1).coerceIn(1, 8)
     private val NAME_FORMAT = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.ROOT)
@@ -29,11 +23,9 @@ object FastCapture {
     private val coordinator = Executors.newSingleThreadExecutor(threads("Screencapper capture"))
     internal val encoderPool = Executors.newFixedThreadPool(encoderThreads, threads("Screencapper encoder"))
 
-    /** Whether captures should go through here instead of vanilla's saving code */
     @JvmStatic
     fun isActive(): Boolean = ScreencapperConfig.enabled && ScreencapperConfig.fastCapture
 
-    /** The file a new screenshot is saved to, matching vanilla's naming */
     @JvmStatic
     @JvmOverloads
     fun nextFile(gameDirectory: File, forceName: String?, kind: CaptureKind = CaptureKind.NORMAL, prefix: String? = null): File {
@@ -49,12 +41,6 @@ object FastCapture {
         }
     }
 
-    /**
-     * Saves pixels captured on the render thread.
-     *
-     * [pixels] is called on a background thread and must return [width] x [height] ARGB pixels, top row first; [release]
-     * frees whatever held them. [onDone] gets null on success or the error, also on a background thread.
-     */
     @JvmStatic
     @JvmOverloads
     fun save(
@@ -84,7 +70,6 @@ object FastCapture {
         }
     }
 
-    /** Converts bottom-up pixels from an OpenGL read of [sourceWidth] wide rows into a top-down [width] x [height] image */
     @JvmStatic
     fun flipped(source: IntArray, sourceWidth: Int, width: Int, height: Int): IntArray {
         val out = IntArray(width * height)
@@ -92,7 +77,6 @@ object FastCapture {
         return out
     }
 
-    /** Saves an image that's already in memory, such as a stitched high-res shot */
     @JvmStatic
     fun saveImage(file: File, image: CapturedImage, kind: CaptureKind, metadata: Map<String, String>, onDone: Consumer<Throwable?>) =
         save(file, image.width, image.height, { image.argb }, {}, onDone, kind, metadata)
@@ -102,7 +86,6 @@ object FastCapture {
             val temp = File(target.parentFile, ".${target.name}.tmp")
             try {
                 BufferedOutputStream(Files.newOutputStream(temp.toPath()), 1 shl 16).use(encode)
-                // Moved into place in one step, so nothing ever sees a half-written screenshot.
                 Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
             } finally {
                 temp.delete()

@@ -9,7 +9,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
-/** Moves settings from the 1.x Vigilance config and its sharex.json into the OneConfig config */
 object LegacyConfigMigration {
     private val LINE = Regex("""^\s*"?([^"=]+?)"?\s*=\s*(.+?)\s*$""")
 

@@ -27,13 +27,11 @@ class PngEncoderTest {
         return IntArray(width * height) { i ->
             val x = i % width
             val y = i / width
-            // Gradients with noise, so both the filter and the deflate strips see varied data.
             val noise = random.nextInt(16)
             (0xFF shl 24) or (((x * 7 + noise) and 0xFF) shl 16) or (((y * 3) and 0xFF) shl 8) or ((x xor y) and 0xFF)
         }
     }
 
-    /** Entries in the PLTE chunk, read from the raw chunks since ImageIO pads palettes to a power of two */
     private fun paletteEntries(png: ByteArray): Int {
         val data = java.io.DataInputStream(ByteArrayInputStream(png, 8, png.size - 8))
         while (true) {
@@ -92,7 +90,6 @@ class PngEncoderTest {
                 assertEquals(width, image.width)
                 assertEquals(height, image.height)
                 assertTrue(image.colorModel is IndexColorModel, "not an indexed image")
-                // ImageIO pads the colour model to 256 entries, so the PLTE chunk itself is checked.
                 assertTrue(paletteEntries(out.toByteArray()) in 1..colors, "PLTE over $colors colours")
 
                 val decoded = image.getRGB(0, 0, width, height, null, 0, width)

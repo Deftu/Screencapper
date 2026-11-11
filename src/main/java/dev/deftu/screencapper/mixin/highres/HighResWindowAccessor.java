@@ -12,7 +12,6 @@ import com.mojang.blaze3d.platform.Window;
 /*import org.spongepowered.asm.mixin.gen.Accessor;
 *///?}
 
-/** Lets a tiled high-res capture lay the HUD out for a virtual screen of the target size */
 @Mixin(Window.class)
 public interface HighResWindowAccessor {
     //? if >=1.21 && <1.21.5 {

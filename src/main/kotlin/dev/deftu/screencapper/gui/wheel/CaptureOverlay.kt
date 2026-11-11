@@ -39,11 +39,7 @@ import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.ProvideOneConfigTheme
 import kotlin.math.ceil
 
-/**
- * One opening of the capture wheel. Steering is in dp from the wheel's centre.
- *
- * Adapted from PolyPlus's radial wheel (Polyfrost, GPL-3.0).
- */
+// Adapted from PolyPlus's radial wheel (Polyfrost, GPL-3.0)
 internal class WheelSession(val entries: List<WheelEntry>) {
     var pointer by mutableStateOf(Offset.Zero)
         private set
@@ -52,7 +48,6 @@ internal class WheelSession(val entries: List<WheelEntry>) {
     var closing by mutableStateOf(false)
         private set
 
-    /** Set when the wheel closes on a pick, so it is gone before the capture reads the frame */
     var instantClose = false
         private set
 
@@ -80,10 +75,6 @@ internal class WheelSession(val entries: List<WheelEntry>) {
     }
 }
 
-/**
- * The capture wheel and the timer countdown, drawn from [dev.deftu.screencapper.mixin.input.CaptureOverlayMixin] over
- * the in-game GUI. Render thread only.
- */
 internal object CaptureOverlay {
     private const val PULL_GAIN = 1.9
     private const val TITLE = "Capture"
@@ -98,10 +89,8 @@ internal object CaptureOverlay {
 
     val isOpen: Boolean get() = session != null
 
-    /** The aimed wedge of the open wheel, or -1 */
     val hovered: Int get() = session?.hovered ?: -1
 
-    /** The wheel only lives in a world with no screen in front, since it steers with the camera */
     fun canStayOpen(): Boolean = Minecraft.getInstance().player != null && !InputBridge.screenOpen
 
     fun open(entries: List<WheelEntry>): Boolean {
@@ -112,7 +101,6 @@ internal object CaptureOverlay {
         return true
     }
 
-    /** Closes the wheel; returns the aimed wedge, or -1. [instant] skips the fade, for picks that capture straight away */
     fun close(instant: Boolean): Int {
         val current = session ?: return -1
         session = null
@@ -123,7 +111,6 @@ internal object CaptureOverlay {
         return pick
     }
 
-    /** Mouse movement in window pixels, scaled to feel like turning the camera */
     fun steer(dx: Double, dy: Double) {
         val current = session ?: return
         val scale = PULL_GAIN * InputBridge.sensitivityGain() / host.density.coerceAtLeast(0.01f)

@@ -5,7 +5,6 @@ import java.io.File
 import java.io.IOException
 import javax.imageio.ImageIO
 
-/** A screenshot file, with its size and modification time read once when it's listed */
 class Screenshot(val file: File) {
     val name: String get() = file.name
     val size: Long = file.length()

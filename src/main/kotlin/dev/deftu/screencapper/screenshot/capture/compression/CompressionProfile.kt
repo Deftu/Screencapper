@@ -16,24 +16,19 @@ enum class ResizeMode(val displayName: String) {
     MAX_SIZE("To a max width"),
 }
 
-/** The encoder settings one file is written with */
 data class CompressionProfile(
     val format: ImageFormat = ImageFormat.PNG,
     val pngLevel: Int = 4,
-    /** 0 keeps full colour; otherwise the palette size of an indexed PNG */
     val paletteColors: Int = 0,
     val dither: Boolean = true,
     val jpegQuality: Int = 90,
     val chroma: ChromaSubsampling = ChromaSubsampling.HALF,
     val resize: ResizeMode = ResizeMode.NONE,
     val resizePercent: Int = 50,
-    /** 0 means no limit on that side */
     val maxWidth: Int = 0,
     val maxHeight: Int = 0,
-    /** Also saves the untouched capture to `screenshots/original` */
     val keepOriginal: Boolean = false,
 ) {
-    /** Whether the saved file holds exactly the captured pixels */
     val isLossless: Boolean get() = format == ImageFormat.PNG && paletteColors == 0 && resize == ResizeMode.NONE
 
     fun normalized(): CompressionProfile = copy(
@@ -45,7 +40,6 @@ data class CompressionProfile(
         maxHeight = maxHeight.coerceAtLeast(0),
     )
 
-    /** Whether both write the same pixels, ignoring settings that only change encoding speed */
     fun looksLike(other: CompressionProfile): Boolean {
         val a = normalized()
         val b = other.normalized()
@@ -67,10 +61,8 @@ data class CompressionProfile(
 
         val LOSSLESS = CompressionProfile()
 
-        /** Where an upload that was sent as saved starts shrinking from when it is over the host's limit */
         val UPLOAD = CompressionProfile(format = ImageFormat.JPEG, jpegQuality = 90, chroma = ChromaSubsampling.HALF)
 
-        /** Full colour detail only pays off at the highest qualities, where 4:2:0 would be the visible loss on coloured text */
         fun chromaFor(quality: Int): ChromaSubsampling = if (quality >= 95) ChromaSubsampling.FULL else ChromaSubsampling.HALF
     }
 }

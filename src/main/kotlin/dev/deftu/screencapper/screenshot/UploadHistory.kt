@@ -13,7 +13,6 @@ import java.util.concurrent.Executors
 
 data class UploadRecord(val uploaderId: String, val uploaderName: String, val url: String, val uploadedAt: Long)
 
-/** Every link a screenshot was uploaded to, kept across restarts in `config/screencapper/uploads.json` */
 object UploadHistory {
     private val gson = GsonBuilder().setPrettyPrinting().create()
     private val lock = Any()

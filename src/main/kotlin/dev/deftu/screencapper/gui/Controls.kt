@@ -48,7 +48,6 @@ internal val DANGER = Color(0xFFE35B5B)
 
 enum class ButtonHierarchy { PRIMARY, SECONDARY }
 
-/** Matches OneConfig's own button: primary fills with the accent, secondary sits on the component surface; hover dims rather than tints */
 @Composable
 fun SmallButton(
     label: String,
@@ -99,7 +98,6 @@ fun SmallButton(
     }
 }
 
-/** The design system's Dark Tag: a fixed 18px capsule for status, never an action. Over a screenshot it stays dark; elsewhere it takes theme surface colours so it reads in light themes. */
 @Composable
 fun StatusTag(label: String, modifier: Modifier = Modifier, overImage: Boolean = true) {
     val theme = OneConfigTheme.current
@@ -176,7 +174,6 @@ fun KeyValueList(
 
 enum class IconActionStyle { GHOST, OVERLAY }
 
-/** The design system's icon-only button: a square with 7px padding, 28px (14px glyph) or 32px (18px glyph) */
 @Composable
 fun IconAction(
     icon: String,

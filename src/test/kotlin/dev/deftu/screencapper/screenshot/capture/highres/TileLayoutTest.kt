@@ -28,7 +28,6 @@ class TileLayoutTest {
             val left = column * grid.tileWidth
             val top = row * grid.tileHeight
 
-            // Full-frame NDC of the tile's edges: x grows right, y grows up, the image's top row is y = +1.
             val ndcLeft = -1.0 + 2.0 * left / grid.width
             val ndcRight = -1.0 + 2.0 * (left + grid.tileWidth) / grid.width
             val ndcTop = 1.0 - 2.0 * top / grid.height
@@ -64,7 +63,6 @@ class TileLayoutTest {
         val out = IntArray(width * height)
 
         for (row in 0 until grid.rows) for (column in 0 until grid.columns) {
-            // Tiles are always full size; pixels past the image's edge hold junk that must not leak in.
             val stride = grid.tileWidth + 3
             val tile = IntArray(stride * grid.tileHeight) { -1 }
             for (y in 0 until grid.tileHeight) for (x in 0 until grid.tileWidth) {

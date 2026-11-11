@@ -37,13 +37,7 @@ internal typealias WheelGraphics = GuiGraphicsExtractor
 /*internal typealias WheelGraphics = Any
 *///?}
 
-/**
- * Draws a [PolyCanvas] in framebuffer pixels into the current GUI frame, at the point it's called from.
- *
- * Adapted from PolyPlus's radial wheel (Polyfrost, GPL-3.0). 1.21.11+ hands OneConfig's Blaze renderer's ops to the
- * GUI graphics, so it works on every backend including Vulkan; older versions draw through OneConfig's GL renderer, into
- * an offscreen target blitted into the GUI on 1.21.8-1.21.10, straight into the main target before that.
- */
+// Adapted from PolyPlus's radial wheel (Polyfrost, GPL-3.0)
 internal class InlineCanvas(textureName: String) {
     //? if >=1.21.11 {
     fun draw(ctx: WheelGraphics, block: (PolyCanvas) -> Unit): Boolean {

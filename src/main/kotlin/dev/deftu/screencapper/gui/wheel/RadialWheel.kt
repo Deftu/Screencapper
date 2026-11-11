@@ -124,20 +124,16 @@ private val BAND_TIP = 2.5.dp
 
 private val PopEasing = CubicBezierEasing(0.0f, 0.55f, 0.45f, 1.0f)
 
-/** Minecraft themes are square, opaque and shadowless; OneConfig marks them by turning shadows off */
 internal val OneConfigUITheme.isSquare: Boolean get() = !shadowEnabled
 
-/** OneConfig's animations setting; off means every state change is instant */
 internal val animationsOn: Boolean get() = runCatching { ThemeConfig.animations }.getOrDefault(true)
 
-/** The theme's popup surface, kept see-through on glass themes but never so thin that labels lose the world behind */
 @Composable
 internal fun wheelSurface(theme: OneConfigUITheme): Color {
     val base = theme.popupBackground
     return if (theme.isSquare || base.alpha >= SURFACE_ALPHA_FLOOR) base else base.copy(alpha = SURFACE_ALPHA_FLOOR)
 }
 
-/** Minecraft's bitmap font is only crisp at whole multiples of its glyph size */
 @Composable
 internal fun wheelFont(size: TextUnit, square: Boolean, ratio: Float): TextUnit {
     if (!square) return size
@@ -159,12 +155,7 @@ internal fun WheelText(
     Text(text, modifier, color, size, null, BaselineShift.None, weight, TextAlign.Center, maxLines, TextOverflow.Ellipsis)
 }
 
-/**
- * The capture wheel: wedges around a hub, steered by [session].
- *
- * Adapted from PolyPlus's radial wheel (Polyfrost, GPL-3.0). Every colour, shape and font comes from the OneConfig
- * theme; Minecraft themes get square wedges, no shadows and pixel-snapped type.
- */
+// Adapted from PolyPlus's radial wheel (Polyfrost, GPL-3.0)
 @Composable
 internal fun RadialWheel(session: WheelSession, pixelRatio: Float, title: String) {
     val entries = session.entries

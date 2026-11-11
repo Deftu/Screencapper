@@ -10,12 +10,10 @@ import com.mojang.blaze3d.platform.InputConstants
 /*import org.lwjgl.input.Keyboard
 *///?}
 
-/** The version-specific reads and writes the capture input needs. Render thread only */
 internal object InputBridge {
     private val minecraft: Minecraft get() = Minecraft.getInstance()
 
     //? if >=26.3 {
-    // 26.3 runs on SDL: key values are scancodes.
     private val DIGITS = IntArray(9) { 30 + it }
     private const val ESCAPE = 41
     //?} else if >=1.21 {
@@ -45,14 +43,12 @@ internal object InputBridge {
         *///?}
     }
 
-    /** Which of the number keys 1-9 is down, as 0-8, or -1 */
     fun digitDown(): Int = DIGITS.indexOfFirst(::isKeyDown)
 
     fun escapeDown(): Boolean = isKeyDown(ESCAPE)
 
     val screenOpen: Boolean get() = Platform.screen().current<Any?>() != null
 
-    /** Vanilla's look-sensitivity curve, so steering the wheel feels like turning the camera */
     fun sensitivityGain(): Double = runCatching {
         //? if >=1.21 {
         val sensitivity = minecraft.options.sensitivity().get()
@@ -63,7 +59,6 @@ internal object InputBridge {
         f * f * f * 8.0
     }.getOrDefault(1.0)
 
-    /** F1's hide-GUI state: `Hud.isHidden` on 26.2+, the options' `hideGui` flag before */
     var hudHidden: Boolean
         //? if >=26.2 {
         get() = minecraft.gui.hud.isHidden

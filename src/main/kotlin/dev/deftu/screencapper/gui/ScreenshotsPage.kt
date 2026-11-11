@@ -159,8 +159,6 @@ private fun ScreenshotManager() {
     val query = currentPageSearchQuery.trim()
 
     val gridState = rememberLazyGridState()
-    // Re-lists the folder every few seconds to catch files added outside the game, but only publishes a new list
-    // when something actually changed so the grid doesn't recompose on every poll.
     val listed by produceState<List<Screenshot>?>(null, revision) {
         while (true) {
             val fresh = withContext(Dispatchers.IO) { ScreenshotLibrary.list() }
@@ -171,7 +169,6 @@ private fun ScreenshotManager() {
     val all = listed.orEmpty()
     val indexRevision = MetadataIndex.revision
     val search = remember(query) { SearchQuery.parse(query) }
-    // Filtering reads the index, so it runs off the render thread; typing cancels the previous run.
     var filtered by remember { mutableStateOf<List<Screenshot>?>(null) }
     LaunchedEffect(all, sort, search, indexRevision) {
         filtered = withContext(Dispatchers.Default) { filterAndSort(all, sort, search) }
@@ -224,7 +221,6 @@ private fun ScreenshotManager() {
             enter = fadeIn() + slideInVertically { it / 2 },
             exit = fadeOut() + slideOutVertically { it / 2 },
         ) {
-            // Keeps showing the last selection while the bar animates out after it's cleared.
             val selected = selection.toList().mapNotNull { name -> all.firstOrNull { it.name == name } }
             var lastSelected by remember { mutableStateOf(selected) }
             if (selected.isNotEmpty()) lastSelected = selected
@@ -503,7 +499,6 @@ private fun Viewer(screenshot: Screenshot, list: List<Screenshot>, onNavigate: (
                 withContext(Dispatchers.IO) { imageAspect(screenshot) }?.let { value = it }
             }
             BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                // The frame hugs the screenshot, so there's no letterboxing inside it.
                 val frameWidth = minOf(maxWidth, maxHeight * aspect)
                 Box(
                     Modifier
@@ -551,7 +546,6 @@ private fun FilmStrip(list: List<Screenshot>, current: Screenshot, onNavigate: (
     val index = list.indexOfFirst { it.name == current.name }.coerceAtLeast(0)
 
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        // Fixed pages of whole tiles; a short last page is centred, and the arrows never move.
         val usable = maxWidth - (FILM_ARROW + FILM_GAP) * 2
         val count = ((usable + FILM_GAP) / (FILM_MIN_WIDTH + FILM_GAP)).toInt().coerceIn(1, 9)
         val tileWidth = (usable - FILM_GAP * (count - 1)) / count
@@ -602,7 +596,6 @@ private fun FilmTile(item: Screenshot, isCurrent: Boolean, modifier: Modifier, o
     }
 }
 
-/** The screenshot's width over height, read from the file header without decoding it */
 private fun imageAspect(screenshot: Screenshot): Float? = runCatching {
     javax.imageio.ImageIO.createImageInputStream(screenshot.file).use { stream ->
         val reader = javax.imageio.ImageIO.getImageReaders(stream ?: return null).asSequence().firstOrNull() ?: return null
@@ -752,7 +745,6 @@ private fun metadataRows(fields: Map<String, String>): List<Pair<String, String>
     fields[MetadataKeys.VERSION]?.let { "Version" to it },
 ).filter { it.second.isNotBlank() }
 
-/** `minecraft:cherry_grove` reads as "Cherry grove"; other namespaces stay visible */
 private fun idLabel(id: String): String {
     val path = id.removePrefix("minecraft:").replace('_', ' ')
     return path.replaceFirstChar { it.titlecase(Locale.ROOT) }

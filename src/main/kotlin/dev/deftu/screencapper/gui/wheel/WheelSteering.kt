@@ -7,16 +7,7 @@ import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * Turns mouse movement into a pointer on the wheel and the wedge it aims at. Units are whatever [configure]'s radius is
- * in (dp for the wheel).
- *
- * The pointer eases into the rim instead of stopping dead, the raw position is capped a little past the rim so pulling
- * back takes effect at once, the aim holds across a border for a few degrees so it doesn't flicker, and a square wheel
- * measures reach along the square. Wedge 0 points straight up; the rest follow clockwise.
- *
- * Adapted from PolyPlus's radial wheel (Polyfrost, GPL-3.0).
- */
+// Adapted from PolyPlus's radial wheel (Polyfrost, GPL-3.0)
 internal class WheelSteering {
     private var radius = 0f
     private var square = false
@@ -30,7 +21,6 @@ internal class WheelSteering {
     var pointer: Pair<Float, Float> = 0f to 0f
         private set
 
-    /** Returns whether anything changed */
     fun configure(radius: Float, square: Boolean, deadZone: Float, enabled: List<Boolean>): Boolean {
         if (this.radius == radius && this.square == square && this.deadZone == deadZone && this.enabled == enabled) return false
         this.radius = radius
@@ -40,7 +30,6 @@ internal class WheelSteering {
         return true
     }
 
-    /** Moves the pointer by [dx], [dy] and returns the aimed wedge, or -1 */
     fun steer(dx: Float, dy: Float): Int {
         var x = rawX + dx
         var y = rawY + dy

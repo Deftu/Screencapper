@@ -10,13 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Chat lines that can be rewritten after they're posted.
- * <p>
- * New text always goes through OneConfig's own chat path so its component conversion is reused; the freshly added
- * entry is then moved into the slot of the line it replaces. A line is only tracked when posting it actually added a
- * new entry, since chat filters and other mods can drop messages.
- */
 public final class ChatLines {
     private static final int MAX_TRACKED = 256;
 
@@ -30,7 +23,6 @@ public final class ChatLines {
     private ChatLines() {
     }
 
-    /** Whether a line is tracked under [key]. Lines that leave chat are dropped once an edit finds them gone */
     public static boolean isTracked(String key) {
         synchronized (entries) {
             return entries.containsKey(key);
@@ -47,7 +39,6 @@ public final class ChatLines {
         });
     }
 
-    /** Rewrites the line posted under [key] in place. Does nothing when that line has already left chat */
     public static void replace(String key, Component text) {
         MainThread.run(() -> {
             Object previous;
@@ -63,7 +54,6 @@ public final class ChatLines {
             Object fresh = display(text);
             if (fresh == null) return;
 
-            // Posting can trim the oldest lines, so the old slot is looked up again afterwards.
             int index = indexOf(messages, previous);
             messages.remove(0);
             if (index < 0) {
@@ -93,7 +83,6 @@ public final class ChatLines {
         });
     }
 
-    /** Posts [text] and returns the chat entry it created, or null when nothing was added */
     private static Object display(Component text) {
         List<Object> messages = messages();
         Object head = messages == null || messages.isEmpty() ? null : messages.get(0);

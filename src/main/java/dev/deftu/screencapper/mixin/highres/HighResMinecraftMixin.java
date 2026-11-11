@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.Shadow;
 *///?}
 
-/** Runs the high-res capture's per-frame work around the game renderer's frame */
 @Mixin(Minecraft.class)
 public class HighResMinecraftMixin {
     //? if >=26.3 {

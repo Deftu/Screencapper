@@ -7,12 +7,6 @@ import java.io.File
 import java.io.InputStream
 import java.util.zip.InflaterInputStream
 
-/**
- * Reads the text chunks (`tEXt`, `zTXt`, `iTXt`) of a PNG without decoding any pixels.
- *
- * Text written before the image data is all that's read; the file is closed at the first `IDAT`. Anything that isn't a
- * readable PNG gives an empty map instead of an error.
- */
 object PngText {
     private val SIGNATURE = byteArrayOf(0x89.toByte(), 'P'.code.toByte(), 'N'.code.toByte(), 'G'.code.toByte(), 13, 10, 26, 10)
     private const val MAX_TEXT_CHUNK = 4 * 1024 * 1024

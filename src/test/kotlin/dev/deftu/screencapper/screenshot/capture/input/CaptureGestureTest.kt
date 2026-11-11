@@ -29,7 +29,6 @@ class CaptureGestureTest {
 
     @Test
     fun releaseSeenLateStillCountsAsTap() {
-        // A long frame can hide the release; the key was never seen held past the threshold, so it stays a tap.
         val gesture = HoldGesture { 300L }
         gesture.press(0L)
         assertEquals(HoldGesture.Outcome.TAP, gesture.update(2_000L, down = false))

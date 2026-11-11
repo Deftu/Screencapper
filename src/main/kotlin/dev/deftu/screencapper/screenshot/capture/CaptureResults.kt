@@ -16,12 +16,7 @@ import net.minecraft.text.Text
 import net.minecraft.text.TranslatableText
 *///?}
 
-/** Vanilla's screenshot chat messages, and the hand-off from a finished save to Screencapper's chat card */
 object CaptureResults {
-    /**
-     * Reports a finished save the way vanilla would: Screencapper's chat card when it's on, otherwise vanilla's message.
-     * Safe to call from any thread.
-     */
     @JvmStatic
     fun deliver(file: File, error: Throwable?) {
         MainThread.run {

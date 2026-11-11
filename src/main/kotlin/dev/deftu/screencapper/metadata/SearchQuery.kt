@@ -5,17 +5,8 @@ import java.time.YearMonth
 import java.time.format.DateTimeParseException
 import java.util.Locale
 
-/** What a search runs against: the file name, its metadata fields and the day it was taken */
 class SearchEntry(val name: String, val fields: Map<String, String>, val date: LocalDate)
 
-/**
- * A parsed search box query. Every term must match.
- *
- * Filters: `server:` (name or address), `world:`, `biome:`, `dimension:`, `player:`, `version:`, `before:` and `after:`
- * (`YYYY`, `YYYY-MM` or `YYYY-MM-DD`, both excluding the named period), `has:coords` and `has:chat`. Values can be quoted
- * to include spaces. Everything else, including unknown filters and unreadable dates, is a free word or quoted phrase
- * matched against the name and every field. Matching ignores case.
- */
 class SearchQuery private constructor(private val terms: List<Term>) {
     val isEmpty: Boolean get() = terms.isEmpty()
 
@@ -102,10 +93,6 @@ class SearchQuery private constructor(private val terms: List<Term>) {
             null
         }
 
-        /**
-         * Splits on whitespace outside quotes. A token that opens with a quote is a phrase; inside a token, quotes only
-         * group (`world:"my world"`). An unclosed quote runs to the end.
-         */
         private fun tokens(query: String): List<Token> {
             val tokens = mutableListOf<Token>()
             var index = 0

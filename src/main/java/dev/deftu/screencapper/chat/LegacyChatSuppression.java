@@ -1,6 +1,5 @@
 package dev.deftu.screencapper.chat;
 
-/** Holds the vanilla screenshot message that 1.8.9 should drop instead of printing */
 public final class LegacyChatSuppression {
     private static Object suppressed;
 

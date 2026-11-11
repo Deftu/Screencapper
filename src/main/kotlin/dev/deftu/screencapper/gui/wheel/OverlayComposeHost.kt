@@ -23,12 +23,7 @@ import org.polyfrost.oneconfig.internal.ui.compose.RenderThreadDispatcher
 import org.polyfrost.oneconfig.internal.ui.compose.impls.OneConfigUIScreen
 import org.polyfrost.oneconfig.internal.ui.compose.sceneDensity
 
-/**
- * A Compose scene drawn over the in-game GUI from a render hook, outside OneConfig's HUD system, so it never shows up in
- * the HUD editor.
- *
- * Adapted from PolyPlus's radial wheel (Polyfrost, GPL-3.0).
- */
+// Adapted from PolyPlus's radial wheel (Polyfrost, GPL-3.0)
 internal class OverlayComposeHost(textureName: String, private val content: @Composable () -> Unit) {
     private val inline = InlineCanvas(textureName)
     private var scene: ComposeScene? = null

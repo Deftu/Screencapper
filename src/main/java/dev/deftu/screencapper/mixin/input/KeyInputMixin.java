@@ -16,10 +16,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 //? if >=1.21.9
 import net.minecraft.client.input.KeyEvent;
 
-/**
- * Keeps key presses from the game while the capture menu is open, so picking with number keys or closing with Escape
- * doesn't also switch hotbar slots or open the pause menu. Releases still go through, so no key is left held down.
- */
 //? if >=1.21 {
 @Mixin(KeyboardHandler.class)
 //?} else {

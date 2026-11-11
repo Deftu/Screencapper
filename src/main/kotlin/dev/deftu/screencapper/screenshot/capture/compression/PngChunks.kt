@@ -4,14 +4,12 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.util.zip.InflaterInputStream
 
-/** Reads and removes the text chunks of an encoded PNG without decoding its pixels */
 object PngChunks {
     private val SIGNATURE = byteArrayOf(0x89.toByte(), 'P'.code.toByte(), 'N'.code.toByte(), 'G'.code.toByte(), 13, 10, 26, 10)
     private val METADATA_TYPES = setOf("tEXt", "iTXt", "zTXt", "eXIf", "tIME")
 
     fun isPng(bytes: ByteArray): Boolean = bytes.size >= SIGNATURE.size && SIGNATURE.indices.all { bytes[it] == SIGNATURE[it] }
 
-    /** [png] without its text, EXIF and time chunks; anything that isn't a well-formed PNG comes back unchanged */
     fun stripText(png: ByteArray): ByteArray {
         if (!isPng(png)) return png
         val out = ByteArrayOutputStream(png.size)
@@ -22,7 +20,6 @@ object PngChunks {
         return if (ok) out.toByteArray() else png
     }
 
-    /** The keyword/text pairs of the tEXt, zTXt and iTXt chunks in [png] */
     fun readText(png: ByteArray): Map<String, String> {
         if (!isPng(png)) return emptyMap()
         val text = LinkedHashMap<String, String>()
@@ -61,7 +58,6 @@ object PngChunks {
         throw IllegalArgumentException("Malformed text chunk")
     }
 
-    /** Calls [action] with each chunk's type, offset and body length; false if the chunk layout is broken */
     private inline fun forEachChunk(png: ByteArray, action: (type: String, start: Int, length: Int) -> Unit): Boolean {
         val buffer = ByteBuffer.wrap(png)
         var offset = SIGNATURE.size

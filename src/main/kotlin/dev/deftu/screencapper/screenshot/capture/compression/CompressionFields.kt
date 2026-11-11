@@ -3,7 +3,6 @@ package dev.deftu.screencapper.screenshot.capture.compression
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
-/** The config settings of one use: its choice, plus the detailed options shown when that choice is Custom */
 class CompressionFields(
     val choice: KMutableProperty0<CompressionChoice>,
     val format: KMutableProperty0<ImageFormat>,
@@ -13,12 +12,10 @@ class CompressionFields(
     val resize: KMutableProperty0<ResizeMode>,
     val scale: KMutableProperty0<Float>,
     val maxWidth: KMutableProperty0<Float>,
-    /** Null for uploads, which never save anything */
     val keepOriginal: KMutableProperty0<Boolean>?,
 ) {
     private val isCustom: Boolean get() = choice.get() == CompressionChoice.CUSTOM
 
-    /** The settings to encode with, or null to send the file as it was saved */
     fun profile(): CompressionProfile? {
         val keep = keepOriginal?.get() ?: false
         return when (val selected = choice.get()) {
@@ -42,7 +39,6 @@ class CompressionFields(
         }
     }
 
-    /** Registers when each detailed option is hidden, and asks for a re-check whenever any of these settings changes */
     fun registerVisibility(hideIf: (KProperty<*>, () -> Boolean) -> Unit, refreshOn: (KProperty<*>) -> Unit) {
         hideIf(format) { !isCustom }
         hideIf(quality) { !isCustom || format.get() != ImageFormat.JPEG }

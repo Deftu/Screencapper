@@ -18,12 +18,6 @@ import javax.imageio.ImageIO
 
 class Thumbnail(val bitmap: ImageBitmap, val width: Int, val height: Int, internal val bytes: Long)
 
-/**
- * Decoded, downscaled screenshots.
- *
- * Decodes run two at a time and are shared between callers asking for the same image, since a full-size screenshot
- * takes tens of megabytes while it's being read. Cached bitmaps are capped by their total size.
- */
 object Thumbnails {
     private const val MAX_CACHE_BYTES = 160L * 1024 * 1024
 
@@ -51,7 +45,6 @@ object Thumbnails {
                 try {
                     return existing.await()
                 } catch (e: CancellationException) {
-                    // The caller that started this decode went away before it ran, so try again as the owner.
                     currentCoroutineContext().ensureActive()
                     continue
                 }

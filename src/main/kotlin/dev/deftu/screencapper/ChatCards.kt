@@ -19,13 +19,6 @@ import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import javax.imageio.ImageIO
 
-/**
- * The two-line chat card posted for each new screenshot.
- *
- * The header carries the screenshot's details and, once uploaded, its latest link. The second line holds the actions
- * and is rewritten in place while an action is in progress (picking an uploader, confirming a delete, uploading),
- * then switches back to the actions when it finishes or is cancelled.
- */
 object ChatCards {
     private val BAR_INFO = NamedTextColor.AQUA
     private val BAR_SUCCESS = NamedTextColor.GREEN

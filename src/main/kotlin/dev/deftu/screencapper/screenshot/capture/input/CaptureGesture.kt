@@ -1,6 +1,5 @@
 package dev.deftu.screencapper.screenshot.capture.input
 
-/** Tells a tap of the screenshot key from a hold, from the key state seen each frame */
 internal class HoldGesture(private val thresholdMs: () -> Long) {
     enum class Outcome { NONE, TAP, HOLD, RELEASED }
 
@@ -14,7 +13,6 @@ internal class HoldGesture(private val thresholdMs: () -> Long) {
         held = false
     }
 
-    /** [HOLD] fires once, when the key has been down for the threshold; [RELEASED] follows it, [TAP] replaces it */
     fun update(now: Long, down: Boolean): Outcome {
         if (pressedAt < 0) return Outcome.NONE
         if (!down) {
@@ -35,12 +33,6 @@ internal class HoldGesture(private val thresholdMs: () -> Long) {
     }
 }
 
-/**
- * A capture whose fate is decided separately from its arrival.
- *
- * The pixels can arrive after the decision (GPU readback finishes a frame or two later) or before it. Whichever comes
- * second applies the decision, so each capture reaches exactly one of [keep] or [drop].
- */
 internal class PendingShot<T : Any>(private val keep: (T) -> Unit, private val drop: (T) -> Unit) {
     private var capture: T? = null
     private var decision: Boolean? = null
@@ -54,7 +46,6 @@ internal class PendingShot<T : Any>(private val keep: (T) -> Unit, private val d
         }
     }
 
-    /** Returns false when this shot was already decided */
     @Synchronized
     fun decide(save: Boolean): Boolean {
         if (decision != null) return false

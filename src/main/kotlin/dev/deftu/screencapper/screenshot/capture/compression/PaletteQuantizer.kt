@@ -1,12 +1,7 @@
 package dev.deftu.screencapper.screenshot.capture.compression
 
-/** One palette index per pixel, plus the RGB palette they point into */
 class QuantizedImage(val indices: ByteArray, val palette: IntArray)
 
-/**
- * Reduces an image to a small palette with median cut over a 15-bit colour histogram, then maps each pixel to its
- * nearest palette colour, optionally with Floyd-Steinberg error diffusion.
- */
 object PaletteQuantizer {
     private const val BITS = 5
     private const val BINS = 1 shl (BITS * 3)
@@ -65,7 +60,6 @@ object PaletteQuantizer {
             return QuantizedImage(indices, palette)
         }
 
-        // Errors are kept in sixteenths; each row buffer has a spare column on both sides for the edge pixels.
         var current = Array(3) { IntArray(width + 2) }
         var next = Array(3) { IntArray(width + 2) }
         for (y in 0 until height) {
@@ -118,7 +112,6 @@ object PaletteQuantizer {
         return best
     }
 
-    /** Splits the occupied histogram bins into at most [colors] boxes, always cutting the widest box at its pixel median */
     private fun medianCut(occupied: IntArray, counts: IntArray, colors: Int): List<IntArray> {
         val boxes = mutableListOf(occupied)
         while (boxes.size < colors) {

@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 //?}
 
-/** Keeps the GUI's share of the frame while a high-res capture enlarges the framebuffer */
 @Mixin(Window.class)
 public class HighResWindowMixin {
     //? if >=1.21.5 {

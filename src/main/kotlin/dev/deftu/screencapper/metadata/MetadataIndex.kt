@@ -14,13 +14,6 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.Executors
 
-/**
- * Each screenshot's metadata fields by file name, kept in `config/screencapper/index.json` so searching never has to
- * open the images.
- *
- * Loading, updates and saves all run in order on one background thread. Files the index doesn't know yet are read from
- * their PNG text chunks.
- */
 object MetadataIndex {
     private const val BACKFILL_PUBLISH_EVERY = 64
 
@@ -34,14 +27,12 @@ object MetadataIndex {
     @Volatile
     private var loadQueued = false
 
-    /** Bumps whenever the index changes, so open views re-run their search */
     var revision by mutableIntStateOf(0)
         private set
 
     private val file: File
         get() = File(FabricLoader.getInstance().configDir.toFile(), "screencapper/index.json")
 
-    /** Fields for [name] without blocking: null until the index has loaded, which this starts in the background */
     fun peek(name: String): Map<String, String>? {
         if (!loaded) {
             requestLoad()
@@ -50,13 +41,11 @@ object MetadataIndex {
         return synchronized(lock) { entries[name] }
     }
 
-    /** Fields for [name], loading the index first if needed. Blocks, so keep it off the render thread */
     fun fields(name: String): Map<String, String>? {
         ensureLoaded()
         return synchronized(lock) { entries[name] }
     }
 
-    /** Indexes a freshly saved screenshot from its text chunks */
     fun record(file: File) {
         worker.execute {
             ensureLoaded()
@@ -77,7 +66,6 @@ object MetadataIndex {
         }
     }
 
-    /** Reads the text chunks of every file the index hasn't seen, and drops entries whose file is gone */
     fun backfill(files: List<File>) {
         worker.execute {
             ensureLoaded()
@@ -134,7 +122,6 @@ object MetadataIndex {
         }
     }
 
-    /** Only ever called on [worker], so writes land in order */
     private fun save() {
         val json = synchronized(lock) {
             JsonObject().apply {

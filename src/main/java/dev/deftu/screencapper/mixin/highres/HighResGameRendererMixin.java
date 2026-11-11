@@ -21,13 +21,6 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 *///?}
 
-/**
- * Points the projection at one tile of a tiled high-res capture.
- * <p>
- * The aspect ratio becomes the target image's, and the tile's zoom goes on the drawing projection only, so culling still
- * sees the whole frustum and no tile loses chunks that sit outside its own slice. The first-person hand gets the same zoom,
- * and on 1.8.9 so does the GUI's ortho while a tiled capture draws the HUD.
- */
 @Mixin(GameRenderer.class)
 public class HighResGameRendererMixin {
     //? if >=1.21.4 && <1.21.5 {

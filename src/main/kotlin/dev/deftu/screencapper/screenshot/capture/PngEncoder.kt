@@ -9,12 +9,6 @@ import java.util.zip.Adler32
 import java.util.zip.CRC32
 import java.util.zip.Deflater
 
-/**
- * Writes opaque RGB or indexed PNGs, compressing horizontal strips of the image in parallel.
- *
- * Each strip is deflated on its own and flushed to a byte boundary, so the strips concatenate into one valid zlib
- * stream. Screenshots have no useful alpha, so it's dropped, which also makes the file smaller.
- */
 object PngEncoder {
     private val SIGNATURE = byteArrayOf(0x89.toByte(), 'P'.code.toByte(), 'N'.code.toByte(), 'G'.code.toByte(), 13, 10, 26, 10)
     private const val MIN_STRIP_ROWS = 64
@@ -22,11 +16,9 @@ object PngEncoder {
     private const val COLOR_RGB = 2
     private const val COLOR_INDEXED = 3
 
-    /** [argb] holds [width] x [height] pixels, top row first */
     fun encode(argb: IntArray, width: Int, height: Int, level: Int, pool: ExecutorService?, threads: Int, out: OutputStream, text: Map<String, String> = emptyMap()) {
         require(argb.size >= width * height) { "Not enough pixels for a ${width}x$height image" }
         write(width, height, COLOR_RGB, null, 1 + width * 3, level, pool, threads, out, text) { y, raw, start ->
-            // Sub filter: each byte minus the same channel of the pixel to its left. Cheap, and screenshots shrink a lot.
             raw[start] = 1
             var offset = start + 1
             val row = y * width
@@ -42,7 +34,6 @@ object PngEncoder {
         }
     }
 
-    /** [indices] holds one palette index per pixel, top row first; [palette] holds 1-256 RGB colours */
     fun encodeIndexed(indices: ByteArray, palette: IntArray, width: Int, height: Int, level: Int, pool: ExecutorService?, threads: Int, out: OutputStream, text: Map<String, String> = emptyMap()) {
         require(indices.size >= width * height) { "Not enough pixels for a ${width}x$height image" }
         require(palette.size in 1..256) { "A PNG palette holds 1-256 colours, not ${palette.size}" }
@@ -52,7 +43,6 @@ object PngEncoder {
             plte[i * 3 + 1] = (colour shr 8).toByte()
             plte[i * 3 + 2] = colour.toByte()
         }
-        // No filter: the PNG spec advises it for indexed images, where neighbouring indices don't predict each other.
         write(width, height, COLOR_INDEXED, plte, 1 + width, level, pool, threads, out, text) { y, raw, start ->
             raw[start] = 0
             System.arraycopy(indices, y * width, raw, start + 1, width)
@@ -138,7 +128,6 @@ object PngEncoder {
         }
     }
 
-    /** zlib's adler32_combine: the checksum of A followed by B, from both checksums and B's length */
     private fun combineAdler(first: Long, second: Long, secondLength: Long): Long {
         val remainder = secondLength % ADLER_MOD
         var sum1 = first and 0xFFFF
@@ -152,7 +141,6 @@ object PngEncoder {
         return (sum2 shl 16) or sum1
     }
 
-    /** An uncompressed iTXt chunk body: UTF-8 text under a Latin-1 keyword */
     private fun textChunk(keyword: String, value: String): ByteArray {
         require(keyword.length in 1..79) { "PNG text keywords must be 1-79 characters: $keyword" }
         return ByteArrayOutputStream().apply {

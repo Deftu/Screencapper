@@ -6,12 +6,6 @@ import net.fabricmc.loader.api.FabricLoader
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
-/**
- * Gathers what's known about the game at the moment a screenshot is taken.
- *
- * Called on the render thread, once per capture, before the pixels are read. Keys are PNG text chunk keywords (Latin-1,
- * 1-79 characters); values are free text. The key set is [MetadataKeys].
- */
 object MetadataCollector {
     private val gameVersion: String? by lazy {
         runCatching { FabricLoader.getInstance().getModContainer("minecraft").orElse(null)?.metadata?.version?.friendlyString }.getOrNull()

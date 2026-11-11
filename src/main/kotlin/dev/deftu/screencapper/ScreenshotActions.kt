@@ -130,7 +130,6 @@ object ScreenshotActions {
         OneConfigUI.open(ScreenshotsPage)
     }
 
-    /** Opens an uploaded link in the browser, refusing anything that isn't a well-formed http(s) URL */
     fun browse(url: String) {
         val uri = runCatching { java.net.URI(url) }.getOrNull()
         if (uri == null || uri.scheme?.lowercase() !in setOf("http", "https") || uri.host.isNullOrEmpty()) {

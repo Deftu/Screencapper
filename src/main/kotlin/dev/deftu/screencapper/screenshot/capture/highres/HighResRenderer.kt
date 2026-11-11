@@ -31,19 +31,8 @@ import org.lwjgl.opengl.GL11
 /*import com.mojang.blaze3d.vertex.VertexSorting
 *///?}
 
-/**
- * Renders one frame at a size other than the window's.
- *
- * On 1.21.5 and newer the window's framebuffer size is swapped for the target size for a few frames, the way vanilla's
- * panorama capture does, and the frame is read back through vanilla's device-neutral screenshot copy.
- * Older versions render the level several times with an off-centre projection, one window-sized tile at a time, and
- * stitch the tiles. The HUD is laid out once for a virtual screen of the target size and drawn into each tile through
- * the same off-centre transform, so it stitches like the level.
- *
- * Based on Fabrishot by ramidzkh (MIT).
- */
+// Based on Fabrishot by ramidzkh (MIT)
 object HighResRenderer {
-    /** Largest side a tiled capture may have; the stitched image alone is 1 GiB at this size */
     private const val MAX_TILED_SIDE = 16384
     private const val READ_TIMEOUT_FRAMES = 120
 
@@ -66,17 +55,14 @@ object HighResRenderer {
 
     private var job: Job? = null
 
-    /** GUI scale used while the framebuffer is resized, so the HUD covers the same share of the shot as of the window */
     @JvmStatic
     var guiScaleOverride = 0
         private set
 
-    /** The tile being rendered right now, or null outside a tiled capture */
     @JvmStatic
     var tile: TileProjection? = null
         private set
 
-    /** The aspect ratio the projection must use during a tiled capture, or 0 outside one */
     @JvmStatic
     var tiledAspect = 0f
         private set
@@ -95,7 +81,6 @@ object HighResRenderer {
             *///?}
         }
 
-    /** Starts a capture. Call on the render thread */
     @JvmStatic
     fun start(width: Int, height: Int, hideHud: Boolean, delay: Int, onDone: (CapturedImage?) -> Unit) {
         if (job != null || width <= 0 || height <= 0) {
@@ -115,7 +100,6 @@ object HighResRenderer {
         }
     }
 
-    /** Called after the game renderer has drawn a frame (1.21.5 and newer) */
     @JvmStatic
     fun afterFrame() {
         val job = job ?: return
@@ -129,13 +113,11 @@ object HighResRenderer {
             job.reading = true
             CaptureSource.readMain { width, height, pixels, release ->
                 //? if <1.21.6 {
-                /*// The read on 1.21.5 finishes a frame or more later, and needs the resized framebuffer until then.
-                MainThread.run { restore(job) }
+                /*MainThread.run { restore(job) }
                 *///?}
                 deliver(job, width, height, pixels, release)
             }
             //? if >=1.21.6 {
-            // The copy is already queued, so the framebuffer can shrink back right away.
             restore(job)
             //?}
         } catch (e: Throwable) {
@@ -143,7 +125,6 @@ object HighResRenderer {
         }
     }
 
-    /** Called just before the game renderer draws a frame (1.21.4 and older); renders and reads every tile */
     @JvmStatic
     fun beforeFrame(partialTick: Float) {
         val job = job ?: return
@@ -176,13 +157,11 @@ object HighResRenderer {
         }
     }
 
-    /** [calculated] is vanilla's GUI scale for the current framebuffer */
     @JvmStatic
     fun guiScale(calculated: Int): Int = if (guiScaleOverride > 0) guiScaleOverride else calculated
 
     //? if >=1.21 && <1.21.5 {
-    /*/^* Zooms [projection] onto the current tile, in place *^/
-    @JvmStatic
+    /*@JvmStatic
     fun applyTile(projection: Matrix4f): Matrix4f {
         val tile = tile ?: return projection
         return projection.mulLocal(Matrix4f().translation(tile.offsetX, tile.offsetY, 0f).scale(tile.scaleX, tile.scaleY, 1f))
@@ -192,7 +171,6 @@ object HighResRenderer {
     //? if <1.21 {
     /*private val matrix = BufferUtils.createFloatBuffer(16)
 
-    /^* Multiplies the current GL matrix by the tile's transform; call right after the projection was reset *^/
     @JvmStatic
     fun multiplyTile() {
         val tile = tile ?: return
@@ -204,13 +182,11 @@ object HighResRenderer {
 
     private var hudPass = false
 
-    /^* Multiplies the GUI's projection by the tile's transform while [renderHud] draws a tile; call right before the GUI's ortho *^/
     @JvmStatic
     fun multiplyHudTile() {
         if (hudPass) multiplyTile()
     }
 
-    /^* Puts the tile's transform in front of the projection that's already set up, keeping the frustum used for culling whole *^/
     @JvmStatic
     fun prependTileToProjection() {
         val tile = tile ?: return
@@ -271,7 +247,6 @@ object HighResRenderer {
         complete(job, null)
     }
 
-    /** Hands over the result once, even if a late read arrives after the capture already failed */
     private fun complete(job: Job, image: CapturedImage?) {
         if (job.completed) return
         job.completed = true
@@ -300,15 +275,9 @@ object HighResRenderer {
         //?}
     }
 
-    /** [scale] grown by as much as the image grows, so the GUI covers the same share of it */
     private fun scaledGuiScale(scale: Double, oldWidth: Int, oldHeight: Int, newWidth: Int, newHeight: Int): Int =
         max(1, (scale * min(newWidth.toFloat() / oldWidth, newHeight.toFloat() / oldHeight)).roundToInt())
 
-    /**
-     * Draws the in-game GUI over the current tile as if the window were the target size.
-     *
-     * Open screens are left out, the way F2 in game leaves them out.
-     */
     @Suppress("UNUSED_PARAMETER")
     private fun renderHud(job: Job, partialTick: Float) {
         //? if >=1.21 && <1.21.5 {
@@ -390,7 +359,6 @@ object HighResRenderer {
         val minecraft = Minecraft.getInstance()
         minecraft.window.width = width
         minecraft.window.height = height
-        // The game renderer resizes its targets to the window's size when it next renders.
         minecraft.resizeGui()
         //?} else if >=26.1 {
         /*val minecraft = Minecraft.getInstance()
@@ -483,7 +451,6 @@ object HighResRenderer {
         *///?}
     }
 
-    /** The world for `%world%`: the singleplayer level's name, the server's name, or null */
     @JvmStatic
     fun worldName(): String? {
         val minecraft = Minecraft.getInstance()

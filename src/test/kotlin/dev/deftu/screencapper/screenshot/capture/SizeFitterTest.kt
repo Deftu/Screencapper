@@ -10,7 +10,6 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class SizeFitterTest {
-    /** A stand-in encoder whose output grows with quality and with the pixel count */
     private fun fakeSize(profile: CompressionProfile, scale: Double): Int {
         val quality = if (profile.format == ImageFormat.JPEG) profile.jpegQuality / 100.0 else 1.5
         return (10_000_000 * quality * scale * scale).toInt()

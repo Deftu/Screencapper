@@ -26,13 +26,11 @@ import java.util.UUID
 
 class UploadException(message: String) : IOException(message)
 
-/** The bytes actually sent for a screenshot, after the upload profile and the host's size limit */
 private class Payload(val bytes: ByteArray, val fileName: String, val contentType: String)
 
 object Uploaders {
     private const val IMGUR_CLIENT_ID = "fb714c908164e90"
     private val TIMEOUT: Duration = Duration.ofSeconds(60)
-    // HttpClient rejects these, and Content-Type is always set from the body below.
     private val MANAGED_HEADERS = setOf("content-type", "content-length", "host", "connection", "expect", "upgrade")
 
     private val client: HttpClient by lazy {
@@ -67,7 +65,6 @@ object Uploaders {
             if (limit == null || bytes.size <= limit) return Payload(bytes, screenshot.name, contentType(screenshot))
         }
 
-        // An "as saved" file over the host's limit is shrunk starting from a high quality JPEG.
         val start = compression ?: CompressionProfile.UPLOAD
         val image = ImageCompressor.fromImage(screenshot.readImage())
         val text = if (keepMetadata && isPng && start.format == ImageFormat.PNG) PngChunks.readText(original) else emptyMap()
@@ -156,17 +153,10 @@ object Uploaders {
     private fun escape(value: String): String = value.replace("\"", "%22").replace("\r", "").replace("\n", "")
 }
 
-/**
- * Reads the link out of an upload response.
- *
- * The path is either a plain JSON path (`data.link`, `files[0].url`), empty for a plain-text response, or a template
- * using ShareX's `{json:path}`, `$json:path$` and `{response}` tokens, such as `https://i.example.com/{json:id}`.
- */
 object ResponseUrl {
     private val TOKEN = Regex("""\{json:([^}]+)}|\${'$'}json:([^${'$'}]+)\${'$'}|\{response}""")
     private val SEGMENT = Regex("""([^.\[\]]+)|\[(\d+)]""")
 
-    /** Turns a lone token into its plain path. Templates with surrounding text are kept as they are */
     fun normalize(path: String): String {
         val trimmed = path.trim()
         val match = TOKEN.matchEntire(trimmed) ?: return trimmed

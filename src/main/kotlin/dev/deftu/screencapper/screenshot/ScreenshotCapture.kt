@@ -18,18 +18,15 @@ object ScreenshotCapture {
         }
     }
 
-    /** Wraps the screenshot message consumer so the saved file can be picked up once it's written */
     @JvmStatic
     fun <T> wrap(delegate: Consumer<T>, describe: Function<T, String>): Consumer<T> =
         if (delegate is Wrapped<*>) delegate else Wrapped(delegate, describe)
 
-    /** Handles a finished screenshot, returning true when the vanilla message should be hidden */
     @JvmStatic
     fun onMessage(message: String): Boolean {
         if (!ScreencapperConfig.enabled) return false
         val screenshot = ScreenshotLibrary.findJustSaved(message) ?: return false
         val replace = ScreencapperConfig.replaceMessage
-        // Modern versions call this from the screenshot IO thread, so the follow-up work hops to the client thread.
         MainThread.run {
             if (replace) ChatCards.captured(screenshot)
             ScreenshotActions.onCaptured(screenshot)

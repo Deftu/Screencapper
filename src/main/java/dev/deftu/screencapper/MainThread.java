@@ -14,7 +14,6 @@ public final class MainThread {
         *///?}
     }
 
-    /** Runs [action] now when already on the client thread, otherwise queues it there */
     public static void run(Runnable action) {
         if (isCurrent()) {
             action.run();

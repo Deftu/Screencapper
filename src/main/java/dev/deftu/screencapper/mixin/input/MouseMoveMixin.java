@@ -13,14 +13,6 @@ import net.minecraft.client.MouseHandler;
 /*import net.minecraft.client.Mouse;
 *///?}
 
-/**
- * Hands mouse movement to the capture menu instead of the game while it's open, so picking doesn't turn the camera or
- * move over the screen underneath.
- * <p>
- * 1.21+: {@code MouseHandler.handleAccumulatedMovement} turns the player and moves the screen's hover from
- * {@code accumulatedDX}/{@code accumulatedDY}, then zeroes them. 1.8.9: {@code Mouse.tick} copies LWJGL's deltas into
- * {@code x}/{@code y}, which the game renderer turns the player with afterwards.
- */
 //? if >=1.21 {
 @Mixin(MouseHandler.class)
 //?} else {
@@ -52,7 +44,6 @@ public class MouseMoveMixin {
     @Inject(method = "tick", at = @At("TAIL"))
     private void screencapper$redirectToMenu(CallbackInfo ci) {
         if (!CaptureInput.blocksInput()) return;
-        // LWJGL 2 counts y upwards.
         CaptureInput.onMouseDelta(x, -y);
         x = 0;
         y = 0;

@@ -17,17 +17,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 //? if >=1.21.9
 import net.minecraft.client.input.MouseButtonInfo;
 
-/**
- * Keeps clicks and scrolling from the game while the capture wheel is open: the primary button takes the aimed wedge,
- * the secondary cancels, and neither attacks, uses or switches hotbar slots. Releases still go through, so no button is
- * left held down.
- * <p>
- * The hooks, per version:
- * 1.21.9+: {@code MouseHandler.onButton(long, MouseButtonInfo, int)} and {@code onScroll(long, double, double)}; 26.3 runs
- * on SDL, so buttons are compared with {@code InputConstants.MOUSE_BUTTON_LEFT}/{@code RIGHT} rather than raw numbers.
- * 1.21-1.21.8: {@code MouseHandler.onPress(long, int, int, int)} and {@code onScroll}.
- * 1.8.9: the {@code Mouse.next()} loop in {@code Minecraft.tick}, which handles both buttons and the scroll wheel.
- */
 //? if >=1.21 {
 @Mixin(MouseHandler.class)
 //?} else {

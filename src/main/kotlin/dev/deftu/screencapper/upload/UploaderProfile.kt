@@ -17,7 +17,6 @@ data class UploaderProfile(
     val responseUrl: String = "url",
     val headers: List<Pair<String, String>> = emptyList(),
     val formFields: List<Pair<String, String>> = emptyList(),
-    /** Largest upload the host takes, in megabytes; blank for no limit */
     val sizeLimitMb: String = "",
     val keepMetadata: Boolean = false,
 ) {
@@ -30,7 +29,6 @@ data class UploaderProfile(
             else -> runCatching { java.net.URI(url).host }.getOrNull() ?: url.ifBlank { "No URL set" }
         }
 
-    /** The host's upload limit in bytes, or null for none */
     val sizeLimitBytes: Long?
         get() = when (id) {
             IMGUR_ID -> 20_000_000L
@@ -44,7 +42,6 @@ data class UploaderProfile(
 
         val IMGUR = UploaderProfile(id = IMGUR_ID, name = "Imgur", url = "https://api.imgur.com/3/image")
 
-        /** catbox.moe's anonymous upload API answers with the file's link as plain text */
         val CATBOX = UploaderProfile(
             id = CATBOX_ID,
             name = "Catbox",
