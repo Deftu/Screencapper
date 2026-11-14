@@ -67,7 +67,7 @@ private class ActivePreview(val screenshot: Screenshot, val bitmap: PolyBitmap, 
     @Volatile var feedbackAt = 0L
 }
 
-class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview", Category.INFO) {
+class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot Preview", Category.INFO) {
     override val description: String = "Shows each new screenshot with quick actions."
 
     @Slider(title = "Duration", description = "How long the preview stays on screen, in seconds.", min = 1f, max = 30f, step = 1f)
