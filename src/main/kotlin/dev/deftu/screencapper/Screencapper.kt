@@ -15,6 +15,7 @@ import org.polyfrost.oneconfig.api.commands.v1.CommandManager
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.OneConfigUI
+import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigDestination
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPages
 
 object Screencapper : ClientModInitializer {
@@ -31,7 +32,7 @@ object Screencapper : ClientModInitializer {
         LegacyConfigMigration.run()
         HudManager.register(ScreenshotPreviewHud(), ScreencapperConfig.id, "/assets/screencapper/screencapper.svg")
         CaptureInput.install()
-        if (OneConfigPages.byId(ScreenshotsPage.id) == null) OneConfigPages.register(ScreenshotsPage)
+        OneConfigPages.registerIfAbsent(ScreenshotsPage)
         registerCommands()
     }
 
@@ -51,7 +52,7 @@ object Screencapper : ClientModInitializer {
         @OptIn(ExperimentalOneConfigUiApi::class)
         CommandManager.register(
             CommandManager.literal(ID)
-                .executes { OneConfigUI.open(OneConfigPages.modConfig(ScreencapperConfig.id)); 1 }
+                .executes { OneConfigUI.open(OneConfigDestination.ModConfig(OneConfigPages.modConfig(ScreencapperConfig.id))); 1 }
                 .then(CommandManager.literal("screenshots").executes { ScreenshotActions.openManager(); 1 })
                 .then(CommandManager.literal("folder").executes { ScreenshotActions.openFolder(); 1 }
                     .then(CommandManager.argument("screenshot", StringArgumentType.greedyString()).executes { ScreenshotActions.openFolder(); 1 }))

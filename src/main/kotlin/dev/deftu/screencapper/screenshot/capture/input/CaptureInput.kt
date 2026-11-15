@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalOneConfigUiApi::class)
+
 package dev.deftu.screencapper.screenshot.capture.input
 
 import dev.deftu.screencapper.Screencapper
@@ -5,7 +7,6 @@ import dev.deftu.screencapper.ScreenshotActions
 import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.gui.wheel.CaptureOverlay
 import dev.deftu.screencapper.gui.wheel.WheelClick
-import dev.deftu.screencapper.gui.wheel.WheelEntry
 import dev.deftu.screencapper.metadata.MetadataCollector
 import dev.deftu.screencapper.screenshot.capture.CaptureKind
 import dev.deftu.screencapper.screenshot.capture.CaptureResults
@@ -14,6 +15,8 @@ import dev.deftu.screencapper.screenshot.capture.FastCapture
 import dev.deftu.screencapper.screenshot.capture.HighResCapture
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
+import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.RadialMenuItem
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 
@@ -176,32 +179,31 @@ object CaptureInput {
     }
 
     private fun closeMenu() {
-        CaptureOverlay.close(instant = false)
+        CaptureOverlay.dismiss(instant = false)
         gesture.reset()
     }
 
     private fun confirmMenu() {
-        val choice = wheelChoices.getOrNull(CaptureOverlay.hovered)
-        CaptureOverlay.close(instant = choice != null)
+        val choice = wheelChoices.getOrNull(CaptureOverlay.confirm())
         if (choice != null) run(choice)
     }
 
     private fun pickDirectly(index: Int) {
-        CaptureOverlay.close(instant = true)
+        CaptureOverlay.pick(index)
         gesture.reset()
         run(wheelChoices[index])
     }
 
     private fun customSize(): Pair<Int, Int> = ScreencapperConfig.highResWidth.toInt() to ScreencapperConfig.highResHeight.toInt()
 
-    private fun wheelEntries(): List<Pair<CaptureChoice, WheelEntry>> {
+    private fun wheelEntries(): List<Pair<CaptureChoice, RadialMenuItem>> {
         val (customWidth, customHeight) = customSize()
         return listOf(
-            CaptureChoice.HIGH_RES_4K to WheelEntry("maximise", "High-res 4K", "3840 \u00d7 2160"),
-            CaptureChoice.HIGH_RES_8K to WheelEntry("layers", "High-res 8K", "7680 \u00d7 4320"),
-            CaptureChoice.HIGH_RES_CUSTOM to WheelEntry("spanner", "High-res custom", "$customWidth \u00d7 $customHeight"),
-            CaptureChoice.NO_HUD to WheelEntry("eye-off", "No HUD", "Hides the HUD for this shot"),
-            CaptureChoice.TIMER to WheelEntry("bell", "Timer", "Takes it in 3 seconds"),
+            CaptureChoice.HIGH_RES_4K to RadialMenuItem("High-res 4K", "maximise", "3840 \u00d7 2160"),
+            CaptureChoice.HIGH_RES_8K to RadialMenuItem("High-res 8K", "layers", "7680 \u00d7 4320"),
+            CaptureChoice.HIGH_RES_CUSTOM to RadialMenuItem("High-res custom", "spanner", "$customWidth \u00d7 $customHeight"),
+            CaptureChoice.NO_HUD to RadialMenuItem("No HUD", "eye-off", "Hides the HUD for this shot"),
+            CaptureChoice.TIMER to RadialMenuItem("Timer", "bell", "Takes it in 3 seconds"),
         )
     }
 
@@ -251,7 +253,7 @@ object CaptureInput {
     private fun reset() {
         settlePending(false)
         gesture.reset()
-        CaptureOverlay.close(instant = true)
+        CaptureOverlay.dismiss(instant = true)
         timerEndsAt = -1L
         settleAction = null
         restoreHud?.let { runCatching { InputBridge.hudHidden = it } }

@@ -2,33 +2,16 @@
 
 package dev.deftu.screencapper.gui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,39 +25,29 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.deftu.screencapper.ScreenshotActions
 import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.metadata.MetadataIndex
@@ -85,26 +58,43 @@ import dev.deftu.screencapper.screenshot.Screenshot
 import dev.deftu.screencapper.screenshot.ScreenshotLibrary
 import dev.deftu.screencapper.screenshot.UploadHistory
 import dev.deftu.screencapper.screenshot.UploadRecord
-import org.polyfrost.oneconfig.api.platform.v1.DesktopHelper
-import java.net.URI
 import dev.deftu.screencapper.upload.UploaderProfile
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
+import org.polyfrost.oneconfig.api.ui.v1.components.Badge
+import org.polyfrost.oneconfig.api.ui.v1.components.BadgeTone
 import org.polyfrost.oneconfig.api.ui.v1.components.Chip
-import org.polyfrost.oneconfig.api.ui.v1.components.Icon
+import org.polyfrost.oneconfig.api.ui.v1.components.Confirm
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.EmptyState
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButtonStyle
+import org.polyfrost.oneconfig.api.ui.v1.components.ImageViewer
+import org.polyfrost.oneconfig.api.ui.v1.components.KeyValueRow
+import org.polyfrost.oneconfig.api.ui.v1.components.MasterDetailLayout
+import org.polyfrost.oneconfig.api.ui.v1.components.MediaTile
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuEntry
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuHeading
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
+import org.polyfrost.oneconfig.api.ui.v1.components.PanelHeader
+import org.polyfrost.oneconfig.api.ui.v1.components.PanelSection
+import org.polyfrost.oneconfig.api.ui.v1.components.ScrollContainer
+import org.polyfrost.oneconfig.api.ui.v1.components.SelectionBar
+import org.polyfrost.oneconfig.api.ui.v1.components.SplitButton
+import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
 import org.polyfrost.oneconfig.api.ui.v1.components.Text
-import org.polyfrost.oneconfig.api.ui.v1.components.Tooltip
-import org.polyfrost.oneconfig.api.ui.v1.components.onClick
-import org.polyfrost.oneconfig.api.ui.v1.components.rememberInteractionSource
+import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.rememberImageBitmap
+import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
 import org.polyfrost.oneconfig.api.ui.v1.page.PageGroup
 import org.polyfrost.oneconfig.api.ui.v1.page.PageText
-import org.polyfrost.oneconfig.api.ui.v1.page.currentPageSearchQuery
+import org.polyfrost.oneconfig.api.ui.v1.page.currentPageSearchQueryOrNull
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
 import java.time.Instant
@@ -156,8 +146,9 @@ private fun ScreenshotManager() {
     var gridSize by remember { mutableStateOf(GridSize.LARGE) }
     var viewing by remember { mutableStateOf<String?>(null) }
     val selection = remember { mutableStateListOf<String>() }
-    val query = currentPageSearchQuery.trim()
+    val query = currentPageSearchQueryOrNull.orEmpty().trim()
 
+    val spacing = OneConfigTheme.current.spacing
     val gridState = rememberLazyGridState()
     val listed by produceState<List<Screenshot>?>(null, revision) {
         while (true) {
@@ -193,13 +184,13 @@ private fun ScreenshotManager() {
     }
 
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().padding(start = 24.dp, end = 24.dp, top = 12.dp)) {
+        Column(Modifier.fillMaxSize().padding(start = spacing.xxl, end = spacing.xxl, top = spacing.l)) {
             Toolbar(all, shown.size, sort, { sort = it }, gridSize, { gridSize = it })
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(spacing.xl))
             if (listed == null || filtered == null) {
                 Spacer(Modifier.weight(1f))
             } else if (shown.isEmpty()) {
-                EmptyState(all.isEmpty())
+                NoScreenshots(all.isEmpty())
             } else {
                 ScreenshotGrid(
                     state = gridState,
@@ -210,21 +201,17 @@ private fun ScreenshotManager() {
                     onOpen = { screenshot ->
                         if (selection.isNotEmpty()) toggle(selection, screenshot.name) else viewing = screenshot.name
                     },
+                    onView = { viewing = it.name },
                     onSelect = { toggle(selection, it.name) },
                 )
             }
         }
 
-        AnimatedVisibility(
-            visible = selection.isNotEmpty(),
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 20.dp),
-            enter = fadeIn() + slideInVertically { it / 2 },
-            exit = fadeOut() + slideOutVertically { it / 2 },
-        ) {
-            val selected = selection.toList().mapNotNull { name -> all.firstOrNull { it.name == name } }
-            var lastSelected by remember { mutableStateOf(selected) }
-            if (selected.isNotEmpty()) lastSelected = selected
-            SelectionBar(lastSelected, onClear = { selection.clear() })
+        val selected = selection.toList().mapNotNull { name -> all.firstOrNull { it.name == name } }
+        var lastSelected by remember { mutableStateOf(selected) }
+        if (selected.isNotEmpty()) lastSelected = selected
+        SelectionBar(selected.size, onClear = { selection.clear() }, Modifier.align(Alignment.BottomCenter).padding(bottom = spacing.xl)) {
+            SelectionActions(lastSelected, onClear = { selection.clear() })
         }
     }
 }
@@ -264,21 +251,21 @@ private fun Toolbar(
     val totalBytes = remember(all) { all.sumOf { it.size } }
     val uploadedCount = remember(all, revision) { all.count { UploadHistory.latest(it) != null } }
 
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        for (mode in SortMode.entries) Chip(mode.label, sort == mode) { onSort(mode) }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(theme.spacing.m)) {
+        for (mode in SortMode.entries) Chip(mode.label, sort == mode, { onSort(mode) })
         Spacer(Modifier.weight(1f))
-        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(countLabel(shownCount, all.size), Modifier, theme.textColor, 12.sp, FontWeight.Medium)
+        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(theme.spacing.xxs)) {
+            Text(countLabel(shownCount, all.size), Modifier, theme.textColor, OneConfigTheme.typography.label)
             Text(
                 listOfNotNull(sizeLabel(totalBytes), uploadedCount.takeIf { it > 0 }?.let { "$it uploaded" }).joinToString(" · "),
-                Modifier, theme.textColorSecondary, 11.sp,
+                Modifier, theme.textColorSecondary, OneConfigTheme.typography.caption,
             )
         }
-        Spacer(Modifier.width(4.dp))
+        Spacer(Modifier.width(theme.spacing.xs))
         for (size in GridSize.entries) {
-            IconAction(size.icon, size.label, large = true, active = gridSize == size) { onGridSize(size) }
+            IconButton(size.icon, size.label, { onGridSize(size) }, selected = gridSize == size)
         }
-        IconAction("folder", "Open screenshots folder", large = true) { ScreenshotActions.openFolder() }
+        IconButton("folder", "Open screenshots folder", { ScreenshotActions.openFolder() })
     }
 }
 
@@ -290,34 +277,39 @@ private fun ScreenshotGrid(
     gridSize: GridSize,
     selection: List<String>,
     onOpen: (Screenshot) -> Unit,
+    onView: (Screenshot) -> Unit,
     onSelect: (Screenshot) -> Unit,
 ) {
+    val spacing = OneConfigTheme.current.spacing
     val groups = remember(screenshots, sort) {
         if (sort == SortMode.NEWEST || sort == SortMode.OLDEST) screenshots.groupBy { dayLabel(it.modified) }.toList()
         else listOf("" to screenshots)
     }
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(gridSize.minWidth.dp),
-        state = state,
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 96.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        for ((label, items) in groups) {
-            if (label.isNotEmpty()) {
-                item(key = "header:$label", span = { GridItemSpan(maxLineSpan) }) {
-                    GroupHeading(label, items.size)
+    ScrollContainer(state, Modifier.fillMaxSize(), scrollbar = false) {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(gridSize.minWidth.dp),
+            state = state,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 96.dp),
+            horizontalArrangement = Arrangement.spacedBy(spacing.l),
+            verticalArrangement = Arrangement.spacedBy(spacing.l),
+        ) {
+            for ((label, items) in groups) {
+                if (label.isNotEmpty()) {
+                    item(key = "header:$label", span = { GridItemSpan(maxLineSpan) }) {
+                        GroupHeading(label, items.size)
+                    }
                 }
-            }
-            items(items, key = { it.name }) { screenshot ->
-                ScreenshotTile(
-                    screenshot = screenshot,
-                    selected = screenshot.name in selection,
-                    selecting = selection.isNotEmpty(),
-                    onOpen = { onOpen(screenshot) },
-                    onSelect = { onSelect(screenshot) },
-                )
+                items(items, key = { it.name }) { screenshot ->
+                    ScreenshotTile(
+                        screenshot = screenshot,
+                        selected = screenshot.name in selection,
+                        selecting = selection.isNotEmpty(),
+                        onOpen = { onOpen(screenshot) },
+                        onView = { onView(screenshot) },
+                        onSelect = { onSelect(screenshot) },
+                    )
+                }
             }
         }
     }
@@ -326,291 +318,178 @@ private fun ScreenshotGrid(
 @Composable
 private fun GroupHeading(label: String, count: Int) {
     val theme = OneConfigTheme.current
-    Row(Modifier.padding(top = 8.dp, start = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(label.uppercase(Locale.ROOT), Modifier, theme.textColorSecondary, 11.sp, FontWeight.Medium)
-        Text("$count", Modifier, theme.textColorSecondary.copy(alpha = 0.6f), 11.sp, FontWeight.Medium)
+    Row(Modifier.padding(top = theme.spacing.m, start = theme.spacing.xxs), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(theme.spacing.m)) {
+        Text(label.uppercase(Locale.ROOT), Modifier, theme.textColorSecondary, OneConfigTheme.typography.eyebrow)
+        Text("$count", Modifier, theme.textColorSecondary.copy(alpha = 0.6f), OneConfigTheme.typography.eyebrow)
     }
 }
 
 @Composable
-private fun ScreenshotTile(screenshot: Screenshot, selected: Boolean, selecting: Boolean, onOpen: () -> Unit, onSelect: () -> Unit) {
-    val theme = OneConfigTheme.current
-    val interaction = rememberInteractionSource()
-    val hovered by interaction.collectIsHoveredAsState()
+private fun ScreenshotTile(screenshot: Screenshot, selected: Boolean, selecting: Boolean, onOpen: () -> Unit, onView: () -> Unit, onSelect: () -> Unit) {
     val revision = ScreenshotLibrary.revision
     val uploading = remember(revision, screenshot.name) { ScreenshotActions.isUploading(screenshot) }
     val uploaded = remember(revision, screenshot.name) { UploadHistory.latest(screenshot) != null }
     val metadata = remember(MetadataIndex.revision, screenshot.name) { MetadataIndex.peek(screenshot.name) }
-    val overlay by animateFloatAsState(if (hovered || selected) 1f else 0f)
-    val border by animateColorAsState(
-        when {
-            selected -> OneConfigTheme.accent
-            hovered -> theme.textColorSecondary.copy(alpha = 0.6f)
-            else -> theme.borderColor
-        },
-    )
+    val name = screenshot.file.nameWithoutExtension
 
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .aspectRatio(16f / 9f)
-            .clip(theme.modCardShape)
-            .background(theme.modCardBackground)
-            .hoverable(interaction)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .onClick(interaction, onOpen),
+    MediaTile(
+        onClick = onOpen,
+        label = name,
+        modifier = Modifier.contextMenu { screenshotMenu(screenshot, onView = onView, onSelect = onSelect, selected = selected) },
+        selected = selected,
+        onSelectedChange = { onSelect() },
+        selecting = selecting,
+        title = name,
+        subtitle = "${timeLabel(screenshot.modified)} · ${sizeLabel(screenshot.size)}",
+        actions = {
+            IconButton("copy", "Copy", { ScreenshotActions.copy(screenshot) }, style = IconButtonStyle.Overlay, size = ControlSize.Compact)
+            IconButton("upload", "Upload to ${ScreencapperConfig.defaultProfile.name}", { ScreenshotActions.upload(screenshot) }, style = IconButtonStyle.Overlay, size = ControlSize.Compact)
+            IconButton("trash", "Delete", { confirmDelete(screenshot) }, style = IconButtonStyle.Overlay, size = ControlSize.Compact, danger = true)
+        },
+        badge = if (uploading || uploaded) {
+            { Badge(if (uploading) "UPLOADING" else "UPLOADED", tone = if (uploading) BadgeTone.Accent else BadgeTone.Success, overImage = true) }
+        } else {
+            null
+        },
+        tags = { MetadataBadges(metadata, overImage = true) },
     ) {
         ScreenshotImage(screenshot, THUMBNAIL_WIDTH, Modifier.fillMaxSize(), ContentScale.Crop)
-
-        Box(
-            Modifier
-                .fillMaxSize()
-                .alpha(overlay)
-                .background(Brush.verticalGradient(0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.75f))),
-        )
-
-        Column(Modifier.align(Alignment.BottomStart).padding(12.dp).alpha(overlay), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(screenshot.file.nameWithoutExtension, Modifier, Color.White, 12.sp, null, BaselineShift.None, FontWeight.Medium, TextAlign.Start, 1, TextOverflow.Ellipsis)
-            Text("${timeLabel(screenshot.modified)} · ${sizeLabel(screenshot.size)}", Modifier, Color.White.copy(alpha = 0.7f), 11.sp)
-        }
-
-        if (!hovered) {
-            MetadataTags(metadata, Modifier.align(Alignment.TopEnd).padding(8.dp))
-        }
-
-        if (hovered && !selecting) {
-            Row(Modifier.align(Alignment.TopEnd).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                IconAction("copy", "Copy", style = IconActionStyle.OVERLAY) { ScreenshotActions.copy(screenshot) }
-                IconAction("cloud", "Upload to ${ScreencapperConfig.defaultProfile.name}", style = IconActionStyle.OVERLAY) { ScreenshotActions.upload(screenshot) }
-                var armed by remember(screenshot.name) { mutableStateOf(false) }
-                LaunchedEffect(armed) {
-                    if (armed) {
-                        delay(3000)
-                        armed = false
-                    }
-                }
-                IconAction(if (armed) "tick" else "trash", if (armed) "Click again to delete" else "Delete", style = IconActionStyle.OVERLAY, destructive = true, active = armed) {
-                    if (armed) ScreenshotActions.delete(screenshot) else armed = true
-                }
-            }
-        }
-
-        if (hovered || selecting) {
-            SelectDot(selected, Modifier.align(Alignment.TopStart).padding(8.dp), onSelect)
-        } else if (uploading || uploaded) {
-            StatusTag(if (uploading) "UPLOADING" else "UPLOADED", Modifier.align(Alignment.TopStart).padding(8.dp))
-        }
-
-        Box(Modifier.fillMaxSize().border(if (selected) 2.dp else 1.dp, border, theme.modCardShape))
     }
 }
 
-@Composable
-private fun SelectDot(selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val theme = OneConfigTheme.current
-    val interaction = rememberInteractionSource()
-    val hovered by interaction.collectIsHoveredAsState()
-    val fill by animateColorAsState(if (selected) OneConfigTheme.accent else Color.Black.copy(alpha = 0.4f))
-    val ring by animateColorAsState(if (selected) OneConfigTheme.accent else Color.White.copy(alpha = if (hovered) 1f else 0.7f))
-    Box(
-        modifier
-            .size(22.dp)
-            .background(fill, theme.circleShape)
-            .border(1.5.dp, ring, theme.circleShape)
-            .hoverable(interaction)
-            .onClick(interaction, onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (selected) Icon("tick", Color.White, Modifier.size(14.dp))
-    }
+private fun screenshotMenu(screenshot: Screenshot, onView: (() -> Unit)? = null, onSelect: (() -> Unit)? = null, selected: Boolean = false, onDeleted: () -> Unit = {}): List<MenuEntry> {
+    val uploaded = UploadHistory.latest(screenshot) != null
+    val uploading = ScreenshotActions.isUploading(screenshot)
+    return listOfNotNull(
+        onView?.let { MenuAction("View", it,icon = "maximise") },
+        MenuAction("Open", {ScreenshotActions.open(screenshot) }, icon = "external-link"),
+        onSelect?.let { MenuAction(if (selected) "Deselect" else "Select", it,icon = "tick") },
+        MenuSeparator,
+        MenuAction("Copy", {ScreenshotActions.copy(screenshot) }, icon = "copy"),
+        if (uploaded) MenuAction("Copy link", {ScreenshotActions.copyLink(screenshot) }, icon = "clipboard") else null,
+        MenuAction(
+            if (uploaded) "Upload again" else "Upload",
+            { ScreenshotActions.upload(screenshot) },
+            icon = "upload",
+            detail = ScreencapperConfig.defaultProfile.name,
+            enabled = !uploading,
+        ),
+        MenuAction("Show in folder", {ScreenshotActions.openFolder() }, icon = "folder"),
+        MenuSeparator,
+        MenuAction("Delete", {confirmDelete(screenshot, onDeleted) }, icon = "trash", danger = true),
+    )
+}
+
+private fun confirmDelete(screenshot: Screenshot, onDeleted: () -> Unit = {}) {
+    Confirm.ask(
+        "Delete screenshot?",
+        "${screenshot.name} will be deleted from your screenshots folder.",
+        confirmLabel = "Delete",
+        onConfirm = { if (ScreenshotActions.delete(screenshot)) onDeleted() },
+    )
 }
 
 @Composable
-private fun SelectionBar(selected: List<Screenshot>, onClear: () -> Unit) {
-    val theme = OneConfigTheme.current
-    var confirmDelete by remember(selected.map { it.name }.toSet()) { mutableStateOf(false) }
-    LaunchedEffect(confirmDelete) {
-        if (confirmDelete) {
-            delay(3000)
-            confirmDelete = false
-        }
-    }
-    Row(
-        Modifier
-            .background(theme.popupBackground, theme.popupShape)
-            .border(1.dp, theme.borderColor, theme.popupShape)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(if (selected.size == 1) "1 selected" else "${selected.size} selected", Modifier.padding(end = 8.dp), theme.textColor, 14.sp, FontWeight.Medium)
-        if (selected.size == 1) SmallButton("Copy", "copy") { ScreenshotActions.copy(selected.first()) }
-        SmallButton("Upload", "cloud", hierarchy = ButtonHierarchy.PRIMARY) { selected.forEach { ScreenshotActions.upload(it) } }
-        SmallButton(
-            if (confirmDelete) "Delete ${selected.size}?" else "Delete",
-            "trash",
-            hierarchy = if (confirmDelete) ButtonHierarchy.PRIMARY else ButtonHierarchy.SECONDARY,
-            destructive = true,
-        ) {
-            if (confirmDelete) {
+private fun SelectionActions(selected: List<Screenshot>, onClear: () -> Unit) {
+    if (selected.size == 1) TextButton("Copy", "copy", { ScreenshotActions.copy(selected.first()) })
+    TextButton("Upload", "upload", { selected.forEach { ScreenshotActions.upload(it) } }, style = ControlStyle.Primary)
+    TextButton("Delete", "trash", {
+        val count = selected.size
+        Confirm.ask(
+            if (count == 1) "Delete screenshot?" else "Delete $count screenshots?",
+            if (count == 1) "${selected.first().name} will be deleted from your screenshots folder." else "$count screenshots will be deleted from your screenshots folder.",
+            confirmLabel = if (count == 1) "Delete" else "Delete $count",
+            onConfirm = {
                 ScreenshotActions.deleteAll(selected)
                 onClear()
-            } else {
-                confirmDelete = true
-            }
-        }
-        IconAction("close", "Clear selection") { onClear() }
-    }
+            },
+        )
+    }, style = ControlStyle.Danger)
 }
 
 @Composable
 private fun Viewer(screenshot: Screenshot, list: List<Screenshot>, onNavigate: (Screenshot) -> Unit, onClose: () -> Unit) {
-    val theme = OneConfigTheme.current
     val index = list.indexOfFirst { it.name == screenshot.name }
     val previous = list.getOrNull(index - 1)
     val next = list.getOrNull(index + 1)
-    val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+    val spacing = OneConfigTheme.current.spacing
 
-    Row(
-        Modifier
+    MasterDetailLayout(
+        list = {
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(spacing.l)) {
+                PanelHeader(onBack = onClose, backLabel = "All screenshots")
+                ImageViewer(
+                    count = list.size,
+                    index = index.coerceAtLeast(0),
+                    onIndexChange = { at -> list.getOrNull(at)?.let(onNavigate) },
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    onDismiss = onClose,
+                    thumbnail = { at -> ScreenshotImage(list[at], THUMBNAIL_WIDTH, Modifier.fillMaxSize(), ContentScale.Crop) },
+                    thumbnailLabel = { at -> list[at].file.nameWithoutExtension },
+                    itemKey = { at -> list[at].name },
+                    tileModifier = { at ->
+                        val tile = list[at]
+                        Modifier.contextMenu { screenshotMenu(tile, onView = { onNavigate(tile) }, onDeleted = { if (tile.name == screenshot.name) (next ?: previous)?.let(onNavigate) ?: onClose() }) }
+                    },
+                    filmstripPreviousLabel = "Earlier screenshots",
+                    filmstripNextLabel = "Later screenshots",
+                ) { at ->
+                    val shown = list.getOrNull(at) ?: screenshot
+                    ViewerFrame(shown, Modifier.contextMenu { screenshotMenu(shown, onDeleted = { if (shown.name == screenshot.name) (next ?: previous)?.let(onNavigate) ?: onClose() }) })
+                }
+            }
+        },
+        detail = {
+            DetailsPanel(screenshot, onDeleted = {
+                val fallback = next ?: previous
+                if (fallback != null) onNavigate(fallback) else onClose()
+            })
+        },
+        modifier = Modifier
             .fillMaxSize()
-            .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
-            .focusRequester(focus)
-            .focusable()
+            .padding(start = spacing.xxl, end = spacing.xxl, top = spacing.l, bottom = spacing.xxl)
             .onKeyEvent { event ->
-                if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
-                when (event.key) {
-                    Key.DirectionLeft -> previous?.let(onNavigate) != null
-                    Key.DirectionRight -> next?.let(onNavigate) != null
-                    Key.Escape, Key.Backspace -> { onClose(); true }
-                    else -> false
+                if (event.type == KeyEventType.KeyDown && event.key == Key.Backspace) {
+                    onClose()
+                    true
+                } else {
+                    false
                 }
             },
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SmallButton("All screenshots", "left-arrow") { onClose() }
-                Spacer(Modifier.weight(1f))
-                if (index >= 0) Text("${index + 1} of ${list.size}", Modifier, theme.textColorSecondary, 12.sp)
-            }
-            val aspect by produceState(Thumbnails.peek(screenshot, VIEWER_WIDTH)?.let { it.width.toFloat() / it.height } ?: 16f / 9f, screenshot) {
-                withContext(Dispatchers.IO) { imageAspect(screenshot) }?.let { value = it }
-            }
-            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                val frameWidth = minOf(maxWidth, maxHeight * aspect)
-                Box(
-                    Modifier
-                        .size(frameWidth, frameWidth / aspect)
-                        .clip(theme.modCardShape)
-                        .background(theme.componentBackground)
-                        .border(1.dp, theme.borderColor, theme.modCardShape),
-                ) {
-                    ScreenshotImage(screenshot, VIEWER_WIDTH, Modifier.fillMaxSize(), ContentScale.Crop, background = false)
-                }
-                if (previous != null) NavButton("left-arrow", Modifier.align(Alignment.CenterStart).padding(12.dp)) { onNavigate(previous) }
-                if (next != null) NavButton("right-arrow", Modifier.align(Alignment.CenterEnd).padding(12.dp)) { onNavigate(next) }
-            }
-            FilmStrip(list, screenshot, onNavigate)
-        }
-        DetailsPanel(screenshot, onDeleted = {
-            val fallback = next ?: previous
-            if (fallback != null) onNavigate(fallback) else onClose()
-        })
-    }
+        detailWidth = DETAILS_WIDTH,
+    )
 }
 
 @Composable
-private fun NavButton(icon: String, modifier: Modifier, onClick: () -> Unit) {
-    val theme = OneConfigTheme.current
-    val interaction = rememberInteractionSource()
-    val hovered by interaction.collectIsHoveredAsState()
-    val fill = Color.Black.copy(alpha = 0.45f)
-    Box(
-        modifier
-            .size(40.dp)
-            .background(fill, theme.circleShape)
-            .border(1.dp, Color.White.copy(alpha = if (hovered) 0.4f else 0.15f), theme.circleShape)
-            .hoverable(interaction)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .onClick(interaction, onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, Color.White, Modifier.size(18.dp))
-    }
-}
-
-@Composable
-private fun FilmStrip(list: List<Screenshot>, current: Screenshot, onNavigate: (Screenshot) -> Unit) {
-    val index = list.indexOfFirst { it.name == current.name }.coerceAtLeast(0)
-
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val usable = maxWidth - (FILM_ARROW + FILM_GAP) * 2
-        val count = ((usable + FILM_GAP) / (FILM_MIN_WIDTH + FILM_GAP)).toInt().coerceIn(1, 9)
-        val tileWidth = (usable - FILM_GAP * (count - 1)) / count
-        val tileHeight = tileWidth * 9f / 16f
-        val pages = (list.size + count - 1) / count
-        var page by remember { mutableStateOf(index / count) }
-
-        LaunchedEffect(current.name, count) { page = index / count }
-
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(FILM_GAP)) {
-            IconAction("left-arrow", "Earlier screenshots", enabled = page > 0) { page = (page - 1).coerceAtLeast(0) }
-            AnimatedContent(
-                targetState = page.coerceIn(0, (pages - 1).coerceAtLeast(0)),
-                modifier = Modifier.size(usable, tileHeight).clipToBounds(),
-                transitionSpec = {
-                    val forward = targetState > initialState
-                    slideInHorizontally { if (forward) it else -it } togetherWith slideOutHorizontally { if (forward) -it else it }
-                },
-            ) { shown ->
-                Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(FILM_GAP, Alignment.CenterHorizontally)) {
-                    for (item in list.subList(shown * count, minOf(list.size, (shown + 1) * count))) {
-                        key(item.name) {
-                            FilmTile(item, item.name == current.name, Modifier.size(tileWidth, tileHeight)) { onNavigate(item) }
-                        }
-                    }
-                }
-            }
-            IconAction("right-arrow", "Later screenshots", enabled = page < pages - 1) { page = (page + 1).coerceAtMost(pages - 1) }
+private fun ViewerFrame(screenshot: Screenshot, modifier: Modifier = Modifier) {
+    val loaded = rememberImageBitmap(screenshot.file.toPath(), VIEWER_WIDTH)
+    val size = rememberImageSize(screenshot)
+    val aspect = loaded?.let { it.width.toFloat() / it.height } ?: size?.let { it.width.toFloat() / it.height } ?: 16f / 9f
+    BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        val frameWidth = minOf(maxWidth, maxHeight * aspect)
+        Box(
+            modifier
+                .size(frameWidth, frameWidth / aspect)
+                .themedSurface(SurfaceKind.Card),
+        ) {
+            ScreenshotImage(screenshot, VIEWER_WIDTH, Modifier.fillMaxSize(), ContentScale.Crop, background = false)
         }
     }
 }
 
-@Composable
-private fun FilmTile(item: Screenshot, isCurrent: Boolean, modifier: Modifier, onClick: () -> Unit) {
-    val theme = OneConfigTheme.current
-    val interaction = rememberInteractionSource()
-    val hovered by interaction.collectIsHoveredAsState()
-    Box(
-        modifier
-            .clip(theme.buttonShape)
-            .alpha(if (isCurrent || hovered) 1f else 0.55f)
-            .hoverable(interaction)
-            .pointerHoverIcon(PointerIcon.Hand)
-            .onClick(interaction) { onClick() },
-    ) {
-        ScreenshotImage(item, THUMBNAIL_WIDTH, Modifier.fillMaxSize(), ContentScale.Crop)
-        Box(Modifier.fillMaxSize().border(if (isCurrent) 2.dp else 1.dp, if (isCurrent) OneConfigTheme.accent else theme.borderColor, theme.buttonShape))
-    }
-}
-
-private fun imageAspect(screenshot: Screenshot): Float? = runCatching {
+private fun imageSize(screenshot: Screenshot): IntSize? = runCatching {
     javax.imageio.ImageIO.createImageInputStream(screenshot.file).use { stream ->
         val reader = javax.imageio.ImageIO.getImageReaders(stream ?: return null).asSequence().firstOrNull() ?: return null
         try {
             reader.input = stream
-            reader.getWidth(0).toFloat() / reader.getHeight(0)
+            IntSize(reader.getWidth(0), reader.getHeight(0))
         } finally {
             reader.dispose()
         }
     }
-}.getOrNull()?.takeIf { it.isFinite() && it > 0f }
+}.getOrNull()?.takeIf { it.width > 0 && it.height > 0 }
 
-private val FILM_MIN_WIDTH = 104.dp
-private val FILM_ARROW = 28.dp
-private val FILM_GAP = 6.dp
+private val DETAILS_WIDTH = 300.dp
 
 @Composable
 private fun DetailsPanel(screenshot: Screenshot, onDeleted: () -> Unit) {
@@ -621,99 +500,77 @@ private fun DetailsPanel(screenshot: Screenshot, onDeleted: () -> Unit) {
     val profiles = remember(revision) { ScreencapperConfig.profiles }
     val defaultProfile = remember(revision) { ScreencapperConfig.defaultProfile }
     val metadata = remember(MetadataIndex.revision, screenshot.name) { MetadataIndex.peek(screenshot.name) }
-    var confirmDelete by remember(screenshot.name) { mutableStateOf(false) }
-    val thumbnail by produceState(Thumbnails.peek(screenshot, VIEWER_WIDTH), screenshot) {
-        value = Thumbnails.peek(screenshot, VIEWER_WIDTH)
-        value = Thumbnails.load(screenshot, VIEWER_WIDTH)
-    }
-    LaunchedEffect(confirmDelete) {
-        if (confirmDelete) {
-            delay(3000)
-            confirmDelete = false
-        }
-    }
+    val resolution = rememberImageSize(screenshot)
+    val spacing = theme.spacing
 
-    Column(
-        Modifier
-            .width(300.dp)
-            .fillMaxHeight()
-            .background(theme.modCardBackground, theme.modCardShape)
-            .border(1.dp, theme.borderColor, theme.modCardShape)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ScrollContainer(
+        rememberScrollState(),
+        Modifier.fillMaxSize().themedSurface(SurfaceKind.Card),
+        scrollbar = false,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(screenshot.file.nameWithoutExtension, Modifier, theme.textColor, 16.sp, null, BaselineShift.None, FontWeight.Medium, TextAlign.Start, 2, TextOverflow.Ellipsis)
-            Text(fullTimeLabel(screenshot.modified), Modifier, theme.textColorSecondary, 12.sp)
-            MetadataTags(metadata, Modifier.padding(top = 4.dp), overImage = false)
-        }
+        Column(
+            Modifier.fillMaxWidth().padding(spacing.xl),
+            verticalArrangement = Arrangement.spacedBy(spacing.xl),
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
+                Text(screenshot.file.nameWithoutExtension, Modifier.semantics { heading() }, theme.textColor, OneConfigTheme.typography.titleSmall, 2, TextOverflow.Ellipsis, textAlign = TextAlign.Start)
+                Text(fullTimeLabel(screenshot.modified), Modifier, theme.textColorSecondary, OneConfigTheme.typography.small)
+                MetadataTags(metadata, Modifier.padding(top = spacing.xs), overImage = false)
+            }
 
-        Section("Actions") {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    SmallButton("Copy", "copy", Modifier.weight(1f), hierarchy = ButtonHierarchy.PRIMARY) { ScreenshotActions.copy(screenshot) }
-                    SmallButton("Open", "external-link", Modifier.weight(1f)) { ScreenshotActions.open(screenshot) }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    SmallButton("Folder", "folder", Modifier.weight(1f)) { ScreenshotActions.openFolder() }
-                    SmallButton(
-                        if (confirmDelete) "Confirm" else "Delete",
-                        "trash",
-                        Modifier.weight(1f),
-                        hierarchy = if (confirmDelete) ButtonHierarchy.PRIMARY else ButtonHierarchy.SECONDARY,
-                        destructive = true,
-                    ) {
-                        if (confirmDelete) {
-                            if (ScreenshotActions.delete(screenshot)) onDeleted()
-                        } else {
-                            confirmDelete = true
-                        }
+            PanelSection("Actions") {
+                Column(verticalArrangement = Arrangement.spacedBy(spacing.s)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(spacing.s)) {
+                        TextButton("Copy", "copy", { ScreenshotActions.copy(screenshot) }, Modifier.weight(1f), style = ControlStyle.Primary, fillWidth = true)
+                        TextButton("Open", "external-link", { ScreenshotActions.open(screenshot) }, Modifier.weight(1f), fillWidth = true)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(spacing.s)) {
+                        TextButton("Folder", "folder", { ScreenshotActions.openFolder() }, Modifier.weight(1f), fillWidth = true)
+                        TextButton("Delete", "trash", { confirmDelete(screenshot, onDeleted) }, Modifier.weight(1f), style = ControlStyle.Danger, fillWidth = true)
                     }
                 }
             }
-        }
 
-        Section("Upload") {
-            UploadSplitButton(profiles, defaultProfile, uploading, again = links.isNotEmpty()) { ScreenshotActions.upload(screenshot, it) }
-            if (links.isNotEmpty()) {
-                Spacer(Modifier.height(10.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    for (link in links) LinkRow(screenshot, link)
+            PanelSection("Upload") {
+                UploadSplitButton(profiles, defaultProfile, uploading, again = links.isNotEmpty()) { ScreenshotActions.upload(screenshot, it) }
+                if (links.isNotEmpty()) {
+                    Spacer(Modifier.height(spacing.m))
+                    Column(verticalArrangement = Arrangement.spacedBy(spacing.s)) {
+                        for (link in links) LinkRow(screenshot, link)
+                    }
                 }
             }
-        }
 
-        Section("Details") {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                InfoRow("Size", sizeLabel(screenshot.size))
-                thumbnail?.let { InfoRow("Resolution", "${it.width} × ${it.height}") }
-                InfoRow("Format", screenshot.file.extension.uppercase(Locale.ROOT))
-                InfoRow("File", screenshot.name)
-            }
-        }
-
-        val game = metadataRows(metadata.orEmpty())
-        if (game.isNotEmpty()) {
-            Section("In game") {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for ((label, value) in game) InfoRow(label, value)
+            PanelSection("Details") {
+                Column(verticalArrangement = Arrangement.spacedBy(spacing.m)) {
+                    KeyValueRow("Size", sizeLabel(screenshot.size))
+                    resolution?.let { KeyValueRow("Resolution", "${it.width} × ${it.height}") }
+                    KeyValueRow("Format", screenshot.file.extension.uppercase(Locale.ROOT))
+                    KeyValueRow("File", screenshot.name)
                 }
             }
-        }
 
-        val chat = metadata?.get(MetadataKeys.CHAT)?.takeIf { it.isNotBlank() }
-        if (chat != null) {
-            Section("Chat") {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(theme.componentBackground, theme.buttonShape)
-                        .border(1.dp, theme.borderColor, theme.buttonShape)
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    for (line in chat.lines()) Text(line, Modifier, theme.textColor, 11.sp)
+            val game = metadataRows(metadata.orEmpty())
+            if (game.isNotEmpty()) {
+                PanelSection("In game") {
+                    Column(verticalArrangement = Arrangement.spacedBy(spacing.m)) {
+                        for ((label, value) in game) KeyValueRow(label, value)
+                    }
+                }
+            }
+
+            val chat = metadata?.get(MetadataKeys.CHAT)?.takeIf { it.isNotBlank() }
+            if (chat != null) {
+                PanelSection("Chat") {
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .themedSurface(SurfaceKind.Field)
+                            .padding(horizontal = spacing.l, vertical = spacing.m),
+                        verticalArrangement = Arrangement.spacedBy(spacing.xs),
+                    ) {
+                        for (line in chat.lines()) Text(line, Modifier, theme.textColor, OneConfigTheme.typography.caption)
+                    }
                 }
             }
         }
@@ -722,13 +579,16 @@ private fun DetailsPanel(screenshot: Screenshot, onDeleted: () -> Unit) {
 
 @Composable
 private fun MetadataTags(metadata: Map<String, String>?, modifier: Modifier = Modifier, overImage: Boolean = true) {
-    val coords = !metadata?.get(MetadataKeys.COORDINATES).isNullOrBlank()
-    val chat = !metadata?.get(MetadataKeys.CHAT).isNullOrBlank()
-    if (!coords && !chat) return
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (coords) StatusTag("COORDS", overImage = overImage)
-        if (chat) StatusTag("CHAT", overImage = overImage)
+    if (metadata?.get(MetadataKeys.COORDINATES).isNullOrBlank() && metadata?.get(MetadataKeys.CHAT).isNullOrBlank()) return
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(OneConfigTheme.current.spacing.xs)) {
+        MetadataBadges(metadata, overImage)
     }
+}
+
+@Composable
+private fun MetadataBadges(metadata: Map<String, String>?, overImage: Boolean) {
+    if (!metadata?.get(MetadataKeys.COORDINATES).isNullOrBlank()) Badge("COORDS", overImage = overImage)
+    if (!metadata?.get(MetadataKeys.CHAT).isNullOrBlank()) Badge("CHAT", overImage = overImage)
 }
 
 private fun metadataRows(fields: Map<String, String>): List<Pair<String, String>> = listOfNotNull(
@@ -758,149 +618,75 @@ private fun UploadSplitButton(
     again: Boolean,
     onUpload: (UploaderProfile) -> Unit,
 ) {
-    var menuOpen by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        SmallButton(
-            if (uploading) "Uploading..." else if (again) "Upload again to ${defaultProfile.name}" else "Upload to ${defaultProfile.name}",
-            "cloud",
-            Modifier.weight(1f),
-            hierarchy = ButtonHierarchy.PRIMARY,
-            enabled = !uploading,
-        ) { onUpload(defaultProfile) }
-        if (profiles.size > 1) {
-            Box {
-                IconAction("down", "Upload somewhere else", active = menuOpen, enabled = !uploading) { menuOpen = !menuOpen }
-                if (menuOpen) {
-                    Popup(
-                        alignment = Alignment.TopEnd,
-                        offset = with(LocalDensity.current) { IntOffset(0, 36.dp.roundToPx()) },
-                        onDismissRequest = { menuOpen = false },
-                        properties = PopupProperties(focusable = true),
-                    ) {
-                        UploaderMenu(profiles, defaultProfile) {
-                            menuOpen = false
-                            onUpload(it)
-                        }
-                    }
-                }
-            }
-        }
+    val label = if (uploading) "Uploading..." else if (again) "Upload again to ${defaultProfile.name}" else "Upload to ${defaultProfile.name}"
+    if (profiles.size > 1) {
+        SplitButton(label, { onUpload(defaultProfile) }, uploaderMenu(profiles, defaultProfile, onUpload), Modifier.fillMaxWidth(), enabled = !uploading, fillWidth = true, icon = "upload")
+    } else {
+        TextButton(label, "upload", { onUpload(defaultProfile) }, Modifier.fillMaxWidth(), style = ControlStyle.Primary, enabled = !uploading, fillWidth = true)
     }
 }
 
-@Composable
-private fun UploaderMenu(profiles: List<UploaderProfile>, defaultProfile: UploaderProfile, onPick: (UploaderProfile) -> Unit) {
-    val theme = OneConfigTheme.current
-    Column(
-        Modifier
-            .width(240.dp)
-            .background(theme.popupBackground, theme.popupShape)
-            .border(1.dp, theme.borderColor, theme.popupShape)
-            .padding(6.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Text("UPLOAD TO", Modifier.padding(start = 10.dp, top = 6.dp, bottom = 6.dp), theme.textColorSecondary, 11.sp, FontWeight.Medium)
-        for (profile in profiles) {
-            val interaction = rememberInteractionSource()
-            val hovered by interaction.collectIsHoveredAsState()
-            val fill by animateColorAsState(if (hovered) theme.componentBackground else Color.Transparent)
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(fill, theme.buttonShape)
-                    .hoverable(interaction)
-                    .pointerHoverIcon(PointerIcon.Hand)
-                    .onClick(interaction) { onPick(profile) }
-                    .padding(horizontal = 10.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(profile.name, Modifier, theme.textColor, 12.sp, FontWeight.Medium)
-                    Text(profile.host, Modifier, theme.textColorSecondary, 11.sp)
-                }
-                if (profile.id == defaultProfile.id) StatusTag("DEFAULT", overImage = false)
-            }
-        }
+private fun uploaderMenu(profiles: List<UploaderProfile>, defaultProfile: UploaderProfile, onPick: (UploaderProfile) -> Unit): List<MenuEntry> =
+    listOf(MenuHeading("Upload to")) + profiles.map { profile ->
+        MenuAction(profile.name, onClick = { onPick(profile) }, icon = "upload", detail = profile.host, badge = if (profile.id == defaultProfile.id) "Default" else null)
     }
-}
 
 @Composable
 private fun LinkRow(screenshot: Screenshot, link: UploadRecord) {
     val theme = OneConfigTheme.current
+    val spacing = theme.spacing
     Column(
         Modifier
             .fillMaxWidth()
-            .background(theme.componentBackground, theme.buttonShape)
-            .border(1.dp, theme.borderColor, theme.buttonShape)
-            .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 6.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+            .themedSurface(SurfaceKind.Field)
+            .padding(start = spacing.l, end = spacing.xs, top = spacing.m, bottom = spacing.s),
+        verticalArrangement = Arrangement.spacedBy(spacing.xxs),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(link.uploaderName, Modifier.weight(1f), theme.textColor, 12.sp, FontWeight.Medium)
-            Text(relativeTime(link.uploadedAt), Modifier.padding(end = 8.dp), theme.textColorSecondary, 11.sp)
+            Text(link.uploaderName, Modifier.weight(1f), theme.textColor, OneConfigTheme.typography.label)
+            Text(relativeTime(link.uploadedAt), Modifier.padding(end = spacing.m), theme.textColorSecondary, OneConfigTheme.typography.caption)
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(link.url.removePrefix("https://").removePrefix("http://"), Modifier.weight(1f), theme.textColorSecondary, 12.sp, null, BaselineShift.None, FontWeight.Normal, TextAlign.Start, 1, TextOverflow.Ellipsis)
-            IconAction("copy", "Copy link") { ClipboardHelper.setString(link.url) }
-            IconAction("external-link", "Open link") { ScreenshotActions.browse(link.url) }
-            IconAction("close", "Forget this link", destructive = true) {
+            Text(link.url.removePrefix("https://").removePrefix("http://"), Modifier.weight(1f), theme.textColorSecondary, OneConfigTheme.typography.small, 1, TextOverflow.Ellipsis, textAlign = TextAlign.Start)
+            IconButton("copy", "Copy link", { ClipboardHelper.setString(link.url) }, size = ControlSize.Compact)
+            IconButton("external-link", "Open link", { ScreenshotActions.browse(link.url) }, size = ControlSize.Compact)
+            IconButton("close", "Forget this link", {
                 UploadHistory.remove(screenshot, link)
                 ScreenshotLibrary.changed()
-            }
+            }, size = ControlSize.Compact, danger = true)
         }
-    }
-}
-
-@Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
-    Column {
-        Text(title.uppercase(Locale.ROOT), Modifier.padding(bottom = 8.dp), OneConfigTheme.current.textColorSecondary, 11.sp, FontWeight.Medium)
-        content()
-    }
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    val theme = OneConfigTheme.current
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(label, Modifier.width(80.dp), theme.textColorSecondary, 12.sp)
-        Text(value, Modifier.weight(1f), theme.textColor, 12.sp)
     }
 }
 
 @Composable
 private fun ScreenshotImage(screenshot: Screenshot, width: Int, modifier: Modifier, scale: ContentScale, background: Boolean = true) {
     val theme = OneConfigTheme.current
-    val thumbnail by produceState(Thumbnails.peek(screenshot, width), screenshot, width) {
-        value = Thumbnails.peek(screenshot, width)
-        value = Thumbnails.load(screenshot, width)
-    }
-    val fade by animateFloatAsState(if (thumbnail != null) 1f else 0f)
+    val bitmap = rememberImageBitmap(screenshot.file.toPath(), width)
+    val fade by animateFloatAsState(if (bitmap != null) 1f else 0f)
     Box(if (background) modifier.background(theme.componentBackground) else modifier) {
-        thumbnail?.let { Image(it.bitmap, screenshot.name, Modifier.fillMaxSize().alpha(fade), contentScale = scale) }
+        bitmap?.let { Image(it, screenshot.name, Modifier.fillMaxSize().alpha(fade), contentScale = scale) }
     }
 }
 
 @Composable
-private fun EmptyState(noScreenshots: Boolean) {
-    val theme = OneConfigTheme.current
-    Column(Modifier.fillMaxSize().padding(bottom = 48.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Box(Modifier.size(64.dp).background(theme.componentBackground, theme.circleShape).border(1.dp, theme.borderColor, theme.circleShape), contentAlignment = Alignment.Center) {
-            Icon(if (noScreenshots) "/assets/screencapper/screencapper.svg" else "search", theme.textColorSecondary, Modifier.size(28.dp))
-        }
-        Spacer(Modifier.height(16.dp))
-        Text(if (noScreenshots) "No screenshots yet" else "No screenshots match that search", Modifier, theme.textColor, 16.sp, FontWeight.Medium)
-        Spacer(Modifier.height(6.dp))
-        Text(
-            if (noScreenshots) "Press your screenshot key in game and it shows up here." else "Try another word, or a filter like server:, biome: or before:2026-10.",
-            Modifier, theme.textColorSecondary, 12.sp,
-        )
-        if (noScreenshots) {
-            Spacer(Modifier.height(16.dp))
-            SmallButton("Open screenshots folder", "folder") { ScreenshotActions.openFolder() }
-        }
-    }
+private fun rememberImageSize(screenshot: Screenshot): IntSize? =
+    produceState<IntSize?>(null, screenshot.name, screenshot.modified) {
+        value = withContext(Dispatchers.IO) { imageSize(screenshot) }
+    }.value
+
+@Composable
+private fun NoScreenshots(noScreenshots: Boolean) {
+    EmptyState(
+        if (noScreenshots) "No screenshots yet" else "No screenshots match that search",
+        Modifier.fillMaxSize().padding(bottom = 48.dp),
+        icon = if (noScreenshots) "/assets/screencapper/screencapper.svg" else "search",
+        text = if (noScreenshots) "Press your screenshot key in game and it shows up here." else "Try another word, or a filter like server:, biome: or before:2026-10.",
+        action = if (noScreenshots) {
+            { TextButton("Open screenshots folder", "folder", { ScreenshotActions.openFolder() }) }
+        } else {
+            null
+        },
+    )
 }
 
 private val ZONE: ZoneId get() = ZoneId.systemDefault()

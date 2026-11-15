@@ -3,8 +3,6 @@
 package dev.deftu.screencapper.gui
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,9 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.deftu.screencapper.Screencapper
 import dev.deftu.screencapper.ScreenshotActions
 import dev.deftu.screencapper.config.RequestBody
@@ -36,10 +32,23 @@ import dev.deftu.screencapper.upload.Uploaders
 import org.polyfrost.oneconfig.api.config.v1.Property
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.api.TinyFdApi
+import org.polyfrost.oneconfig.api.ui.v1.components.Badge
+import org.polyfrost.oneconfig.api.ui.v1.components.BadgeTone
 import org.polyfrost.oneconfig.api.ui.v1.components.Chip
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
+import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.Icon
+import org.polyfrost.oneconfig.api.ui.v1.components.IconButton
+import org.polyfrost.oneconfig.api.ui.v1.components.LabeledField
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuAction
+import org.polyfrost.oneconfig.api.ui.v1.components.MenuSeparator
+import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
 import org.polyfrost.oneconfig.api.ui.v1.components.Text
+import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.api.ui.v1.components.ToggleRow
+import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.utils.v1.Multithreading
 import kotlinx.coroutines.delay
@@ -75,7 +84,8 @@ fun UploaderListEditor(prop: Property<*>) {
         expanded = profile.id
     }
 
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val spacing = OneConfigTheme.current.spacing
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing.m)) {
         for (profile in profiles) {
             UploaderCard(
                 profile = profile,
@@ -91,9 +101,9 @@ fun UploaderListEditor(prop: Property<*>) {
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SmallButton("Add uploader", "plus", hierarchy = ButtonHierarchy.PRIMARY) { add(UploaderProfile(name = "Uploader ${profiles.size}")) }
-            SmallButton("Import .sxcu file", "folder") {
+        Row(horizontalArrangement = Arrangement.spacedBy(spacing.m)) {
+            TextButton("Add uploader", "plus", { add(UploaderProfile(name = "Uploader ${profiles.size}")) }, style = ControlStyle.Primary)
+            TextButton("Import .sxcu file", "folder", {
                 Multithreading.submit {
                     val path = runCatching {
                         TinyFdApi.getInstance().openFileSelector("Import a ShareX uploader", null, arrayOf("*.sxcu"), "ShareX custom uploader (*.sxcu)")
@@ -108,7 +118,7 @@ fun UploaderListEditor(prop: Property<*>) {
                             ScreenshotActions.notifyError("Import failed", it.message ?: "That file couldn't be read.")
                         }
                 }
-            }
+            })
         }
     }
 }
@@ -124,27 +134,35 @@ private fun UploaderCard(
     onChange: (UploaderProfile) -> Unit,
 ) {
     val theme = OneConfigTheme.current
+    val spacing = theme.spacing
     Column(
         Modifier
             .fillMaxWidth()
-            .background(theme.componentBackground, theme.buttonShape)
-            .border(1.dp, if (isDefault) OneConfigTheme.accent.copy(alpha = 0.6f) else theme.borderColor, theme.buttonShape)
+            .themedSurface(SurfaceKind.Field, selected = isDefault)
             .animateContentSize()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            IconAction(if (isDefault) "star-filled" else "star", if (isDefault) "Default uploader" else "Make default", active = isDefault, onClick = onDefault)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(profile.name.ifBlank { "Unnamed uploader" }, Modifier, theme.textColor, 14.sp, FontWeight.Medium)
-                Text(if (profile.isBuiltIn) "Built in · ${profile.host}" else "${profile.method.name} · ${profile.host}", Modifier, theme.textColorSecondary, 12.sp)
+            .contextMenu {
+                listOfNotNull(
+                    MenuAction("Make default", onDefault, icon = "star", enabled = !isDefault),
+                    MenuAction(if (isExpanded) "Collapse" else "Edit", onToggle, icon = if (isExpanded) "up" else "text-input"),
+                    if (profile.isBuiltIn) null else MenuSeparator,
+                    if (profile.isBuiltIn) null else MenuAction("Remove", onDelete, icon = "trash", danger = true),
+                )
             }
-            if (isDefault) StatusTag("DEFAULT", overImage = false)
-            IconAction(if (isExpanded) "up" else "down", if (isExpanded) "Collapse" else "Edit", onClick = onToggle)
-            if (!profile.isBuiltIn) IconAction("trash", "Remove uploader", destructive = true, onClick = onDelete)
+            .padding(horizontal = spacing.l, vertical = spacing.m),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(spacing.m)) {
+            IconButton(if (isDefault) "star-filled" else "star", if (isDefault) "Default uploader" else "Make default", onDefault, size = ControlSize.Compact, selected = isDefault)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(spacing.xxs)) {
+                Text(profile.name.ifBlank { "Unnamed uploader" }, Modifier, theme.textColor, OneConfigTheme.typography.label)
+                Text(if (profile.isBuiltIn) "Built in · ${profile.host}" else "${profile.method.name} · ${profile.host}", Modifier, theme.textColorSecondary, OneConfigTheme.typography.small)
+            }
+            if (isDefault) Badge("DEFAULT", tone = BadgeTone.Accent)
+            IconButton(if (isExpanded) "up" else "down", if (isExpanded) "Collapse" else "Edit", onToggle, size = ControlSize.Compact, selected = isExpanded)
+            if (!profile.isBuiltIn) IconButton("trash", "Remove uploader", onDelete, size = ControlSize.Compact, danger = true)
         }
 
         if (isExpanded) {
-            Spacer(Modifier.padding(top = 12.dp))
+            Spacer(Modifier.padding(top = spacing.l))
             if (profile.isBuiltIn) BuiltInForm(profile) else ProfileForm(profile, onChange)
         }
     }
@@ -153,75 +171,68 @@ private fun UploaderCard(
 @Composable
 private fun BuiltInForm(profile: UploaderProfile) {
     var keepMetadata by remember(profile.id) { mutableStateOf(Uploaders.keepsMetadata(profile)) }
-    Column(Modifier.fillMaxWidth().padding(start = 36.dp, bottom = 4.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        ToggleRow("Keep metadata", keepMetadata, Modifier.width(220.dp)) {
+    val spacing = OneConfigTheme.current.spacing
+    Column(Modifier.fillMaxWidth().padding(start = 36.dp, bottom = spacing.xs), verticalArrangement = Arrangement.spacedBy(spacing.l)) {
+        ToggleRow("Keep metadata", keepMetadata, {
             keepMetadata = !keepMetadata
             Uploaders.setKeepsMetadata(profile, keepMetadata)
-        }
+        }, Modifier.width(220.dp))
         val limit = profile.sizeLimitBytes
-        if (limit != null) Text("Uploads over ${limit / 1_000_000} MB are shrunk to fit.", Modifier, OneConfigTheme.current.textColorSecondary, 12.sp)
+        if (limit != null) Text("Uploads over ${limit / 1_000_000} MB are shrunk to fit.", Modifier, OneConfigTheme.current.textColorSecondary, OneConfigTheme.typography.small)
     }
 }
 
 @Composable
 private fun ProfileForm(profile: UploaderProfile, onChange: (UploaderProfile) -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(start = 36.dp, bottom = 4.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Column(Modifier.width(220.dp)) {
-                FieldLabel("Name")
-                TextField(profile.name, "My host") { onChange(profile.copy(name = it)) }
+    val spacing = OneConfigTheme.current.spacing
+    Column(Modifier.fillMaxWidth().padding(start = 36.dp, bottom = spacing.xs), verticalArrangement = Arrangement.spacedBy(spacing.l)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(spacing.l)) {
+            LabeledField("Name", Modifier.width(220.dp)) {
+                TextField(profile.name, { onChange(profile.copy(name = it)) }, placeholder = "My host", label = "Name")
             }
-            Column(Modifier.weight(1f)) {
-                FieldLabel("Upload URL")
-                TextField(profile.url, "https://example.com/upload") { onChange(profile.copy(url = it)) }
+            LabeledField("Upload URL", Modifier.weight(1f)) {
+                TextField(profile.url, { onChange(profile.copy(url = it)) }, placeholder = "https://example.com/upload", label = "Upload URL")
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-            Column {
-                FieldLabel("Request method")
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    for (method in RequestMethod.entries) Chip(method.name, profile.method == method) { onChange(profile.copy(method = method)) }
+        Row(horizontalArrangement = Arrangement.spacedBy(spacing.xxl)) {
+            LabeledField("Request method") {
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing.s)) {
+                    for (method in RequestMethod.entries) Chip(method.name, profile.method == method, { onChange(profile.copy(method = method)) })
                 }
             }
-            Column {
-                FieldLabel("Request body")
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    for (body in RequestBody.entries) Chip(body.displayName, profile.body == body) { onChange(profile.copy(body = body)) }
+            LabeledField("Request body") {
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing.s)) {
+                    for (body in RequestBody.entries) Chip(body.displayName, profile.body == body, { onChange(profile.copy(body = body)) })
                 }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(spacing.l)) {
             if (profile.body == RequestBody.MULTIPART) {
-                Column(Modifier.width(220.dp)) {
-                    FieldLabel("File field")
-                    TextField(profile.fileField, "file") { onChange(profile.copy(fileField = it)) }
+                LabeledField("File field", Modifier.width(220.dp)) {
+                    TextField(profile.fileField, { onChange(profile.copy(fileField = it)) }, placeholder = "file", label = "File field")
                 }
             }
-            Column(Modifier.weight(1f)) {
-                FieldLabel("Link in response")
-                TextField(profile.responseUrl, "data.link, files[0].url, or empty if the response is the link") { onChange(profile.copy(responseUrl = it)) }
+            LabeledField("Link in response", Modifier.weight(1f)) {
+                TextField(profile.responseUrl, { onChange(profile.copy(responseUrl = it)) }, placeholder = "data.link, files[0].url, or empty if the response is the link", label = "Link in response")
             }
         }
-        Column {
-            FieldLabel("Headers")
+        LabeledField("Headers") {
             KeyValueList(profile.headers, "Header", "Value", "Add header") { onChange(profile.copy(headers = it)) }
         }
         if (profile.body == RequestBody.MULTIPART) {
-            Column {
-                FieldLabel("Form fields")
+            LabeledField("Form fields") {
                 KeyValueList(profile.formFields, "Field", "Value", "Add field") { onChange(profile.copy(formFields = it)) }
             }
         }
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Column(Modifier.width(220.dp)) {
-                FieldLabel("Size limit (MB)")
-                TextField(profile.sizeLimitMb, "No limit") { value -> onChange(profile.copy(sizeLimitMb = value.filter { it.isDigit() || it == '.' || it == ',' })) }
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(spacing.l)) {
+            LabeledField("Size limit (MB)", Modifier.width(220.dp)) {
+                TextField(profile.sizeLimitMb, { value -> onChange(profile.copy(sizeLimitMb = value.filter { it.isDigit() || it == '.' || it == ',' })) }, placeholder = "No limit", label = "Size limit (MB)")
             }
-            ToggleRow("Keep metadata", profile.keepMetadata, Modifier.width(220.dp)) { onChange(profile.copy(keepMetadata = !profile.keepMetadata)) }
+            ToggleRow("Keep metadata", profile.keepMetadata, { onChange(profile.copy(keepMetadata = !profile.keepMetadata)) }, Modifier.width(220.dp))
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon("info", OneConfigTheme.current.textColorSecondary, Modifier.size(14.dp))
-            Text("Header and field values are stored in plain text in your config.", Modifier, OneConfigTheme.current.textColorSecondary, 11.sp)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(spacing.s)) {
+            Icon("alert-circle", null, Modifier.size(14.dp), OneConfigTheme.current.warning)
+            Text("Header and field values are stored in plain text in your config.", Modifier, OneConfigTheme.current.textColorSecondary, OneConfigTheme.typography.caption)
         }
     }
 }

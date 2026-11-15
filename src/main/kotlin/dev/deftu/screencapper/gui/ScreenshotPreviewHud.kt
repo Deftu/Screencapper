@@ -4,7 +4,6 @@ package dev.deftu.screencapper.gui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.toArgb
 import dev.deftu.screencapper.ScreenshotActions
 import dev.deftu.screencapper.screenshot.Screenshot
 import org.polyfrost.compose.composables.PolyCanvas
@@ -16,28 +15,23 @@ import org.polyfrost.compose.render.PolyColor
 import org.polyfrost.compose.render.RenderContext
 import org.polyfrost.oneconfig.api.config.v1.annotations.Slider
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch
-import org.polyfrost.oneconfig.api.event.v1.EventManager
-import org.polyfrost.oneconfig.api.event.v1.events.MouseInputEvent
 import org.polyfrost.oneconfig.api.hud.v1.Hud
+import org.polyfrost.oneconfig.api.hud.v1.HudIcons
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.hud.v1.HudResize
+import org.polyfrost.oneconfig.api.hud.v1.clickRegion
+import org.polyfrost.oneconfig.api.hud.v1.hoverRegion
+import org.polyfrost.oneconfig.api.hud.v1.removeClickRegion
 import org.polyfrost.compose.render.PolyFont
 import org.polyfrost.compose.layout.PolyAlign
 import org.polyfrost.oneconfig.api.hud.v1.Font
 import org.polyfrost.oneconfig.api.hud.v1.Weight
-import org.polyfrost.oneconfig.api.notifications.v1.Notifications
-import org.polyfrost.oneconfig.api.platform.v1.Platform
+import org.polyfrost.oneconfig.api.hud.v1.toPolyColor
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
+import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
 import org.polyfrost.oneconfig.utils.v1.Multithreading
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-
-//? if >=1.21 {
-import net.minecraft.client.gui.screens.ChatScreen
-//?} else {
-/*import net.minecraft.client.gui.screen.game.ChatScreen
-*///?}
 import kotlin.math.min
 import kotlin.math.pow
 
@@ -54,7 +48,7 @@ private const val PILL_GAP = 0.55f
 
 private enum class PreviewAction(val label: String, val doneLabel: String, val icon: String) {
     COPY("Copy", "Copied", "copy"),
-    UPLOAD("Upload", "Link copied", "cloud"),
+    UPLOAD("Upload", "Link copied", "upload"),
     DELETE("Delete", "Deleted", "trash"),
     VIEW("View", "View", "external-link"),
 }
@@ -66,6 +60,8 @@ private class ActivePreview(val screenshot: Screenshot, val bitmap: PolyBitmap, 
     @Volatile var feedback: PreviewAction? = null
     @Volatile var feedbackAt = 0L
 }
+
+private class PreviewColors(val accent: PolyColor, val danger: PolyColor, val onMedia: PolyColor, val shade: PolyColor)
 
 class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview", Category.INFO) {
     override val description: String = "Shows each new screenshot with quick actions."
@@ -102,7 +98,6 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
     override fun setup() {
         super.setup()
         staticWidth = true
-        installInput()
     }
 
     override fun clone(): Hud = (super.clone() as ScreenshotPreviewHud).apply {
@@ -121,7 +116,7 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
 
     override val alwaysRedraw: Boolean get() = active != null
 
-    private val square: Boolean get() = OneConfigTheme.active?.shadowEnabled == false
+    private val square: Boolean get() = OneConfigTheme.active?.style == ThemeStyle.Pixel
 
     private fun visibleMs(preview: ActivePreview, now: Long): Long {
         val paused = preview.pausedFor + if (preview.pausedSince >= 0) now - preview.pausedSince else 0L
@@ -143,18 +138,24 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
 
     @Composable
     override fun Content() {
-        val accent = PolyColor(OneConfigTheme.accent.toArgb())
-        PolyCanvas(PolyModifier.size(scaledWidth, scaledHeight), live = true) { x, y, w, h -> draw(x, y, w, h, accent) }
+        val theme = OneConfigTheme.current
+        val colors = PreviewColors(
+            accent = OneConfigTheme.accent.toPolyColor(),
+            danger = theme.error.toPolyColor(),
+            onMedia = theme.onMedia.toPolyColor(),
+            shade = theme.onMediaShadow.toPolyColor(),
+        )
+        val icons = ICON_NAMES.associateWith { HudIcons.bitmap(it, ICON_PX) }
+        PolyCanvas(PolyModifier.size(staticW, staticH), live = true) { x, y, w, h -> draw(x, y, w, h, colors, icons) }
     }
 
-    private fun RenderContext.draw(x: Float, y: Float, width: Float, height: Float, accent: PolyColor) {
+    private fun RenderContext.draw(x: Float, y: Float, width: Float, height: Float, colors: PreviewColors, icons: Map<String, PolyBitmap?>) {
         val preview = active?.takeIf { visible() }
-        if (preview == null) hovered = null
-        drawnAt = System.currentTimeMillis()
+        if (preview == null) clearRegions()
         if (preview == null && isReal && !HudManager.isEditing) return
 
         val unit = if (staticW > 0f) width / staticW else 1f
-        if (showBackground) rect(x, y, width, height, PolyColor(bgColor, bgChroma, bgChromaSpeed), bgRadius * unit)
+        if (showBackground) rect(x, y, width, height, bgPolyColor, bgRadius * unit)
         val ix = x + padLeft * unit
         val iy = y + padTop * unit
         val iw = (width - (padLeft + padRight) * unit).coerceAtLeast(1f)
@@ -162,8 +163,8 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
         val innerRadius = if (square) 0f else (if (showBackground) bgRadius - minOf(padLeft, padTop, padRight, padBottom) else bgRadius).coerceAtLeast(0f) * unit
 
         if (preview == null) {
-            rect(ix, iy, iw, ih, PolyColor(0x40FFFFFF), innerRadius)
-            rectStroke(ix, iy, iw, ih, PolyColor(0x80FFFFFF.toInt()), 1f, innerRadius)
+            rect(ix, iy, iw, ih, colors.onMedia.withAlpha(0.25f), innerRadius)
+            rectStroke(ix, iy, iw, ih, colors.onMedia.withAlpha(0.5f), 1f, innerRadius)
             val sample = "Screenshot preview"
             val size = fitLabel(listOf(sample), ih * TEXT_RATIO * textScale, iw * 0.9f) { _, _ -> 0f }
             drawLabel(sample, ix + (iw - measureLabel(sample, size)) / 2f, iy + ih / 2f, size, 1f)
@@ -192,8 +193,18 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
         val dy = cy - dh / 2f
         val radius = innerRadius.coerceAtMost(min(dw, dh) / 2f)
 
-        val mouse = if (HudManager.isEditing) null else localMouse()
-        val inside = mouse != null && exit == 0f && mouse.first in dx..(dx + dw) && mouse.second in dy..(dy + dh)
+        val inside = if (isReal && exit == 0f) {
+            val hovered = this@ScreenshotPreviewHud.hoverRegion(PREVIEW_REGION, dx, dy, dw, dh, false)
+            if (hoverActions) {
+                this@ScreenshotPreviewHud.clickRegion(VIEW_REGION, dx, dy, dw, dh, false) { run(preview, PreviewAction.VIEW) }
+            } else {
+                removeClickRegion(VIEW_REGION)
+            }
+            hovered
+        } else {
+            clearRegions()
+            false
+        }
         updatePause(preview, inside && pauseOnHover, now)
 
         save()
@@ -205,24 +216,24 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
         if (countdown && preview.dismissedAt < 0) {
             val left = 1f - (visibleMs(preview, now) / (duration * 1000f)).coerceIn(0f, 1f)
             val bar = (dh * 0.015f).coerceAtLeast(1f)
-            rect(dx, dy + dh - bar, dw * left, bar, accent.withAlpha(alpha))
+            rect(dx, dy + dh - bar, dw * left, bar, colors.accent.withAlpha(alpha))
         }
-        hovered = if (inside && hoverActions) Hover(preview, drawActions(preview, dx, dy, dw, dh, mouse!!, alpha, accent)) else null
+        if (inside && hoverActions) drawActions(preview, dx, dy, dw, dh, alpha, colors, icons) else clearActionRegions()
         restore()
-        rectStroke(dx, dy, dw, dh, PolyColor.WHITE.withAlpha((if (inside) 0.55f else 0.25f) * alpha), 1f, radius)
+        rectStroke(dx, dy, dw, dh, colors.onMedia.withAlpha((if (inside) 0.55f else 0.25f) * alpha), 1f, radius)
     }
 
     private fun RenderContext.drawActions(
         preview: ActivePreview,
         dx: Float, dy: Float, dw: Float, dh: Float,
-        mouse: Pair<Float, Float>,
         alpha: Float,
-        accent: PolyColor,
+        colors: PreviewColors,
+        icons: Map<String, PolyBitmap?>,
     ): PreviewAction {
-        rect(dx, dy, dw, dh, PolyColor.BLACK.withAlpha(0.35f * alpha))
+        rect(dx, dy, dw, dh, colors.shade.withAlpha(0.35f * alpha))
 
         val now = System.currentTimeMillis()
-        val actions = listOf(PreviewAction.COPY, PreviewAction.UPLOAD, PreviewAction.DELETE)
+        val actions = ACTIONS
         fun label(action: PreviewAction) =
             if (preview.feedback == action && now - preview.feedbackAt < FEEDBACK_MS) action.doneLabel else action.label
 
@@ -241,19 +252,19 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
 
         for ((index, action) in actions.withIndex()) {
             val w = widths[index]
-            val over = mouse.first in px..(px + w) && mouse.second in py..(py + pillH)
+            val over = this@ScreenshotPreviewHud.clickRegion(action.name, px, py, w, pillH, false) { run(preview, action) }
             if (over) hit = action
             val done = preview.feedback == action && now - preview.feedbackAt < FEEDBACK_MS
             val fill = when {
-                done -> accent
-                over && action == PreviewAction.DELETE -> PolyColor(0xFFE35B5B.toInt())
-                over -> PolyColor(0xFF2A3540.toInt())
-                else -> PolyColor(0xE6141A20.toInt())
+                done -> colors.accent
+                over && action == PreviewAction.DELETE -> colors.danger
+                else -> colors.shade.withAlpha(0.9f)
             }
             rect(px, py, w, pillH, fill.withAlpha(fill.alpha / 255f * alpha), pillRadius(pillH))
-            rectStroke(px, py, w, pillH, PolyColor.WHITE.withAlpha((if (over) 0.3f else 0.12f) * alpha), 1f, pillRadius(pillH))
+            if (over && !done && action != PreviewAction.DELETE) rect(px, py, w, pillH, colors.onMedia.withAlpha(0.12f * alpha), pillRadius(pillH))
+            rectStroke(px, py, w, pillH, colors.onMedia.withAlpha((if (over) 0.3f else 0.12f) * alpha), 1f, pillRadius(pillH))
             val ix = if (withLabels) px + padX else px + (w - iconSize) / 2f
-            icon(if (done) "tick" else action.icon)?.let {
+            icons[if (done) "tick" else action.icon]?.let {
                 image(it, ix, py + (pillH - iconSize) / 2f, iconSize, iconSize, 0f, 0f, 1f, 1f, textTint(alpha), FilterQuality.Low)
             }
             if (withLabels) drawLabel(labels[index], ix + iconSize + gap, py + pillH / 2f, labelSize, alpha)
@@ -266,7 +277,7 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
             val hintPad = hintSize * 0.8f
             val hw = measureLabel(hint, hintSize) + hintPad * 2f
             val hh = labelHeight(hintSize) + hintPad
-            rect(dx + (dw - hw) / 2f, dy + margin, hw, hh, PolyColor(0xCC141A20.toInt()).withAlpha(0.8f * alpha), pillRadius(hh))
+            rect(dx + (dw - hw) / 2f, dy + margin, hw, hh, colors.shade.withAlpha(0.65f * alpha), pillRadius(hh))
             drawLabel(hint, dx + (dw - hw) / 2f + hintPad, dy + margin + hh / 2f, hintSize, alpha)
         }
         return hit
@@ -291,12 +302,12 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
     }
 
     private fun textTint(alpha: Float): PolyColor {
-        val color = PolyColor(textColor, textChroma, textChromaSpeed)
+        val color = textPolyColor
         return color.withAlpha(color.alpha / 255f * alpha)
     }
 
     private fun shadowTint(alpha: Float): PolyColor {
-        val color = PolyColor(shadowColor, shadowChroma, shadowChromaSpeed)
+        val color = shadowPolyColor
         return color.withAlpha(color.alpha / 255f * alpha)
     }
 
@@ -349,84 +360,37 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
         }
     }
 
-    private fun RenderContext.localMouse(): Pair<Float, Float>? {
-        if (mouseX < 0f || Platform.screen().current<Any?>() !is ChatScreen) return null
-        val transform = deviceTransform() ?: return null
-        val ratio = Platform.screen().pixelRatio()
-        val sx = transform[0].takeIf { it != 0f } ?: return null
-        val sy = transform[1].takeIf { it != 0f } ?: return null
-        return (mouseX * ratio - transform[2]) / sx to (mouseY * ratio - transform[3]) / sy
+    private fun clearActionRegions() {
+        for (action in ACTIONS) removeClickRegion(action.name)
+    }
+
+    private fun clearRegions() {
+        removeClickRegion(PREVIEW_REGION)
+        removeClickRegion(VIEW_REGION)
+        clearActionRegions()
     }
 
     private fun onRightHalf(): Boolean = x + scaledWidth / 2f > HudManager.guiScreenWidth / 2f
 
     companion object {
         private const val MAX_WIDTH = 960
+        private const val ICON_PX = 48
+        private const val PREVIEW_REGION = "preview"
+        private const val VIEW_REGION = "view"
+
+        private val ACTIONS = listOf(PreviewAction.COPY, PreviewAction.UPLOAD, PreviewAction.DELETE)
+        private val ICON_NAMES = ACTIONS.map { it.icon } + "tick"
 
         @Volatile
         private var active: ActivePreview? = null
 
-        private const val HOVER_STALE_MS = 250L
-
-        private class Hover(val preview: ActivePreview, val action: PreviewAction)
-
-        @Volatile
-        private var hovered: Hover? = null
-
-        @Volatile
-        private var pressed: Hover? = null
-
-        @Volatile
-        private var drawnAt = 0L
-
         private val shown = AtomicLong()
-
-        @Volatile
-        private var mouseX = -1f
-
-        @Volatile
-        private var mouseY = -1f
-
-        private val inputInstalled = AtomicBoolean(false)
-        private val icons = HashMap<String, PolyBitmap?>()
-
-        private fun icon(name: String): PolyBitmap? = synchronized(icons) {
-            if (name in icons) icons[name] else Notifications.icon("/assets/oneconfig/ico/$name.svg", 48).also { icons[name] = it }
-        }
 
         private fun easeOut(t: Float) = 1f - (1f - t).pow(3)
         private fun easeIn(t: Float) = t * t * t
 
-        private fun installInput() {
-            if (!inputInstalled.compareAndSet(false, true)) return
-            EventManager.register(MouseInputEvent.Moved::class.java) { e ->
-                mouseX = e.x
-                mouseY = e.y
-            }
-            val left = Platform.compatibility().keys().mouseButtonLeft
-            EventManager.register(MouseInputEvent::class.java) { e ->
-                if (e.button != left) return@register
-                when (e.state) {
-                    MouseInputEvent.PRESSED -> pressed = currentHover()
-                    MouseInputEvent.RELEASED -> {
-                        val target = pressed
-                        pressed = null
-                        val now = currentHover()
-                        if (target != null && now != null && target.preview === now.preview && target.action == now.action) run(now)
-                    }
-                }
-            }
-        }
-
-        private fun currentHover(): Hover? {
-            val hover = hovered ?: return null
-            if (HudManager.isEditing || System.currentTimeMillis() - drawnAt > HOVER_STALE_MS || hover.preview !== active) return null
-            return hover
-        }
-
-        private fun run(hover: Hover) {
-            val preview = hover.preview
-            val action = hover.action
+        private fun run(preview: ActivePreview, action: PreviewAction) {
+            if (preview !== active) return
             val screenshot = preview.screenshot
             fun done() {
                 preview.feedback = action

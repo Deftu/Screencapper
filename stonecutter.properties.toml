@@ -5,7 +5,7 @@ mod.version = "2.1.1"
 mod.description = "A highly advanced screenshot mod."
 
 deps.fabric_loader = "0.19.3"
-deps.oneconfig = "1.6.2"
+deps.oneconfig = "1.8.0"
 
 loomx.loom_version = "1.19-SNAPSHOT"
 
