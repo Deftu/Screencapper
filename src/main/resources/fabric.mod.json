@@ -34,7 +34,8 @@
         "fabricloader": ">=${loader_version}",
         "java": ">=${java_version}",
         "fabric-language-kotlin": "*",
-        "oneconfigv1": ">=${oneconfig_version}"
+        "oneconfigv1": ">=${oneconfig_version}",
+        "polycompose": ">=1.0.0"
     },
     "breaks": {
         "screenshotmessageenhancer": "*",

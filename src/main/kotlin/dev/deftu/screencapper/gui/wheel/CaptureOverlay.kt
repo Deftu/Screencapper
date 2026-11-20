@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import dev.deftu.screencapper.screenshot.capture.HighResCapture
 import dev.deftu.screencapper.screenshot.capture.input.InputBridge
 import net.minecraft.client.Minecraft
+import org.polyfrost.compose.minecraft.hud.HudLayer
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.OneConfigPrefs
 import org.polyfrost.oneconfig.api.ui.v1.components.RadialMenu
@@ -45,7 +46,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.RadialMenuState
 import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
 import org.polyfrost.oneconfig.api.ui.v1.components.Text
 import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
-import org.polyfrost.oneconfig.api.ui.v1.platform.ComposeHudLayer
+import org.polyfrost.oneconfig.api.ui.v1.platform.OneConfigComposeOptions
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigUITheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
@@ -103,7 +104,7 @@ internal object CaptureOverlay {
     private var fadeEndsAt = 0L
     private var countdownEndsAt by mutableLongStateOf(-1L)
 
-    private val host = ComposeHudLayer("screencapper:capture_overlay") { Content() }.apply { acceptsInput = false }
+    private val host = HudLayer("screencapper:capture_overlay", OneConfigComposeOptions) { Content() }.apply { acceptsInput = false }
 
     val isOpen: Boolean get() = session != null
 
