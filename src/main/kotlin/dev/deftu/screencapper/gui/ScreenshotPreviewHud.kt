@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import dev.deftu.screencapper.ScreenshotActions
 import dev.deftu.screencapper.screenshot.Screenshot
-import org.polyfrost.compose.composables.PolyCanvas
+import org.polyfrost.compose.composables.NodeCanvas
 import org.polyfrost.compose.composables.PolyModifier
 import org.polyfrost.compose.composables.size
 import org.polyfrost.compose.render.FilterQuality
@@ -146,7 +146,7 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot preview"
             shade = theme.onMediaShadow.toPolyColor(),
         )
         val icons = ICON_NAMES.associateWith { HudIcons.bitmap(it, ICON_PX) }
-        PolyCanvas(PolyModifier.size(staticW, staticH), live = true) { x, y, w, h -> draw(x, y, w, h, colors, icons) }
+        NodeCanvas(PolyModifier.size(staticW, staticH), live = true) { x, y, w, h -> draw(x, y, w, h, colors, icons) }
     }
 
     private fun RenderContext.draw(x: Float, y: Float, width: Float, height: Float, colors: PreviewColors, icons: Map<String, PolyBitmap?>) {
