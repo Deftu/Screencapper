@@ -12,5 +12,10 @@ object CompressionProfiles {
         return fields.profile() ?: CompressionProfile.LOSSLESS
     }
 
+    fun forKind(kind: CaptureKind, override: CompressionChoice?): CompressionProfile = resolve(forKind(kind), override)
+
+    fun resolve(base: CompressionProfile, override: CompressionChoice?): CompressionProfile =
+        override?.preset?.copy(keepOriginal = base.keepOriginal) ?: base
+
     fun forUpload(): CompressionProfile? = ScreencapperConfig.uploadCompressionFields.profile()
 }

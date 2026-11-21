@@ -7,5 +7,9 @@
     "screencapper.text.chat.delete": "Delete",
     "screencapper.page.screenshots": "Screenshots",
     "screencapper.page.screenshots.search": "Search screenshots...",
-    "screencapper.text.chat.view": "View"
+    "screencapper.text.chat.view": "View",
+    "screencapper.text.chat.panorama": "Panorama saved",
+    "screencapper.text.chat.panorama_set_title": "Set as title background",
+    "screencapper.text.chat.panorama_reset_title": "Reset title background",
+    "screencapper.text.chat.panorama_folder": "Open folder"
 }

@@ -4,25 +4,32 @@ package dev.deftu.screencapper.screenshot.capture.input
 
 import dev.deftu.screencapper.Screencapper
 import dev.deftu.screencapper.ScreenshotActions
+import dev.deftu.screencapper.ShutterSound
 import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.gui.wheel.CaptureOverlay
 import dev.deftu.screencapper.gui.wheel.WheelClick
+import dev.deftu.screencapper.gui.wheel.WheelOption
+import dev.deftu.screencapper.gui.wheel.WheelOptions
+import dev.deftu.screencapper.gui.wheel.WheelShot
 import dev.deftu.screencapper.metadata.MetadataCollector
 import dev.deftu.screencapper.screenshot.capture.CaptureKind
 import dev.deftu.screencapper.screenshot.capture.CaptureResults
 import dev.deftu.screencapper.screenshot.capture.CaptureSource
 import dev.deftu.screencapper.screenshot.capture.FastCapture
 import dev.deftu.screencapper.screenshot.capture.HighResCapture
+import dev.deftu.screencapper.screenshot.capture.compression.CompressionProfile
+import dev.deftu.screencapper.screenshot.capture.compression.CompressionProfiles
+import dev.deftu.screencapper.screenshot.panorama.TitlePanorama
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.RadialMenuItem
+import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 
 object CaptureInput {
     private const val SETTLE_FRAMES = 2
-    private const val TIMER_MS = 3_000L
     private const val NO_KEY = Int.MIN_VALUE
 
     private class Frame(val width: Int, val height: Int, val pixels: Supplier<IntArray>, val release: Runnable)
@@ -39,7 +46,9 @@ object CaptureInput {
             CaptureOverlay.showCountdown(value)
         }
 
-    private var wheelChoices: List<CaptureChoice> = emptyList()
+    private var timerOption: WheelOption? = null
+
+    private var wheelChoices: List<WheelOption> = emptyList()
 
     private var settleFrames = -1
     private var settleAction: (() -> Unit)? = null
@@ -51,6 +60,7 @@ object CaptureInput {
     fun install() {
         if (!installed.compareAndSet(false, true)) return
         hookFrames()
+        TitlePanorama.install()
     }
 
     private fun hookFrames() {
@@ -79,9 +89,13 @@ object CaptureInput {
         val file = FastCapture.nextFile(InputBridge.gameDirectory, null)
         val shot = PendingShot<Frame>(
             keep = { frame ->
+                ShutterSound.play()
                 FastCapture.save(file, frame.width, frame.height, frame.pixels, frame.release, { error -> CaptureResults.deliver(file, error) }, CaptureKind.NORMAL, metadata)
             },
-            drop = { frame -> frame.release.run() },
+            drop = { frame ->
+                frame.release.run()
+                FastCapture.release(file)
+            },
         )
         pending = shot
         heldKey = key
@@ -156,7 +170,8 @@ object CaptureInput {
 
         if (timerEndsAt >= 0 && now >= timerEndsAt) {
             timerEndsAt = -1L
-            afterSettling(::captureNow)
+            timerOption?.let(::shoot)
+            timerOption = null
         }
 
         if (settleAction != null && settleFrames-- <= 0) {
@@ -172,7 +187,9 @@ object CaptureInput {
     }
 
     private fun openMenu(): Boolean {
-        val (choices, entries) = wheelEntries().unzip()
+        val choices = WheelOptions.decode(ScreencapperConfig.wheelOptions)
+        val (customWidth, customHeight) = customSize()
+        val entries = choices.map { option -> option.slot(customWidth, customHeight).let { RadialMenuItem(it.label, it.icon, it.detail) } }
         if (!CaptureOverlay.open(entries)) return false
         wheelChoices = choices
         return true
@@ -196,33 +213,41 @@ object CaptureInput {
 
     private fun customSize(): Pair<Int, Int> = ScreencapperConfig.highResWidth.toInt() to ScreencapperConfig.highResHeight.toInt()
 
-    private fun wheelEntries(): List<Pair<CaptureChoice, RadialMenuItem>> {
-        val (customWidth, customHeight) = customSize()
-        return listOf(
-            CaptureChoice.HIGH_RES_4K to RadialMenuItem("High-res 4K", "maximise", "3840 \u00d7 2160"),
-            CaptureChoice.HIGH_RES_8K to RadialMenuItem("High-res 8K", "layers", "7680 \u00d7 4320"),
-            CaptureChoice.HIGH_RES_CUSTOM to RadialMenuItem("High-res custom", "spanner", "$customWidth \u00d7 $customHeight"),
-            CaptureChoice.NO_HUD to RadialMenuItem("No HUD", "eye-off", "Hides the HUD for this shot"),
-            CaptureChoice.TIMER to RadialMenuItem("Timer", "bell", "Takes it in 3 seconds"),
-        )
+    private fun run(option: WheelOption) {
+        when (val shot = option.shot) {
+            is WheelShot.HighRes -> customSize().let { (customWidth, customHeight) -> shot.size(customWidth, customHeight) }.let { (width, height) -> highRes(width, height, option) }
+            is WheelShot.Timer -> {
+                timerOption = option
+                timerEndsAt = System.currentTimeMillis() + shot.seconds * 1_000L
+            }
+            WheelShot.Normal -> shoot(option)
+            is WheelShot.Panorama -> panorama(shot.faceSize)
+        }
     }
 
-    private fun run(choice: CaptureChoice) {
-        when (choice) {
-            CaptureChoice.HIGH_RES_4K -> highRes(3840, 2160)
-            CaptureChoice.HIGH_RES_8K -> highRes(7680, 4320)
-            CaptureChoice.HIGH_RES_CUSTOM -> customSize().let { (width, height) -> highRes(width, height) }
-            CaptureChoice.NO_HUD -> {
-                restoreHud = InputBridge.hudHidden
-                InputBridge.hudHidden = true
-                afterSettling {
-                    captureNow()
-                    restoreHud?.let { InputBridge.hudHidden = it }
-                    restoreHud = null
-                }
+    private fun shoot(option: WheelOption) {
+        hide(option)
+        afterSettling {
+            try {
+                captureNow(option)
+            } finally {
+                unhide()
             }
-            CaptureChoice.TIMER -> timerEndsAt = System.currentTimeMillis() + TIMER_MS
         }
+    }
+
+    private fun hide(option: WheelOption) {
+        if (option.hideHud) {
+            if (restoreHud == null) restoreHud = InputBridge.hudHidden
+            InputBridge.hudHidden = true
+        }
+        HiddenLayers.hide(option.hideChat, option.hideHand)
+    }
+
+    private fun unhide() {
+        HiddenLayers.clear()
+        restoreHud?.let { runCatching { InputBridge.hudHidden = it } }
+        restoreHud = null
     }
 
     private fun afterSettling(action: () -> Unit) {
@@ -230,23 +255,37 @@ object CaptureInput {
         settleAction = action
     }
 
-    private fun highRes(width: Int, height: Int) {
+    private fun profileOf(option: WheelOption?, kind: CaptureKind): CompressionProfile? =
+        option?.compression?.let { CompressionProfiles.forKind(kind, it) }
+
+    private fun fileFor(kind: CaptureKind, profile: CompressionProfile?, prefix: String?): File {
+        return FastCapture.nextFile(InputBridge.gameDirectory, null, kind, prefix, profile?.format?.extension)
+    }
+
+    private fun highRes(width: Int, height: Int, option: WheelOption) {
         val metadata = MetadataCollector.collect()
-        HighResCapture.capture(width, height, ScreencapperConfig.highResHideHud) { image ->
+        val profile = profileOf(option, CaptureKind.HIGH_RES)
+        HighResCapture.capture(width, height, option.hideHud, option.hideChat, option.hideHand) { image ->
             if (image == null) {
                 ScreenshotActions.notifyError("Couldn't take high-res screenshot", "The capture failed or was cancelled.")
                 return@capture
             }
-            val file = FastCapture.nextFile(InputBridge.gameDirectory, null, CaptureKind.HIGH_RES, HighResCapture.fileName())
-            FastCapture.saveImage(file, image, CaptureKind.HIGH_RES, metadata) { error -> CaptureResults.deliver(file, error) }
+            val file = fileFor(CaptureKind.HIGH_RES, profile, HighResCapture.fileName())
+            FastCapture.save(file, image.width, image.height, { image.argb }, {}, { error -> CaptureResults.deliver(file, error) }, CaptureKind.HIGH_RES, metadata, profile)
         }
     }
 
-    private fun captureNow() {
+    private fun panorama(faceSize: Int) {
+        if (!PanoramaShot.start(faceSize)) ScreenshotActions.notifyError("Couldn't take panorama", "Another capture is still running.")
+    }
+
+    private fun captureNow(option: WheelOption? = null) {
         val metadata = MetadataCollector.collect()
-        val file = FastCapture.nextFile(InputBridge.gameDirectory, null)
+        val profile = profileOf(option, CaptureKind.NORMAL)
+        val file = fileFor(CaptureKind.NORMAL, profile, null)
+        ShutterSound.play()
         CaptureSource.readMain { width, height, pixels, release ->
-            FastCapture.save(file, width, height, pixels, release, { error -> CaptureResults.deliver(file, error) }, CaptureKind.NORMAL, metadata)
+            FastCapture.save(file, width, height, pixels, release, { error -> CaptureResults.deliver(file, error) }, CaptureKind.NORMAL, metadata, profile)
         }
     }
 
@@ -255,16 +294,8 @@ object CaptureInput {
         gesture.reset()
         CaptureOverlay.dismiss(instant = true)
         timerEndsAt = -1L
+        timerOption = null
         settleAction = null
-        restoreHud?.let { runCatching { InputBridge.hudHidden = it } }
-        restoreHud = null
+        unhide()
     }
-}
-
-internal enum class CaptureChoice {
-    HIGH_RES_4K,
-    HIGH_RES_8K,
-    HIGH_RES_CUSTOM,
-    NO_HUD,
-    TIMER,
 }

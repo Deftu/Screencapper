@@ -7,17 +7,22 @@
     "defaultRequire": 1
   },
   "client": [
+    "AdvancementEarnedMixin",
     "ChatAccessor",
     "ChatMixin",
+    "capture.HideChatMixin",
+    "capture.HideHandMixin",
     "ScreenshotMixin",
     "highres.HighResGameRendererMixin",
-    "highres.HighResMinecraftMixin",
     "highres.HighResWindowAccessor",
     "highres.HighResWindowMixin",
     "input.CaptureOverlayMixin",
     "input.KeyInputMixin",
     "input.MouseButtonMixin",
     "input.MouseMoveMixin",
-    "input.ScreenshotKeyMixin"
+    "input.ScreenshotKeyMixin",
+    "panorama.LeaveWorldMixin",
+    "panorama.LeaveWorldTasksMixin",
+    "panorama.PanoramaGameRendererMixin"
   ]
 }

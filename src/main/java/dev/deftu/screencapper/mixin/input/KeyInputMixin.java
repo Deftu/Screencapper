@@ -1,17 +1,16 @@
 package dev.deftu.screencapper.mixin.input;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import dev.deftu.screencapper.screenshot.capture.input.CaptureInput;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
 
 //? if >=1.21 {
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import net.minecraft.client.KeyboardHandler;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 //?} else {
-/*import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+/*import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.Minecraft;
+import org.spongepowered.asm.mixin.injection.At;
 import org.lwjgl.input.Keyboard;
 *///?}
 //? if >=1.21.9
@@ -24,14 +23,14 @@ import net.minecraft.client.input.KeyEvent;
 *///?}
 public class KeyInputMixin {
     //? if >=1.21.9 {
-    @Inject(method = "keyPress", at = @At("HEAD"), cancellable = true)
-    private void screencapper$blockKeys(long window, int action, KeyEvent event, CallbackInfo ci) {
-        if (CaptureInput.onKey(event.key(), action)) ci.cancel();
+    @WrapMethod(method = "keyPress")
+    private void screencapper$blockKeys(long window, int action, KeyEvent event, Operation<Void> original) {
+        if (!CaptureInput.onKey(event.key(), action)) original.call(window, action, event);
     }
     //?} else if >=1.21 {
-    /*@Inject(method = "keyPress", at = @At("HEAD"), cancellable = true)
-    private void screencapper$blockKeys(long window, int key, int scancode, int action, int modifiers, CallbackInfo ci) {
-        if (CaptureInput.onKey(key, action)) ci.cancel();
+    /*@WrapMethod(method = "keyPress")
+    private void screencapper$blockKeys(long window, int key, int scancode, int action, int modifiers, Operation<Void> original) {
+        if (!CaptureInput.onKey(key, action)) original.call(window, key, scancode, action, modifiers);
     }
     *///?} else {
     /*@WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lorg/lwjgl/input/Keyboard;next()Z", remap = false))

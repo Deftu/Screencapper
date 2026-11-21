@@ -1,0 +1,6 @@
+{
+  "shutter": {
+    "category": "master",
+    "sounds": ["screencapper:shutter"]
+  }
+}
