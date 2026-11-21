@@ -1,13 +1,20 @@
 package dev.deftu.screencapper
 
+import dev.deftu.screencapper.clipboard.FileListSelection
+import dev.deftu.screencapper.clipboard.MultiCopy
+import dev.deftu.screencapper.clipboard.MultiCopyResult
 import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.gui.ScreenshotPreviewHud
 import dev.deftu.screencapper.gui.ScreenshotsPage
+import dev.deftu.screencapper.library.UserDataStore
 import dev.deftu.screencapper.metadata.MetadataIndex
 import dev.deftu.screencapper.screenshot.Screenshot
 import dev.deftu.screencapper.screenshot.ScreenshotLibrary
 import dev.deftu.screencapper.screenshot.UploadHistory
 import dev.deftu.screencapper.screenshot.UploadRecord
+import dev.deftu.screencapper.screenshot.capture.FastCapture
+import dev.deftu.screencapper.screenshot.naming.RenameCheck
+import dev.deftu.screencapper.screenshot.naming.ScreenshotPaths
 import dev.deftu.screencapper.upload.UploaderProfile
 import dev.deftu.screencapper.upload.Uploaders
 import org.polyfrost.oneconfig.api.notifications.v1.NotificationAction
@@ -29,7 +36,7 @@ object ScreenshotActions {
         if (ScreencapperConfig.autoUpload) upload(screenshot)
     }
 
-    fun isUploading(screenshot: Screenshot): Boolean = screenshot.name in uploading
+    fun isUploading(screenshot: Screenshot): Boolean = screenshot.id in uploading
 
     fun copy(screenshot: Screenshot, quiet: Boolean = false, onDone: (Boolean) -> Unit = {}) {
         Multithreading.submit {
@@ -44,14 +51,35 @@ object ScreenshotActions {
         }
     }
 
+    fun copyAll(screenshots: List<Screenshot>) {
+        if (screenshots.size == 1) {
+            copy(screenshots.first())
+            return
+        }
+        Multithreading.submit {
+            val files = screenshots.map { it.file }
+            val result = MultiCopy.copy(files, { ClipboardHelper.setTransferable(FileListSelection(it)) }, { ClipboardHelper.setString(it) })
+            when (result) {
+                MultiCopyResult.NothingToCopy -> notifyError("Copy failed", "Those screenshots no longer exist.")
+                is MultiCopyResult.Single -> screenshots.firstOrNull { it.file.absoluteFile == result.file }?.let { copy(it) }
+                is MultiCopyResult.Files -> notifySuccess("Copied", "${result.files.size} screenshots are on your clipboard.")
+                is MultiCopyResult.Paths -> notifySuccess("Copied file paths", "Your clipboard can't hold files here, so the paths of ${result.files.size} screenshots were copied instead.")
+                is MultiCopyResult.Failed -> {
+                    Screencapper.LOGGER.error("Failed to copy {} screenshots", result.files.size)
+                    notifyError("Copy failed", "Couldn't copy ${result.files.size} screenshots to the clipboard.")
+                }
+            }
+        }
+    }
+
     fun copyLink(screenshot: Screenshot) {
-        val link = UploadHistory.latest(screenshot) ?: return notifyError("No link yet", "${screenshot.name} hasn't been uploaded.")
+        val link = UploadHistory.latestLink(screenshot) ?: return notifyError("No link yet", "${screenshot.name} has no uploaded link.")
         ClipboardHelper.setString(link.url)
         notifySuccess("Link copied", link.url)
     }
 
     fun upload(screenshot: Screenshot, profile: UploaderProfile? = null, onDone: (String?) -> Unit = {}) {
-        if (!uploading.add(screenshot.name)) {
+        if (!uploading.add(screenshot.id)) {
             notifyError("Already uploading", "${screenshot.name} is still uploading.")
             return
         }
@@ -63,21 +91,28 @@ object ScreenshotActions {
             ChatCards.uploading(screenshot, uploader)
             Notifications.send("Uploading", "Sending ${screenshot.name} to $service.", NotificationType.PROGRESS, duration = -1f)
         } catch (e: Throwable) {
-            uploading.remove(screenshot.name)
+            uploading.remove(screenshot.id)
             throw e
         }
         Multithreading.submit {
             val result = runCatching { Uploaders.upload(screenshot, uploader) }
-            uploading.remove(screenshot.name)
+                .map { uploaded -> UploadRecord(uploader.id, uploader.name, uploaded.url, System.currentTimeMillis(), uploaded.deletion) }
+            try {
+                result.onSuccess { UploadHistory.add(screenshot, it) }
+            } finally {
+                uploading.remove(screenshot.id)
+            }
             runCatching { Notifications.dismiss(progress) }
-            result.onSuccess { url ->
-                val record = UploadRecord(uploader.id, uploader.name, url, System.currentTimeMillis())
-                UploadHistory.add(screenshot, record)
+            result.onSuccess { record ->
                 ChatCards.uploadFinished(screenshot, record)
                 ScreenshotLibrary.changed()
-                ClipboardHelper.setString(url)
-                notifyLink(screenshot, url, "Uploaded to $service")
-                onDone(url)
+                if (record.hasLink) {
+                    ClipboardHelper.setString(record.url)
+                    notifyLink(screenshot, record.url, "Uploaded to $service")
+                } else {
+                    notifySuccess("Uploaded to $service", "${screenshot.name} was sent to $service.")
+                }
+                onDone(record.url)
             }.onFailure {
                 Screencapper.LOGGER.error("Failed to upload {}", screenshot.name, it)
                 ScreenshotLibrary.changed()
@@ -92,8 +127,8 @@ object ScreenshotActions {
         if (!DesktopHelper.open(screenshot.file)) notifyError("Couldn't open", screenshot.name)
     }
 
-    fun openFolder() {
-        val dir = ScreenshotLibrary.directory.apply { mkdirs() }
+    fun openFolder(screenshot: Screenshot? = null) {
+        val dir = screenshot?.file?.parentFile?.takeIf { it.isDirectory } ?: ScreenshotLibrary.directory.apply { mkdirs() }
         if (!DesktopHelper.open(dir)) notifyError("Couldn't open", dir.absolutePath)
     }
 
@@ -101,7 +136,8 @@ object ScreenshotActions {
         val deleted = screenshot.file.delete()
         if (deleted) {
             UploadHistory.forget(screenshot)
-            MetadataIndex.forget(screenshot.name)
+            MetadataIndex.forget(screenshot.id)
+            UserDataStore.forget(screenshot.id)
             ScreenshotLibrary.changed()
             ScreenshotPreviewHud.dismiss(screenshot)
             ChatCards.deleted(screenshot)
@@ -111,6 +147,56 @@ object ScreenshotActions {
             if (!quiet) notifyError("Delete failed", "Couldn't delete ${screenshot.name}.")
         }
         return deleted
+    }
+
+    fun rename(screenshot: Screenshot, newName: String): Screenshot? {
+        if (isUploading(screenshot)) {
+            notifyError("Couldn't rename", "${screenshot.name} is still uploading.")
+            return null
+        }
+        val root = ScreenshotLibrary.directory
+        val target = when (val check = ScreenshotPaths.renameTarget(root, screenshot.file, newName)) {
+            is RenameCheck.Invalid -> {
+                notifyError("Couldn't rename", check.reason)
+                return null
+            }
+            is RenameCheck.Ok -> check
+        }
+        if (!FastCapture.claim(target.file)) {
+            notifyError("Couldn't rename", "A screenshot is being saved as ${target.id} right now.")
+            return null
+        }
+        val moved = try {
+            runCatching {
+                target.file.parentFile?.mkdirs()
+                screenshot.file.renameTo(target.file)
+            }.onFailure { Screencapper.LOGGER.error("Failed to rename {}", screenshot.id, it) }.getOrDefault(false)
+        } finally {
+            FastCapture.release(target.file)
+        }
+        if (!moved) {
+            notifyError("Couldn't rename", "${screenshot.name} couldn't be renamed.")
+            return null
+        }
+
+        val original = ScreenshotPaths.originalOf(screenshot.file)
+        val originalStuck = original.isFile && ScreenshotPaths.ownsOriginal(screenshot.file) && runCatching {
+            val movedOriginal = ScreenshotPaths.originalOf(target.file)
+            if (movedOriginal.exists()) error("$movedOriginal already exists")
+            movedOriginal.parentFile?.mkdirs()
+            if (!original.renameTo(movedOriginal)) error("rename failed")
+        }.onFailure { Screencapper.LOGGER.warn("Couldn't move the original of {}", screenshot.id, it) }.isFailure
+
+        val renamed = Screenshot(target.file, target.id)
+        UploadHistory.move(screenshot.id, renamed.id)
+        MetadataIndex.move(screenshot.id, renamed.id)
+        UserDataStore.move(screenshot.id, renamed.id)
+        ScreenshotPreviewHud.dismiss(screenshot)
+        ChatCards.renamed(screenshot, renamed)
+        ScreenshotLibrary.changed()
+        notifySuccess("Renamed", "${screenshot.name} is now ${renamed.id}.")
+        if (originalStuck) notifyError("Original not moved", "The untouched copy of ${screenshot.name} couldn't be renamed and is still at ${ScreenshotPaths.idOf(root, original)}.")
+        return renamed
     }
 
     fun deleteAll(screenshots: List<Screenshot>) {

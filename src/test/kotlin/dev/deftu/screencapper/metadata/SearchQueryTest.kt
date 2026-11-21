@@ -116,4 +116,56 @@ class SearchQueryTest {
         assertFalse(matches("has:wings", hypixel))
         assertFalse(matches("server:", singleplayer))
     }
+
+    private val tagged = SearchEntry(
+        "2026-08-01_12.00.00.png",
+        mapOf(MetadataKeys.WORLD to "Creative"),
+        LocalDate.of(2026, 8, 1),
+        tags = listOf("Redstone", "Big Build"),
+        albums = listOf("Builds", "Summer Trip"),
+        note = "Finished the sorting machine\nwith Alex",
+    )
+
+    @Test
+    fun tagFilterMatchesWholeTagsIgnoringCase() {
+        assertTrue(matches("tag:redstone", tagged))
+        assertTrue(matches("TAG:\"big build\"", tagged))
+        assertFalse(matches("tag:red", tagged))
+        assertFalse(matches("tag:big", tagged))
+        assertFalse(matches("tag:redstone", hypixel))
+    }
+
+    @Test
+    fun albumFilterMatchesWholeAlbumNames() {
+        assertTrue(matches("album:builds", tagged))
+        assertTrue(matches("album:\"summer trip\"", tagged))
+        assertFalse(matches("album:summer", tagged))
+        assertFalse(matches("album:builds", singleplayer))
+        assertTrue(matches("album:builds tag:redstone world:creative", tagged))
+    }
+
+    @Test
+    fun freeWordsAlsoSearchNotesAndTags() {
+        assertTrue(matches("sorting", tagged))
+        assertTrue(matches("\"sorting machine\"", tagged))
+        assertTrue(matches("alex", tagged))
+        assertTrue(matches("redstone", tagged))
+        assertFalse(matches("sorting", hypixel))
+        assertFalse(matches("summer", tagged))
+    }
+
+    @Test
+    fun hasNoteAndTags() {
+        assertTrue(matches("has:note", tagged))
+        assertTrue(matches("has:tags", tagged))
+        assertTrue(matches("has:tag", tagged))
+        assertFalse(matches("has:note", hypixel))
+        assertFalse(matches("has:tags", hypixel))
+    }
+
+    @Test
+    fun emptyTagOrAlbumIsAFreeWord() {
+        assertFalse(matches("tag:", tagged))
+        assertFalse(matches("album:", tagged))
+    }
 }

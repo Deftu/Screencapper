@@ -3,13 +3,16 @@ package dev.deftu.screencapper.screenshot.capture
 import dev.deftu.screencapper.Screencapper
 import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.gui.ScreenshotPreviewHud
+import dev.deftu.screencapper.screenshot.capture.compression.CompressionProfile
+import dev.deftu.screencapper.screenshot.capture.compression.ImageCompressor
+import dev.deftu.screencapper.screenshot.naming.NameTemplate
+import dev.deftu.screencapper.screenshot.naming.PathSanitizer
+import dev.deftu.screencapper.screenshot.naming.ScreenshotNames
 import java.io.BufferedOutputStream
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
@@ -18,9 +21,11 @@ import java.util.function.Supplier
 
 object FastCapture {
     internal val encoderThreads = (Runtime.getRuntime().availableProcessors() - 1).coerceIn(1, 8)
-    private val NAME_FORMAT = SimpleDateFormat("yyyy-MM-dd_HH.mm.ss", Locale.ROOT)
 
-    private val coordinator = Executors.newSingleThreadExecutor(threads("Screencapper capture"))
+    private val reserved: MutableSet<String> = ConcurrentHashMap.newKeySet()
+    private val FORMATS = listOf("png", "jpg", "jpeg")
+
+    private val coordinator =Executors.newSingleThreadExecutor(threads("Screencapper capture"))
     internal val encoderPool = Executors.newFixedThreadPool(encoderThreads, threads("Screencapper encoder"))
 
     @JvmStatic
@@ -28,15 +33,23 @@ object FastCapture {
 
     @JvmStatic
     @JvmOverloads
-    fun nextFile(gameDirectory: File, forceName: String?, kind: CaptureKind = CaptureKind.NORMAL, prefix: String? = null): File {
+    fun nextFile(gameDirectory: File, forceName: String?, kind: CaptureKind = CaptureKind.NORMAL, prefix: String? = null, extension: String? = null): File {
         val directory = File(gameDirectory, "screenshots").apply { mkdirs() }
         if (forceName != null) return File(directory, forceName)
-        val name = prefix ?: synchronized(NAME_FORMAT) { NAME_FORMAT.format(Date()) }
-        val extension = ScreenshotEncoding.extension(kind)
+        val name = prefix?.let(PathSanitizer::path) ?: ScreenshotNames.normal()
+        return reserve(directory, name, extension ?: ScreenshotEncoding.extension(kind))
+    }
+
+    internal fun reserve(directory: File, name: String, extension: String): File {
+        val counted = NameTemplate.COUNT in name
         var count = 1
         while (true) {
-            val file = File(directory, name + (if (count == 1) "" else "_$count") + ".$extension")
-            if (!file.exists()) return file
+            val path = if (counted) name.replace(NameTemplate.COUNT, count.toString()) else name + (if (count == 1) "" else "_$count")
+            val file = File(directory, "$path.$extension")
+            if ((FORMATS + extension).none { File(directory, "$path.$it").exists() } && reserved.add(stem(file))) {
+                file.parentFile?.mkdirs()
+                return file
+            }
             count++
         }
     }
@@ -52,6 +65,8 @@ object FastCapture {
         onDone: Consumer<Throwable?>,
         kind: CaptureKind = CaptureKind.NORMAL,
         metadata: Map<String, String> = emptyMap(),
+        profile: CompressionProfile? = null,
+        preview: Boolean = true,
     ) {
         coordinator.execute {
             val error = runCatching {
@@ -61,13 +76,27 @@ object FastCapture {
                     release.run()
                 }
                 val image = CapturedImage(argb, width, height)
-                runCatching { ScreenshotPreviewHud.showCaptured(file, argb, width, height) }
-                    .onFailure { Screencapper.LOGGER.warn("Couldn't show the screenshot preview", it) }
-                write(file, image, kind, metadata)
+                if (preview) {
+                    runCatching { ScreenshotPreviewHud.showCaptured(file, argb, width, height) }
+                        .onFailure { Screencapper.LOGGER.warn("Couldn't show the screenshot preview", it) }
+                }
+                write(file, image, kind, metadata, profile)
             }.exceptionOrNull()
+            release(file)
             if (error != null) Screencapper.LOGGER.error("Couldn't save screenshot {}", file.name, error)
             onDone.accept(error)
         }
+    }
+
+    internal fun release(file: File) {
+        reserved.remove(stem(file))
+    }
+
+    internal fun claim(file: File): Boolean = reserved.add(stem(file))
+
+    private fun stem(file: File): String {
+        val stem = File(file.parentFile, file.nameWithoutExtension)
+        return runCatching { stem.canonicalPath }.getOrDefault(stem.absolutePath)
     }
 
     @JvmStatic
@@ -81,7 +110,7 @@ object FastCapture {
     fun saveImage(file: File, image: CapturedImage, kind: CaptureKind, metadata: Map<String, String>, onDone: Consumer<Throwable?>) =
         save(file, image.width, image.height, { image.argb }, {}, onDone, kind, metadata)
 
-    private fun write(file: File, image: CapturedImage, kind: CaptureKind, metadata: Map<String, String>) {
+    private fun write(file: File, image: CapturedImage, kind: CaptureKind, metadata: Map<String, String>, override: CompressionProfile?) {
         fun writeAtomically(target: File, encode: (java.io.OutputStream) -> Unit) {
             val temp = File(target.parentFile, ".${target.name}.tmp")
             try {
@@ -92,9 +121,11 @@ object FastCapture {
             }
         }
 
-        writeAtomically(file) { out -> ScreenshotEncoding.encode(image, kind, metadata, out) }
+        writeAtomically(file) { out ->
+            if (override != null) ImageCompressor.encode(image, override, metadata, out) else ScreenshotEncoding.encode(image, kind, metadata, out)
+        }
 
-        val profile = dev.deftu.screencapper.screenshot.capture.compression.CompressionProfiles.forKind(kind)
+        val profile = override ?: dev.deftu.screencapper.screenshot.capture.compression.CompressionProfiles.forKind(kind)
         if (profile.keepOriginal && !profile.isLossless) {
             runCatching {
                 val directory = File(file.parentFile, "original").apply { mkdirs() }

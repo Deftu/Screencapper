@@ -5,7 +5,14 @@ import java.time.YearMonth
 import java.time.format.DateTimeParseException
 import java.util.Locale
 
-class SearchEntry(val name: String, val fields: Map<String, String>, val date: LocalDate)
+class SearchEntry(
+    val name: String,
+    val fields: Map<String, String>,
+    val date: LocalDate,
+    val tags: Collection<String> = emptyList(),
+    val albums: Collection<String> = emptyList(),
+    val note: String = "",
+)
 
 class SearchQuery private constructor(private val terms: List<Term>) {
     val isEmpty: Boolean get() = terms.isEmpty()
@@ -19,6 +26,9 @@ class SearchQuery private constructor(private val terms: List<Term>) {
     private class LoweredEntry(val entry: SearchEntry) {
         val name = entry.name.lowercase(Locale.ROOT)
         val fields = entry.fields.mapValues { it.value.lowercase(Locale.ROOT) }
+        val tags = entry.tags.map { it.lowercase(Locale.ROOT) }
+        val albums = entry.albums.map { it.lowercase(Locale.ROOT) }
+        val note = entry.note.lowercase(Locale.ROOT)
     }
 
     private sealed interface Term {
@@ -26,7 +36,8 @@ class SearchQuery private constructor(private val terms: List<Term>) {
     }
 
     private class Words(val text: String) : Term {
-        override fun matches(entry: LoweredEntry) = text in entry.name || entry.fields.values.any { text in it }
+        override fun matches(entry: LoweredEntry) =
+            text in entry.name || entry.fields.values.any { text in it } || text in entry.note || entry.tags.any { text in it }
     }
 
     private class Field(val keys: List<String>, val text: String) : Term {
@@ -35,6 +46,22 @@ class SearchQuery private constructor(private val terms: List<Term>) {
 
     private class Has(val key: String) : Term {
         override fun matches(entry: LoweredEntry) = !entry.entry.fields[key].isNullOrBlank()
+    }
+
+    private object HasNote : Term {
+        override fun matches(entry: LoweredEntry) = entry.note.isNotBlank()
+    }
+
+    private object HasTags : Term {
+        override fun matches(entry: LoweredEntry) = entry.tags.isNotEmpty()
+    }
+
+    private class Tag(val name: String) : Term {
+        override fun matches(entry: LoweredEntry) = name in entry.tags
+    }
+
+    private class Album(val name: String) : Term {
+        override fun matches(entry: LoweredEntry) = name in entry.albums
     }
 
     private class Before(val start: LocalDate) : Term {
@@ -55,10 +82,14 @@ class SearchQuery private constructor(private val terms: List<Term>) {
             "version" to listOf(MetadataKeys.VERSION),
         )
 
-        private val HAS = mapOf(
-            "coords" to MetadataKeys.COORDINATES,
-            "coordinates" to MetadataKeys.COORDINATES,
-            "chat" to MetadataKeys.CHAT,
+        private val HAS: Map<String, Term> = mapOf(
+            "coords" to Has(MetadataKeys.COORDINATES),
+            "coordinates" to Has(MetadataKeys.COORDINATES),
+            "chat" to Has(MetadataKeys.CHAT),
+            "note" to HasNote,
+            "notes" to HasNote,
+            "tag" to HasTags,
+            "tags" to HasTags,
         )
 
         fun parse(query: String): SearchQuery = SearchQuery(tokens(query).mapNotNull(::term))
@@ -75,12 +106,18 @@ class SearchQuery private constructor(private val terms: List<Term>) {
             if (value.isEmpty()) return Words(text)
             FIELDS[key]?.let { return Field(it, value) }
             return when (key) {
-                "has" -> HAS[value]?.let(::Has)
+                "has" -> HAS[value]
+                "tag" -> Tag(label(value))
+                "album" -> Album(label(value))
                 "before" -> period(value)?.let { Before(it.start) }
                 "after" -> period(value)?.let { After(it.endInclusive) }
                 else -> null
             } ?: Words(text)
         }
+
+        private fun label(value: String): String = value.trim().replace(WHITESPACE, " ")
+
+        private val WHITESPACE = Regex("\\s+")
 
         private fun period(value: String): ClosedRange<LocalDate>? = try {
             when {

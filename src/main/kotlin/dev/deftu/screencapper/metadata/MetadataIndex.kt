@@ -33,32 +33,32 @@ object MetadataIndex {
     private val file: File
         get() = File(FabricLoader.getInstance().configDir.toFile(), "screencapper/index.json")
 
-    fun peek(name: String): Map<String, String>? {
+    fun peek(id: String): Map<String, String>? {
         if (!loaded) {
             requestLoad()
             return null
         }
-        return synchronized(lock) { entries[name] }
+        return synchronized(lock) { entries[id] }
     }
 
-    fun fields(name: String): Map<String, String>? {
+    fun fields(id: String): Map<String, String>? {
         ensureLoaded()
-        return synchronized(lock) { entries[name] }
+        return synchronized(lock) { entries[id] }
     }
 
-    fun record(file: File) {
+    fun record(id: String, file: File) {
         worker.execute {
             ensureLoaded()
-            put(file.name, read(file))
+            put(id, read(file))
             save()
             changed()
         }
     }
 
-    fun forget(name: String) {
+    fun forget(id: String) {
         worker.execute {
             ensureLoaded()
-            val removed = synchronized(lock) { entries.remove(name) != null }
+            val removed = synchronized(lock) { entries.remove(id) != null }
             if (removed) {
                 save()
                 changed()
@@ -66,17 +66,31 @@ object MetadataIndex {
         }
     }
 
-    fun backfill(files: List<File>) {
+    fun move(from: String, to: String) {
         worker.execute {
             ensureLoaded()
-            val missing = synchronized(lock) { files.filter { it.name !in entries } }
-            val directory = files.firstOrNull()?.parentFile
-            val gone = if (directory == null) emptyList() else synchronized(lock) { entries.keys.toList() }.filter { !File(directory, it).exists() }
+            val moved = synchronized(lock) {
+                val fields = entries.remove(from) ?: return@synchronized false
+                entries[to] = fields
+                true
+            }
+            if (moved) {
+                save()
+                changed()
+            }
+        }
+    }
+
+    fun backfill(directory: File, files: Map<String, File>) {
+        worker.execute {
+            ensureLoaded()
+            val missing = synchronized(lock) { files.filterKeys { it !in entries }.toList() }
+            val gone = synchronized(lock) { entries.keys.toList() }.filter { it !in files && !File(directory, it).exists() }
             if (missing.isEmpty() && gone.isEmpty()) return@execute
 
             synchronized(lock) { gone.forEach(entries::remove) }
-            missing.forEachIndexed { index, file ->
-                put(file.name, read(file))
+            missing.forEachIndexed { index, (id, file) ->
+                if (file.isFile) put(id, read(file))
                 if ((index + 1) % BACKFILL_PUBLISH_EVERY == 0) changed()
             }
             save()
@@ -87,8 +101,8 @@ object MetadataIndex {
     private fun read(file: File): Map<String, String> =
         if (file.extension.equals("png", ignoreCase = true)) PngText.read(file).filterKeys { it.startsWith(MetadataKeys.PREFIX) } else emptyMap()
 
-    private fun put(name: String, fields: Map<String, String>) {
-        synchronized(lock) { entries[name] = fields }
+    private fun put(id: String, fields: Map<String, String>) {
+        synchronized(lock) { entries[id] = fields }
     }
 
     private fun requestLoad() {

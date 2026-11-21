@@ -5,7 +5,9 @@ import java.io.File
 import java.io.IOException
 import javax.imageio.ImageIO
 
-class Screenshot(val file: File) {
+class Screenshot(val file: File, val id: String) {
+    constructor(file: File) : this(file, ScreenshotLibrary.idOf(file))
+
     val name: String get() = file.name
     val size: Long = file.length()
     val modified: Long = file.lastModified()
