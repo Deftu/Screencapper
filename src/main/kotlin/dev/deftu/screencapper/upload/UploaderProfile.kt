@@ -3,8 +3,12 @@ package dev.deftu.screencapper.upload
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import dev.deftu.screencapper.config.LinkMode
 import dev.deftu.screencapper.config.RequestBody
 import dev.deftu.screencapper.config.RequestMethod
+import dev.deftu.screencapper.upload.integration.IntegrationSettings
+import dev.deftu.screencapper.upload.integration.Integrations
+import java.net.URI
 import java.util.UUID
 
 data class UploaderProfile(
@@ -19,6 +23,10 @@ data class UploaderProfile(
     val formFields: List<Pair<String, String>> = emptyList(),
     val sizeLimitMb: String = "",
     val keepMetadata: Boolean = false,
+    val linkMode: LinkMode = LinkMode.LINK,
+    val deletion: DeletionRequest = DeletionRequest(),
+    val discord: DiscordOptions? = null,
+    val integration: IntegrationSettings? = null,
 ) {
     val isBuiltIn: Boolean get() = BUILT_IN.any { it.id == id }
 
@@ -26,8 +34,13 @@ data class UploaderProfile(
         get() = when (id) {
             IMGUR_ID -> "imgur.com"
             CATBOX_ID -> "catbox.moe"
-            else -> runCatching { java.net.URI(url).host }.getOrNull() ?: url.ifBlank { "No URL set" }
+            else -> integration?.let { settings -> Integrations.find(settings.kind)?.host(settings) } ?: displayHost(url)
         }
+
+    private fun displayHost(url: String): String {
+        if (url.isBlank()) return "No URL set"
+        return runCatching { URI(url.trim().replace(Regex("""\{[^{}]*}"""), "x")).host }.getOrNull() ?: "Custom host"
+    }
 
     val sizeLimitBytes: Long?
         get() = when (id) {
@@ -39,6 +52,7 @@ data class UploaderProfile(
     companion object {
         const val IMGUR_ID = "imgur"
         const val CATBOX_ID = "catbox"
+        internal const val IMGUR_CLIENT_ID = "fb714c908164e90"
 
         val IMGUR = UploaderProfile(id = IMGUR_ID, name = "Imgur", url = "https://api.imgur.com/3/image")
 
@@ -57,6 +71,10 @@ data class UploaderProfile(
             JsonParser.parseString(json).asJsonArray.mapNotNull { runCatching { decode(it.asJsonObject) }.getOrNull() }
         }.getOrDefault(emptyList())
 
+        fun decodeList(json: String, cipher: SecretCipher): List<UploaderProfile> = decodeList(json).map { UploaderSecrets.open(it, cipher) }
+
+        fun encodeList(profiles: List<UploaderProfile>, cipher: SecretCipher): String = encodeList(profiles.map { UploaderSecrets.seal(it, cipher) })
+
         fun encodeList(profiles: List<UploaderProfile>): String = JsonArray().apply {
             profiles.filterNot { it.isBuiltIn }.forEach { add(encode(it)) }
         }.toString()
@@ -69,10 +87,14 @@ data class UploaderProfile(
             body = RequestBody.entries.firstOrNull { it.name == json.get("body")?.asString } ?: RequestBody.MULTIPART,
             fileField = json.get("fileField")?.asString ?: "file",
             responseUrl = json.get("responseUrl")?.asString ?: "url",
-            headers = pairs(json.getAsJsonArray("headers")),
-            formFields = pairs(json.getAsJsonArray("formFields")),
+            headers = jsonToPairs(json.get("headers") as? JsonArray),
+            formFields = jsonToPairs(json.get("formFields") as? JsonArray),
             sizeLimitMb = json.get("sizeLimitMb")?.asString.orEmpty(),
             keepMetadata = json.get("keepMetadata")?.asBoolean ?: false,
+            linkMode = LinkMode.entries.firstOrNull { it.name == json.get("linkMode")?.asString } ?: LinkMode.LINK,
+            deletion = (json.get("deletion") as? JsonObject)?.let { runCatching { DeletionRequest.fromJson(it) }.getOrNull() } ?: DeletionRequest(),
+            discord = (json.get("discord") as? JsonObject)?.let { runCatching { DiscordOptions.fromJson(it) }.getOrNull() },
+            integration = (json.get("integration") as? JsonObject)?.let { runCatching { IntegrationSettings.fromJson(it) }.getOrNull() },
         )
 
         private fun encode(profile: UploaderProfile): JsonObject = JsonObject().apply {
@@ -83,17 +105,14 @@ data class UploaderProfile(
             addProperty("body", profile.body.name)
             addProperty("fileField", profile.fileField)
             addProperty("responseUrl", profile.responseUrl)
-            add("headers", pairsJson(profile.headers))
-            add("formFields", pairsJson(profile.formFields))
+            add("headers", pairsToJson(profile.headers))
+            add("formFields", pairsToJson(profile.formFields))
             addProperty("sizeLimitMb", profile.sizeLimitMb)
             addProperty("keepMetadata", profile.keepMetadata)
-        }
-
-        private fun pairs(array: JsonArray?): List<Pair<String, String>> =
-            array?.mapNotNull { entry -> entry.asJsonArray.takeIf { it.size() == 2 }?.let { it[0].asString to it[1].asString } }.orEmpty()
-
-        private fun pairsJson(pairs: List<Pair<String, String>>): JsonArray = JsonArray().apply {
-            pairs.forEach { (k, v) -> add(JsonArray().apply { add(k); add(v) }) }
+            addProperty("linkMode", profile.linkMode.name)
+            add("deletion", profile.deletion.toJson())
+            profile.discord?.let { add("discord", it.toJson()) }
+            profile.integration?.let { add("integration", it.toJson()) }
         }
     }
 }

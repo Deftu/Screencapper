@@ -2,12 +2,16 @@ package dev.deftu.screencapper.upload
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import dev.deftu.screencapper.config.DeletionKind
+import dev.deftu.screencapper.config.DeletionMethod
 import dev.deftu.screencapper.config.RequestBody
 import dev.deftu.screencapper.config.RequestMethod
 import java.io.File
 import java.net.URLEncoder
 
 object SxcuImporter {
+    private val LEGACY_JSON = Regex("""\${'$'}json:([^${'$'}]+)\${'$'}""")
+
     fun read(file: File): UploaderProfile {
         val json = JsonParser.parseString(file.readText()).asJsonObject
         val destination = json.string("DestinationType").orEmpty()
@@ -29,6 +33,9 @@ object SxcuImporter {
             responseUrl = ResponseUrl.normalize(json.string("URL").orEmpty()),
             headers = json.pairs("Headers"),
             formFields = json.pairs("Arguments"),
+            deletion = json.string("DeletionURL")?.trim()?.takeIf { it.isNotEmpty() }
+                ?.let { DeletionRequest(DeletionKind.BROWSER, DeletionMethod.GET, LEGACY_JSON.replace(it) { match -> "{json:${match.groupValues[1]}}" }) }
+                ?: DeletionRequest(),
         )
     }
 
