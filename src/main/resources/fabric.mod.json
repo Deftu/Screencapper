@@ -8,7 +8,27 @@
         "Deftu"
     ],
     "contributors": [
-        "isXander"
+        {
+            "name": "isXander",
+            "contact": {
+                "homepage": "https://github.com/isXander"
+            }
+        },
+        {
+            "name": "Zetvue"
+        },
+        {
+            "name": "ramidzkh",
+            "contact": {
+                "homepage": "https://github.com/ramidzkh"
+            }
+        },
+        {
+            "name": "Polyfrost",
+            "contact": {
+                "homepage": "https://polyfrost.org"
+            }
+        }
     ],
     "icon": "assets/screencapper/logo.png",
     "contact": {

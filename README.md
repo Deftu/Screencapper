@@ -14,16 +14,35 @@ Faster screenshots, high-res shots, uploads and a searchable screenshot manager 
 ## What it does
 In vanilla Minecraft, sharing a screenshot means opening the screenshots folder, finding the file, and copying it somewhere. If the place you're sending it to won't take an image directly, you also have to upload it to an image host first.
 
-With Screencapper, a preview of each screenshot pops up as soon as you take it. You can have it copied to your clipboard or uploaded to your image host automatically, or use the buttons on the chat message to view, copy, upload, open or delete it.
+With Screencapper, a preview of each screenshot pops up as soon as you take it. You can have it copied to your clipboard or uploaded automatically, or use the buttons on the chat message to view, copy, upload, open or delete it.
 
-Screencapper needs [OneConfig][oneconfig], and its settings are in the OneConfig menu. It also adds a Screenshots page to the OneConfig sidebar where you can browse, search, copy, upload, open and delete every screenshot you've taken. Run `/screenshots` to open it.
+Screencapper needs [OneConfig][oneconfig], and its settings are in the OneConfig menu. It also adds a Screenshots page to the OneConfig sidebar where you can browse, search, edit, copy, upload and delete every screenshot you've taken, and zoom in on any of them full screen. Run `/screenshots` to open it.
 
-Imgur and Catbox are built in. To use another image host, add it in the settings or import its ShareX `.sxcu` file. Screencapper keeps every link a screenshot has been uploaded to, and if a file is too big for a host, it's made smaller before uploading.
+### Uploading
+Imgur and Catbox work out of the box. You can also post to a Discord channel through a webhook, or send screenshots to your own Immich or Nextcloud server. Google Photos and Flickr work too, once you sign in with your own Google Cloud app or Flickr API key; the setup screen walks you through it. Any other host that takes a file upload can be added by hand or from its ShareX `.sxcu` file.
+
+Screencapper remembers every link a screenshot was uploaded to. If the host allows it, you can delete an upload from the Screenshots page or straight from the chat message. Files that are too big for a host are made smaller first. Saved keys and passwords are stored encrypted.
 
 ### Taking screenshots
-Tap the screenshot key for a normal screenshot. It's saved in the background, so the game doesn't freeze while the file is written.
+Tap the screenshot key for a normal screenshot. It's saved in the background, so the game doesn't freeze while the file is written, and a shutter sound lets you know it worked.
 
-Hold the key instead and a capture wheel opens. Point at an option with the mouse and let go of the key to take it. The wheel has high-res shots at 4K, 8K or a size you set, a shot with the HUD hidden, and a timer that counts down for 3 seconds before taking the shot.
+Hold the key instead and a capture wheel opens. Point at an option and let go of the key to take it. By default the wheel has:
+
+- Clean, which hides the HUD and your hand
+- No chat, which keeps the HUD but hides chat
+- 4K, a high-res shot at 3840 × 2160
+- Panorama, a 360° shot you can set as your title screen background
+- Timer, which waits 3 seconds and then takes a clean shot
+
+You can change, reorder or add options in the settings (8K or a size of your own, for example) and give each one its own compression.
+
+Screencapper can also take a panorama every time you leave a world and use it as your title screen, or take a screenshot when you earn an advancement. Both are off by default.
+
+### Editing
+Open a screenshot from the Screenshots page and press Edit. You can crop it (freely or to a ratio like 16:9), rotate and flip it, draw on it, add arrows, boxes and numbered steps, write text, blur out anything private, or cut out a piece and move it. Everything you add stays editable until you save, and the original is never touched: the edit is saved as a new copy next to it, ready to copy or upload.
+
+### Naming and organising
+File names follow a template you can change, using things like the date, world, dimension or player. A `/` in the template sorts screenshots into folders. You can rename screenshots, tag them, put them in albums and add notes, then search by `tag:` or `album:`.
 
 ### Saving smaller files
 Screenshots can be saved with one of a few presets, ranging from lossless PNG to small JPEGs that are easy to share. Normal shots, high-res shots and uploads each have their own setting. Custom lets you set the format, quality, colours and size yourself, and you can also keep an untouched copy of every shot.
@@ -49,6 +68,8 @@ Essential's version is buggy and breaks other mods, including this one. I wouldn
 
 - [isXander](https://github.com/isXander)
   - The original [Shotify](https://curseforge.com/minecraft/mc-mods/shotify) mod, which Screencapper started from
+- Zetvue
+  - The shutter sound, made for Screencapper
 - [ramidzkh](https://github.com/ramidzkh)
   - [Fabrishot](https://github.com/ramidzkh/fabrishot) (MIT), which high-res capture is based on
 - [Polyfrost](https://github.com/Polyfrost)

@@ -196,22 +196,31 @@ val curseforgeId = listOf("oneconfig.publish.curseforge", "publish.curseforge")
 val curseforgeToken = listOf("oneconfig.publish.curseforge.token", "publish.curseforge.token", "curseforge.token")
     .firstNotNullOfOrNull { findProperty(it) }?.toString()?.takeIf { it.isNotBlank() }
 
-val changelogFile = rootProject.file("changelogs/$modversion.md")
-val changelogText = changelogFile.takeIf { it.isFile }?.readText()?.trim().orEmpty()
+val changelogFile = rootProject.file("CHANGELOG.md")
+
+fun currentChangelogSection(): String? {
+    if (!changelogFile.exists()) return null
+    val headingPattern = Regex("^##\\s+\\[?v?" + Regex.escape(modversion) + "]?(\\s.*)?$")
+    val lines = changelogFile.readLines()
+    val start = lines.indexOfFirst { headingPattern.matches(it.trimEnd()) }
+    if (start < 0) return null
+    val end = (start + 1 until lines.size).firstOrNull { lines[it].startsWith("## ") } ?: lines.size
+    val section = lines.subList(start + 1, end)
+    if (section.none { it.isNotBlank() && !it.trimStart().startsWith("#") }) return null
+    return section.joinToString("\n").trim()
+}
+
+fun missingChangelog() = GradleException("Changelog for version $modversion not found. Add a non-empty `## [$modversion] - YYYY-MM-DD` section to CHANGELOG.md.")
 
 val validateChangelog = tasks.register("validateChangelog") {
-    description = "Validates that changelogs/<version>.md is written for the current version."
+    description = "Validates that CHANGELOG.md has a non-empty section for the current version."
     doLast {
-        if (changelogText.isEmpty()) {
-            throw GradleException("Write a changelog for $modversion in ${changelogFile.relativeTo(rootProject.projectDir)}.")
-        }
+        val section = currentChangelogSection() ?: throw missingChangelog()
+        logger.lifecycle("Changelog for $modversion:\n$section")
     }
 }
 
-tasks.publishMods.configure {
-    dependsOn(validateChangelog)
-}
-tasks.matching { it.name == "publishModrinth" || it.name == "publishCurseforge" }.configureEach {
+tasks.matching { it.name == "publishMods" || it.name == "publishModrinth" || it.name == "publishCurseforge" }.configureEach {
     dependsOn(validateChangelog)
 }
 
@@ -220,7 +229,7 @@ publishMods {
 
     displayName = modversion
     version = "v$modversion"
-    changelog = changelogText
+    changelog = providers.provider { currentChangelogSection() ?: throw missingChangelog() }
     type = when {
         "beta" in modversion.lowercase() -> BETA
         "alpha" in modversion.lowercase() -> ALPHA
