@@ -31,7 +31,8 @@ import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.api.ui.v1.theme.ThemeStyle
 import org.polyfrost.oneconfig.utils.v1.Multithreading
-import java.util.concurrent.atomic.AtomicLong
+import java.awt.image.BufferedImage
+import java.io.File
 import kotlin.math.min
 import kotlin.math.pow
 
@@ -69,7 +70,7 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot Preview"
     @Slider(title = "Duration", description = "How long the preview stays on screen, in seconds.", min = 1f, max = 30f, step = 1f)
     var duration = 6f
 
-    @Switch(title = "Hover actions", description = "With chat open, hovering the preview shows copy, upload and delete buttons. Clicking the preview opens it in Screenshots.")
+    @Switch(title = "Hover actions", description = "With chat open, hover the preview for copy, upload and delete buttons, or click it to open it in Screenshots.")
     var hoverActions = true
 
     @Switch(title = "Pause on hover", description = "Keeps the preview on screen while your mouse is over it.")
@@ -93,6 +94,7 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot Preview"
     init {
         showBackground = false
         bgRadius = 8f
+        font = Font.Poppins
     }
 
     override fun setup() {
@@ -384,7 +386,7 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot Preview"
         @Volatile
         private var active: ActivePreview? = null
 
-        private val shown = AtomicLong()
+        private val order = PreviewOrder()
 
         private fun easeOut(t: Float) = 1f - (1f - t).pow(3)
         private fun easeIn(t: Float) = t * t * t
@@ -407,32 +409,33 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot Preview"
             }
         }
 
-        fun showCaptured(file: java.io.File, argb: IntArray, width: Int, height: Int) {
-            val order = shown.incrementAndGet()
-            val image = java.awt.image.BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_INT_RGB)
+        fun showCaptured(file: File, argb: IntArray, width: Int, height: Int) {
+            val screenshot = Screenshot(file)
+            val ticket = order.claim(screenshot.id, System.currentTimeMillis(), fromPixels = true) ?: return
+            val image = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
             image.raster.setDataElements(0, 0, width, height, argb)
             val bitmap = PolyBitmap.fromAwt(Thumbnails.downscale(image, MAX_WIDTH))
-            if (shown.get() == order) active = ActivePreview(Screenshot(file), bitmap, System.currentTimeMillis())
+            order.commit(ticket) { active = ActivePreview(screenshot, bitmap, System.currentTimeMillis()) }
         }
 
         fun show(screenshot: Screenshot) {
-            if (active?.screenshot?.name == screenshot.name) return
-            val order = shown.incrementAndGet()
+            val ticket = order.claim(screenshot.id, screenshot.modified, fromPixels = false) ?: return
             Multithreading.submit {
-                var image: java.awt.image.BufferedImage? = null
+                var image: BufferedImage? = null
                 for (attempt in 0 until 5) {
                     image = runCatching { screenshot.readImage() }.getOrNull()
-                    if (image != null || shown.get() != order) break
+                    if (image != null || !order.isCurrent(ticket)) break
                     Thread.sleep(100)
                 }
                 val bitmap = PolyBitmap.fromAwt(Thumbnails.downscale(image ?: return@submit, MAX_WIDTH))
-                if (shown.get() == order) active = ActivePreview(screenshot, bitmap, System.currentTimeMillis())
+                order.commit(ticket) { active = ActivePreview(screenshot, bitmap, System.currentTimeMillis()) }
             }
         }
 
         fun dismiss(screenshot: Screenshot) {
+            order.forget(screenshot.id)
             val preview = active ?: return
-            if (preview.screenshot.name == screenshot.name && preview.dismissedAt < 0) preview.dismissedAt = System.currentTimeMillis()
+            if (preview.screenshot.id == screenshot.id && preview.dismissedAt < 0) preview.dismissedAt = System.currentTimeMillis()
         }
     }
 }

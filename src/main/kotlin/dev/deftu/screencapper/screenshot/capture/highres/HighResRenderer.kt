@@ -2,9 +2,11 @@ package dev.deftu.screencapper.screenshot.capture.highres
 
 import dev.deftu.screencapper.MainThread
 import dev.deftu.screencapper.Screencapper
+import dev.deftu.screencapper.ShutterSound
 import dev.deftu.screencapper.screenshot.capture.CaptureSource
 import dev.deftu.screencapper.screenshot.capture.CapturedImage
 import dev.deftu.screencapper.screenshot.capture.FastCapture
+import dev.deftu.screencapper.screenshot.capture.input.HiddenLayers
 import net.minecraft.client.Minecraft
 import java.util.function.Supplier
 import kotlin.math.max
@@ -40,6 +42,8 @@ object HighResRenderer {
         val width: Int,
         val height: Int,
         val hideHud: Boolean,
+        val hideChat: Boolean,
+        val hideHand: Boolean,
         val delay: Int,
         val onDone: (CapturedImage?) -> Unit,
     ) {
@@ -82,18 +86,19 @@ object HighResRenderer {
         }
 
     @JvmStatic
-    fun start(width: Int, height: Int, hideHud: Boolean, delay: Int, onDone: (CapturedImage?) -> Unit) {
-        if (job != null || width <= 0 || height <= 0) {
+    fun start(width: Int, height: Int, hideHud: Boolean, hideChat: Boolean, hideHand: Boolean, delay: Int, onDone: (CapturedImage?) -> Unit) {
+        if (job != null || PanoramaRenderer.isCapturing || width <= 0 || height <= 0) {
             onDone(null)
             return
         }
 
         val size = clamp(width, height)
-        val job = Job(size.first, size.second, hideHud, max(1, delay), onDone)
+        val job = Job(size.first, size.second, hideHud, hideChat, hideHand, max(1, delay), onDone)
         this.job = job
         try {
             job.hudWasHidden = isHudHidden()
             if (job.hideHud) setHudHidden(true)
+            if (job.hideChat || job.hideHand) HiddenLayers.hide(job.hideChat, job.hideHand)
             if (!usesTiling) resize(job)
         } catch (e: Throwable) {
             fail(job, e)
@@ -111,6 +116,7 @@ object HighResRenderer {
             if (job.frames++ < job.delay) return
 
             job.reading = true
+            ShutterSound.play()
             CaptureSource.readMain { width, height, pixels, release ->
                 //? if <1.21.6 {
                 /*MainThread.run { restore(job) }
@@ -130,27 +136,37 @@ object HighResRenderer {
         val job = job ?: return
         if (job.frames++ < job.delay) return
 
-        val tiles = ArrayList<ReadTile>()
         try {
             check(canRenderLevel()) { "There's no level to render" }
-            val tileWidth = framebufferWidth()
-            val tileHeight = framebufferHeight()
-            val grid = TileGrid(job.width, job.height, tileWidth, tileHeight)
+            ShutterSound.play()
+            val grid = TileGrid(job.width, job.height, framebufferWidth(), framebufferHeight())
+            val tiles = renderTiles(grid, partialTick, if (isHudHidden()) null else ({ renderHud(job, partialTick) }))
+            restore(job)
+            stitch(grid, tiles) { image -> complete(job, image) }
+        } catch (e: Throwable) {
+            fail(job, e)
+        }
+    }
+
+    internal fun renderTiled(width: Int, height: Int, partialTick: Float, handBack: (Runnable) -> Unit, onDone: (CapturedImage?) -> Unit) {
+        val grid = TileGrid(width, height, framebufferWidth(), framebufferHeight())
+        stitch(grid, renderTiles(grid, partialTick, null), handBack, onDone)
+    }
+
+    private fun renderTiles(grid: TileGrid, partialTick: Float, overlay: (() -> Unit)?): List<ReadTile> {
+        val tiles = ArrayList<ReadTile>()
+        try {
             tiledAspect = grid.aspect
-            val hud = !isHudHidden()
             for (row in 0 until grid.rows) for (column in 0 until grid.columns) {
                 tile = grid.projection(column, row)
-                renderLevel(tileWidth, tileHeight, partialTick)
-                if (hud) renderHud(job, partialTick)
+                renderLevel(grid.tileWidth, grid.tileHeight, partialTick)
+                overlay?.invoke()
                 CaptureSource.readMain { width, height, pixels, release -> tiles += ReadTile(column, row, width, height, pixels, release) }
             }
-            tile = null
-            tiledAspect = 0f
-            restore(job)
-            stitch(job, grid, tiles)
+            return tiles
         } catch (e: Throwable) {
             tiles.forEach { it.release.run() }
-            fail(job, e)
+            throw e
         } finally {
             tile = null
             tiledAspect = 0f
@@ -211,7 +227,7 @@ object HighResRenderer {
 
     private class ReadTile(val column: Int, val row: Int, val width: Int, val height: Int, val pixels: Supplier<IntArray>, val release: Runnable)
 
-    private fun stitch(job: Job, grid: TileGrid, tiles: List<ReadTile>) {
+    private fun stitch(grid: TileGrid, tiles: List<ReadTile>, handBack: (Runnable) -> Unit = MainThread::run, onDone: (CapturedImage?) -> Unit) {
         FastCapture.encoderPool.execute {
             val image = runCatching {
                 val out = IntArray(grid.width * grid.height)
@@ -225,7 +241,7 @@ object HighResRenderer {
                 }
                 CapturedImage(out, grid.width, grid.height)
             }.onFailure { Screencapper.LOGGER.error("Couldn't stitch the high-res screenshot", it) }.getOrNull()
-            MainThread.run { complete(job, image) }
+            handBack(Runnable { onDone(image) })
         }
     }
 
@@ -261,6 +277,7 @@ object HighResRenderer {
             guiScaleOverride = 0
             if (job.oldWidth > 0) setFramebufferSize(job.oldWidth, job.oldHeight)
         } finally {
+            if (job.hideChat || job.hideHand) HiddenLayers.clear()
             if (job.hideHud) setHudHidden(job.hudWasHidden)
             if (this.job === job) this.job = null
         }
@@ -375,14 +392,18 @@ object HighResRenderer {
         *///?}
     }
 
-    private fun clamp(width: Int, height: Int): Pair<Int, Int> {
+    internal fun maxTextureSize(): Int {
         //? if >=26.2 {
-        val limit = RenderSystem.getDevice().deviceInfo.limits().maxTextureSize()
+        return RenderSystem.getDevice().deviceInfo.limits().maxTextureSize()
         //?} else if >=1.21.5 {
-        /*val limit = RenderSystem.getDevice().maxTextureSize
+        /*return RenderSystem.getDevice().maxTextureSize
         *///?} else {
-        /*val limit = MAX_TILED_SIDE
+        /*return MAX_TILED_SIDE
         *///?}
+    }
+
+    private fun clamp(width: Int, height: Int): Pair<Int, Int> {
+        val limit = maxTextureSize()
         if (width <= limit && height <= limit) return width to height
         val scale = limit.toDouble() / max(width, height)
         val clamped = max(1, (width * scale).toInt()) to max(1, (height * scale).toInt())
@@ -408,7 +429,7 @@ object HighResRenderer {
         *///?}
     }
 
-    private fun framebufferWidth(): Int {
+    internal fun framebufferWidth(): Int {
         //? if >=1.21 {
         return Minecraft.getInstance().window.width
         //?} else {
@@ -416,7 +437,7 @@ object HighResRenderer {
         *///?}
     }
 
-    private fun framebufferHeight(): Int {
+    internal fun framebufferHeight(): Int {
         //? if >=1.21 {
         return Minecraft.getInstance().window.height
         //?} else {
@@ -424,7 +445,7 @@ object HighResRenderer {
         *///?}
     }
 
-    private fun canRenderLevel(): Boolean {
+    internal fun canRenderLevel(): Boolean {
         val minecraft = Minecraft.getInstance()
         //? if >=1.21 {
         return minecraft.level != null && minecraft.player != null && minecraft.isGameLoadFinished

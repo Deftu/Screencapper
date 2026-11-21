@@ -29,6 +29,7 @@ object CaptureResults {
     //? if >=1.21 {
     @JvmStatic
     fun success(file: File): Component {
+        ScreenshotCapture.completed(file)
         //? if >=1.21.5 {
         val click = ClickEvent.OpenFile(file.absoluteFile)
         //?} else {
@@ -55,6 +56,7 @@ object CaptureResults {
     //?} else {
     /*@JvmStatic
     fun success(file: File): Text {
+        ScreenshotCapture.completed(file)
         val name: Text = LiteralText(file.name)
         name.style.clickEvent = ClickEvent(ClickEvent.Action.OPEN_FILE, file.absolutePath)
         name.style.setUnderlined(true)

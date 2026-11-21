@@ -1,6 +1,10 @@
 package dev.deftu.screencapper.mixin.highres;
 
+import dev.deftu.screencapper.screenshot.capture.highres.HighResRenderer;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 //? if >=1.21 {
 import net.minecraft.client.renderer.GameRenderer;
@@ -11,8 +15,7 @@ import net.minecraft.client.renderer.GameRenderer;
 //? if <1.21.5 {
 /*import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import dev.deftu.screencapper.screenshot.capture.highres.HighResRenderer;
-import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.Unique;
 *///?}
 //? if >=1.21 && <1.21.5 {
 /*import org.joml.Matrix4f;
@@ -26,6 +29,28 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(GameRenderer.class)
 public class HighResGameRendererMixin {
+    //? if >=26.3 {
+    @Inject(method = "render()V", at = @At("RETURN"))
+    private void screencapper$afterFrame(CallbackInfo ci) {
+        HighResRenderer.afterFrame();
+    }
+    //?} else if >=1.21.5 {
+    /*@Inject(method = "render(Lnet/minecraft/client/DeltaTracker;Z)V", at = @At("RETURN"))
+    private void screencapper$afterFrame(CallbackInfo ci) {
+        HighResRenderer.afterFrame();
+    }
+    *///?} else if >=1.21 {
+    /*@Inject(method = "render(Lnet/minecraft/client/DeltaTracker;Z)V", at = @At("HEAD"))
+    private void screencapper$beforeFrame(CallbackInfo ci) {
+        HighResRenderer.beforeFrame(0f);
+    }
+    *///?} else {
+    /*@Inject(method = "render(FJ)V", at = @At("HEAD"))
+    private void screencapper$beforeFrame(float partialTick, long nanoTime, CallbackInfo ci) {
+        HighResRenderer.beforeFrame(partialTick);
+    }
+    *///?}
+
     //? if >=1.21 && <1.21.5 {
     /*@WrapOperation(method = "getProjectionMatrix", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4f;perspective(FFFF)Lorg/joml/Matrix4f;", remap = false))
     private Matrix4f screencapper$tiledAspect(Matrix4f matrix, float fov, float aspect, float near, float far, Operation<Matrix4f> original) {
@@ -70,7 +95,8 @@ public class HighResGameRendererMixin {
     *///?}
 
     //? if <1.21.5 {
-    /*private static float screencapper$aspect(float aspect) {
+    /*@Unique
+    private static float screencapper$aspect(float aspect) {
         float tiled = HighResRenderer.getTiledAspect();
         return tiled > 0f ? tiled : aspect;
     }

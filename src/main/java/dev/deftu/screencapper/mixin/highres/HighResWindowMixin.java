@@ -9,19 +9,17 @@ import com.mojang.blaze3d.platform.Window;
 *///?}
 
 //? if >=1.21.5 {
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import dev.deftu.screencapper.screenshot.capture.highres.HighResRenderer;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 //?}
 
 @Mixin(Window.class)
 public class HighResWindowMixin {
     //? if >=1.21.5 {
-    @Inject(method = "calculateScale", at = @At("RETURN"), cancellable = true)
-    private void screencapper$scaleGui(CallbackInfoReturnable<Integer> cir) {
-        int scale = HighResRenderer.guiScale(cir.getReturnValueI());
-        if (scale != cir.getReturnValueI()) cir.setReturnValue(scale);
+    @ModifyReturnValue(method = "calculateScale", at = @At("RETURN"))
+    private int screencapper$scaleGui(int original) {
+        return HighResRenderer.guiScale(original);
     }
     //?}
 }
