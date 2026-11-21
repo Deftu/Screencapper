@@ -5,9 +5,14 @@ import dev.deftu.screencapper.config.LegacyConfigMigration
 import dev.deftu.screencapper.config.ScreencapperConfig
 import dev.deftu.screencapper.gui.ScreenshotPreviewHud
 import dev.deftu.screencapper.gui.ScreenshotsPage
+import dev.deftu.screencapper.gui.editor.EditorIcons
+import dev.deftu.screencapper.screenshot.Panoramas
 import dev.deftu.screencapper.screenshot.Screenshot
 import dev.deftu.screencapper.screenshot.ScreenshotLibrary
+import dev.deftu.screencapper.screenshot.UploadHistory
+import dev.deftu.screencapper.screenshot.UploadRecord
 import dev.deftu.screencapper.screenshot.capture.input.CaptureInput
+import dev.deftu.screencapper.upload.Uploaders
 import net.fabricmc.api.ClientModInitializer
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -30,9 +35,11 @@ object Screencapper : ClientModInitializer {
     override fun onInitializeClient() {
         ScreencapperConfig.preload()
         LegacyConfigMigration.run()
+        ScreencapperConfig.migrateHighResHideHud()
         HudManager.register(ScreenshotPreviewHud(), ScreencapperConfig.id, "/assets/screencapper/screencapper.svg")
         CaptureInput.install()
         OneConfigPages.registerIfAbsent(ScreenshotsPage)
+        EditorIcons.register()
         registerCommands()
     }
 
@@ -49,13 +56,35 @@ object Screencapper : ClientModInitializer {
                 }
             })
 
+        fun uploadAction(name: String, run: (Screenshot, UploadRecord) -> Unit) = CommandManager.literal(name)
+            .then(CommandManager.argument("upload", StringArgumentType.word())
+                .then(CommandManager.argument("screenshot", StringArgumentType.greedyString()).executes { ctx ->
+                    val screenshot = ScreenshotLibrary.find(StringArgumentType.getString(ctx, "screenshot"))
+                    val uploadedAt = StringArgumentType.getString(ctx, "upload").toLongOrNull()
+                    val record = if (screenshot == null || uploadedAt == null) null else UploadHistory.find(screenshot, uploadedAt)
+                    if (screenshot == null || record == null) {
+                        screenshot?.let { ChatCards.uploadsChanged(it) }
+                        ScreenshotActions.notifyError("Upload not found", "It was already deleted or removed from your history.")
+                        0
+                    } else {
+                        run(screenshot, record)
+                        1
+                    }
+                }))
+
+        fun panorama(name: String, run: (String) -> Unit) = CommandManager.literal(name)
+            .then(CommandManager.argument("panorama", StringArgumentType.greedyString()).executes { ctx ->
+                run(StringArgumentType.getString(ctx, "panorama"))
+                1
+            })
+
         @OptIn(ExperimentalOneConfigUiApi::class)
         CommandManager.register(
             CommandManager.literal(ID)
                 .executes { OneConfigUI.open(OneConfigDestination.ModConfig(OneConfigPages.modConfig(ScreencapperConfig.id))); 1 }
                 .then(CommandManager.literal("screenshots").executes { ScreenshotActions.openManager(); 1 })
                 .then(CommandManager.literal("folder").executes { ScreenshotActions.openFolder(); 1 }
-                    .then(CommandManager.argument("screenshot", StringArgumentType.greedyString()).executes { ScreenshotActions.openFolder(); 1 }))
+                    .then(CommandManager.argument("screenshot", StringArgumentType.greedyString()).executes { ctx -> ScreenshotActions.openFolder(ScreenshotLibrary.find(StringArgumentType.getString(ctx, "screenshot"))); 1 }))
                 .then(action("upload") { ScreenshotActions.upload(it) })
                 .then(action("copy") { ScreenshotActions.copy(it) })
                 .then(action("copy-link") { ScreenshotActions.copyLink(it) })
@@ -65,6 +94,14 @@ object Screencapper : ClientModInitializer {
                 .then(action("pick") { ChatCards.showUploaderPicker(it) })
                 .then(action("confirm-delete") { ChatCards.showDeleteConfirm(it) })
                 .then(action("card") { ChatCards.showActions(it) })
+                .then(uploadAction("confirm-delete-upload") { screenshot, record -> ChatCards.showDeleteUploadConfirm(screenshot, record) })
+                .then(uploadAction("delete-upload") { screenshot, record ->
+                    Uploaders.deleteRemote(screenshot, record)
+                    ChatCards.showActions(screenshot)
+                })
+                .then(panorama("panorama-set-title") { Panoramas.setTitleBackground(it) })
+                .then(panorama("panorama-reset-title") { Panoramas.resetTitleBackground(it) })
+                .then(panorama("panorama-folder") { Panoramas.openFolder(it) })
                 .then(CommandManager.literal("upload-to").then(CommandManager.argument("uploader", StringArgumentType.word())
                     .then(CommandManager.argument("screenshot", StringArgumentType.greedyString()).executes { ctx ->
                         val profile = ScreencapperConfig.profiles.firstOrNull { it.id == StringArgumentType.getString(ctx, "uploader") }
