@@ -33,9 +33,7 @@ import org.polyfrost.oneconfig.utils.v1.Multithreading
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.net.URI
-import java.net.URLEncoder
 import java.net.http.HttpRequest
-import java.util.Base64
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -187,16 +185,15 @@ object Uploaders {
     private fun formatMb(bytes: Long): String = "%.0f MB".format(java.util.Locale.ROOT, bytes / 1_000_000.0)
 
     private fun uploadToImgur(payload: Payload): UploadResult {
-        val base64 = Base64.getEncoder().encodeToString(payload.bytes)
-        val request = HttpRequest.newBuilder(URI("https://api.imgur.com/3/image"))
-            .timeout(TIMEOUT)
-            .header("Content-Type", "application/x-www-form-urlencoded")
+        val boundary = "----Screencapper${UUID.randomUUID().toString().replace("-", "")}"
+        val request = UploadHttp.request("https://api.imgur.com/3/image")
+            .header("Content-Type", "multipart/form-data; boundary=$boundary")
             .header("Authorization", "Client-ID ${UploaderProfile.IMGUR_CLIENT_ID}")
-            .POST(HttpRequest.BodyPublishers.ofString("image=${URLEncoder.encode(base64, Charsets.UTF_8)}"))
+            .POST(HttpRequest.BodyPublishers.ofByteArray(multipart(boundary, payload, listOf("type" to "file"), "image")))
             .build()
         val body = send(request)
         val json = JsonParser.parseString(body).asJsonObject
-        if (!json.get("success").asBoolean) throw UploadException("Imgur returned status ${json.get("status")}")
+        if (json.get("success")?.asBoolean != true) throw UploadException(UploadHttp.failure(json.get("status")?.asInt ?: 200, body))
         val data = json.getAsJsonObject("data")
         val deletion = data.get("deletehash")?.takeIf { it.isJsonPrimitive }?.asString?.takeIf { it.isNotBlank() }?.let {
             SecretRefs.toReferences(

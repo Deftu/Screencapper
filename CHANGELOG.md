@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Profilers such as Spark no longer show Screencapper as taking most of the frame time.
 - The preview could show an older screenshot when two were taken close together.
 - Two screenshots taken in the same second could overwrite each other.
+- Failed uploads now show the host's reason, not only the HTTP status.
+- Imgur uploads send the image file directly instead of as base64 text.
 
 ## [2.1.2] - 2026-11-17
 
