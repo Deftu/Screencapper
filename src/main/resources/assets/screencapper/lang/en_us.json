@@ -19,6 +19,7 @@
     "screencapper.controller.zoom_out": "Zoom out",
     "screencapper.controller.select": "Select",
     "screencapper.controller.deselect": "Deselect",
+    "screencapper.controller.selection_actions": "Selection actions",
     "screencapper.controller.undo": "Undo",
     "screencapper.controller.redo": "Redo",
     "screencapper.controller.delete": "Delete",

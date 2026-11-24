@@ -57,7 +57,7 @@ object AutoCapture {
         *///?}
     }
 
-    private fun grab() {
+    internal fun grab() {
         val minecraft = Minecraft.getInstance()
         //? if >=26.2 {
         Screenshot.grab(minecraft, false)

@@ -12,6 +12,7 @@ import dev.deftu.screencapper.gui.wheel.WheelOption
 import dev.deftu.screencapper.gui.wheel.WheelOptions
 import dev.deftu.screencapper.gui.wheel.WheelShot
 import dev.deftu.screencapper.metadata.MetadataCollector
+import dev.deftu.screencapper.screenshot.AutoCapture
 import dev.deftu.screencapper.screenshot.capture.CaptureKind
 import dev.deftu.screencapper.screenshot.capture.CaptureResults
 import dev.deftu.screencapper.screenshot.capture.CaptureSource
@@ -21,6 +22,7 @@ import dev.deftu.screencapper.screenshot.capture.compression.CompressionProfile
 import dev.deftu.screencapper.screenshot.capture.compression.CompressionProfiles
 import dev.deftu.screencapper.screenshot.panorama.TitlePanorama
 import org.polyfrost.compose.host.controller.ControllerAction
+import org.polyfrost.compose.host.controller.ControllerContext
 import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
@@ -69,6 +71,7 @@ object CaptureInput {
             "screencapper:take_screenshot",
             "screencapper.controller.take_screenshot",
             category = CONTROLLER_CATEGORY,
+            context = ControllerContext.Anywhere,
         )
         shutter.onPress { onScreenshotButton(shutter) }
     }
@@ -87,14 +90,14 @@ object CaptureInput {
     fun onScreenshotKey(key: Int, holdable: Boolean = true): Boolean = begin(key, holdable) { InputBridge.isKeyDown(key) }
 
     private fun onScreenshotButton(button: ControllerAction) {
-        begin(button, true) { button.isPressed }
+        if (!begin(button, true) { button.isPressed }) AutoCapture.grab()
     }
 
     private fun begin(source: Any, holdable: Boolean, down: () -> Boolean): Boolean {
         if (!FastCapture.isActive()) return false
         hookFrames()
         if (busy()) return true
-        if (gesture.active && source == heldBy) return true
+        if (gesture.active) return true
         if (!holdable || !ScreencapperConfig.holdForMenu) {
             captureNow()
             return true

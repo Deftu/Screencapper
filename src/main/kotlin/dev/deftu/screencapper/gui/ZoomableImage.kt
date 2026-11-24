@@ -220,7 +220,7 @@ internal fun ZoomableImage(
         else ZoomGeometry(viewSize.width.toFloat(), viewSize.height.toFloat(), sourceSize.width, sourceSize.height)
     }
     val latestGeometry by rememberUpdatedState(geometry)
-    LaunchedEffect(geometry) {
+    LaunchedEffect(state, geometry) {
         state.geometry = geometry
         geometry?.let { state.transform = it.clamp(state.transform) }
     }
@@ -302,7 +302,7 @@ private val sharpDecodes = Mutex()
 @Composable
 private fun rememberSharpRegion(file: File, state: ZoomState, geometry: ZoomGeometry?, baseWidth: Int): SharpBitmap? {
     var sharp by remember(file) { mutableStateOf<SharpBitmap?>(null) }
-    LaunchedEffect(file, geometry, baseWidth) {
+    LaunchedEffect(file, state, geometry, baseWidth) {
         if (geometry == null) {
             sharp = null
             return@LaunchedEffect

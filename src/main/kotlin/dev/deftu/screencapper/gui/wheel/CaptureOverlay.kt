@@ -122,7 +122,7 @@ internal object CaptureOverlay {
         session = next
         shown = next
         stickSteering = false
-        look = Controllers.captureLook()
+        look = Controllers.captureGameplay()
         return true
     }
 
@@ -167,10 +167,13 @@ internal object CaptureOverlay {
     fun aimStick(stick: Offset) {
         val current = session ?: return
         val reach = stick.getDistance()
-        if (!stickSteering && reach < STICK_DEAD_ZONE) return
+        if (reach < STICK_DEAD_ZONE) {
+            if (stickSteering) current.state.aimAt(0f, 0f)
+            stickSteering = false
+            return
+        }
         stickSteering = true
-        if (reach < STICK_DEAD_ZONE) current.state.aimAt(0f, 0f)
-        else current.state.aimAt(stick.x / reach * STICK_AIM, stick.y / reach * STICK_AIM)
+        current.state.aimAt(stick.x / reach * STICK_AIM, stick.y / reach * STICK_AIM)
     }
 
     fun showCountdown(endsAt: Long) {

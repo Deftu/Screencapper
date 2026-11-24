@@ -303,11 +303,14 @@ internal fun ScreenshotEditor(screenshot: Screenshot, onClose: () -> Unit, onSav
     EscapeCloses(cancel)
 
     val canSave = load == SourceLoad.READY && state.canSave && !state.saving
+    val shortcuts = !Confirm.hasPending && state.draft == null
     Column(
         Modifier
             .fillMaxSize()
             .padding(start = spacing.xxl, end = spacing.xxl, top = spacing.l, bottom = spacing.xxl)
-            .controllerAction(ControllerButton.START, SAVE_LABEL.resolve(), canSave, requireFocus = false, onPress = save)
+            .controllerAction(ControllerButton.START, SAVE_LABEL.resolve(), canSave && !Confirm.hasPending, requireFocus = false, onPress = save)
+            .controllerShortcut(ControllerButton.LEFT_BUMPER, "screencapper.controller.undo", "Undo", shortcuts && state.history.canUndo, onPress = state::undo)
+            .controllerShortcut(ControllerButton.RIGHT_BUMPER, "screencapper.controller.redo", "Redo", shortcuts && state.history.canRedo, onPress = state::redo)
             .onKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown || !(event.isCtrlPressed || event.isMetaPressed) || state.draft != null) return@onKeyEvent false
                 when {
@@ -611,8 +614,6 @@ private fun EditorCanvas(
                 .clipToBounds()
                 .onSizeChanged { state.viewSize = it }
                 .controllerPan { delta -> state.panView(-delta.x, -delta.y) }
-                .controllerShortcut(ControllerButton.LEFT_BUMPER, "screencapper.controller.undo", "Undo", state.history.canUndo || state.draft != null, onPress = state::undo)
-                .controllerShortcut(ControllerButton.RIGHT_BUMPER, "screencapper.controller.redo", "Redo", state.history.canRedo, onPress = state::redo)
                 .controllerShortcut(ControllerButton.RIGHT_TRIGGER, "screencapper.controller.zoom_in", "Zoom in", state.viewport != null) { state.zoomView(CONTROLLER_ZOOM_STEP) }
                 .controllerShortcut(ControllerButton.LEFT_TRIGGER, "screencapper.controller.zoom_out", "Zoom out", state.transform.zoomed) { state.zoomView(1f / CONTROLLER_ZOOM_STEP) }
                 .controllerShortcut(ControllerButton.X, "screencapper.controller.delete", "Delete", state.selection != null && state.draft == null, onPress = state::deleteSelected)
