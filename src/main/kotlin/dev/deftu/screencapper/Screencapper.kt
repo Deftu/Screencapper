@@ -12,10 +12,12 @@ import dev.deftu.screencapper.screenshot.ScreenshotLibrary
 import dev.deftu.screencapper.screenshot.UploadHistory
 import dev.deftu.screencapper.screenshot.UploadRecord
 import dev.deftu.screencapper.screenshot.capture.input.CaptureInput
+import dev.deftu.screencapper.screenshot.capture.input.InputBridge
 import dev.deftu.screencapper.upload.Uploaders
 import net.fabricmc.api.ClientModInitializer
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.oneconfig.api.commands.v1.CommandManager
 import org.polyfrost.oneconfig.api.hud.v1.HudManager
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
@@ -41,6 +43,12 @@ object Screencapper : ClientModInitializer {
         OneConfigPages.registerIfAbsent(ScreenshotsPage)
         EditorIcons.register()
         registerCommands()
+        Controllers.register(
+            "screencapper:open_screenshots",
+            "screencapper.controller.open_screenshots",
+            category = CaptureInput.CONTROLLER_CATEGORY,
+            radial = true,
+        ).onPress { if (!InputBridge.screenOpen) ScreenshotActions.openManager() }
     }
 
     private fun registerCommands() {

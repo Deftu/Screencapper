@@ -101,6 +101,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
+import org.polyfrost.compose.host.controller.ControllerButton
+import org.polyfrost.compose.host.controller.Controllers
+import org.polyfrost.compose.host.controller.controllerAction
+import org.polyfrost.compose.host.controller.controllerPan
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.Chip
 import org.polyfrost.oneconfig.api.ui.v1.components.ColorPickerPopup
@@ -119,8 +123,11 @@ import org.polyfrost.oneconfig.api.ui.v1.components.SurfaceKind
 import org.polyfrost.oneconfig.api.ui.v1.components.Text
 import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
+import org.polyfrost.oneconfig.api.ui.v1.components.controllerShortcut
 import org.polyfrost.oneconfig.api.ui.v1.components.rememberColorPickerModel
 import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
+import org.polyfrost.oneconfig.api.ui.v1.page.PageText
+import org.polyfrost.oneconfig.api.ui.v1.page.resolve
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.utils.v1.Multithreading
 import kotlin.math.floor
@@ -138,6 +145,8 @@ private const val OUTLINE = 2f
 private const val HANDLE = 8f
 private const val TINT_ALPHA = 0.2f
 private const val FAINT_ALPHA = 0.5f
+private const val CONTROLLER_ZOOM_STEP = 1.5f
+private val SAVE_LABEL = PageText.translatable("screencapper.controller.save", "Save copy")
 
 private val PALETTE = listOf(
     "White" to 0xFFFFFFFF.toInt(),
@@ -293,10 +302,12 @@ internal fun ScreenshotEditor(screenshot: Screenshot, onClose: () -> Unit, onSav
 
     EscapeCloses(cancel)
 
+    val canSave = load == SourceLoad.READY && state.canSave && !state.saving
     Column(
         Modifier
             .fillMaxSize()
             .padding(start = spacing.xxl, end = spacing.xxl, top = spacing.l, bottom = spacing.xxl)
+            .controllerAction(ControllerButton.START, SAVE_LABEL.resolve(), canSave, requireFocus = false, onPress = save)
             .onKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown || !(event.isCtrlPressed || event.isMetaPressed) || state.draft != null) return@onKeyEvent false
                 when {
@@ -324,7 +335,7 @@ internal fun ScreenshotEditor(screenshot: Screenshot, onClose: () -> Unit, onSav
                 TextButton(
                     if (state.saving) "Saving..." else "Save copy", "tick", save,
                     style = ControlStyle.Primary,
-                    enabled = load == SourceLoad.READY && state.canSave && !state.saving,
+                    enabled = canSave,
                 )
             },
         )
@@ -599,6 +610,12 @@ private fun EditorCanvas(
                 .matchParentSize()
                 .clipToBounds()
                 .onSizeChanged { state.viewSize = it }
+                .controllerPan { delta -> state.panView(-delta.x, -delta.y) }
+                .controllerShortcut(ControllerButton.LEFT_BUMPER, "screencapper.controller.undo", "Undo", state.history.canUndo || state.draft != null, onPress = state::undo)
+                .controllerShortcut(ControllerButton.RIGHT_BUMPER, "screencapper.controller.redo", "Redo", state.history.canRedo, onPress = state::redo)
+                .controllerShortcut(ControllerButton.RIGHT_TRIGGER, "screencapper.controller.zoom_in", "Zoom in", state.viewport != null) { state.zoomView(CONTROLLER_ZOOM_STEP) }
+                .controllerShortcut(ControllerButton.LEFT_TRIGGER, "screencapper.controller.zoom_out", "Zoom out", state.transform.zoomed) { state.zoomView(1f / CONTROLLER_ZOOM_STEP) }
+                .controllerShortcut(ControllerButton.X, "screencapper.controller.delete", "Delete", state.selection != null && state.draft == null, onPress = state::deleteSelected)
                 .focusRequester(focus)
                 .focusable()
                 .onKeyEvent { event ->
@@ -711,6 +728,7 @@ private fun Modifier.editorGestures(state: EditorState, onPick: (ImagePoint) -> 
             state.shift = event.keyboardModifiers.isShiftPressed
             when (event.type) {
                 PointerEventType.Scroll -> {
+                    if (Controllers.isDispatching) continue
                     val factor = ZoomGeometry.wheelFactor(change.scrollDelta.y)
                     if (factor != 1f) state.transform = viewport.zoom.zoomBy(state.transform, factor, position.x, position.y)
                     event.changes.forEach { it.consume() }
@@ -756,6 +774,16 @@ private fun Modifier.editorGestures(state: EditorState, onPick: (ImagePoint) -> 
             }
         }
     }
+}
+
+private fun EditorState.zoomView(factor: Float) {
+    val viewport = viewport ?: return
+    transform = viewport.zoom.zoomBy(transform, factor, viewport.viewWidth / 2f, viewport.viewHeight / 2f)
+}
+
+private fun EditorState.panView(dx: Float, dy: Float) {
+    val viewport = viewport ?: return
+    transform = viewport.zoom.panBy(transform, dx, dy)
 }
 
 private fun DrawScope.inImage(viewport: EditorViewport, transform: ZoomTransform, block: DrawScope.() -> Unit) {

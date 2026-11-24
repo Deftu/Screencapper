@@ -38,6 +38,8 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import dev.deftu.screencapper.screenshot.Screenshot
+import org.polyfrost.compose.host.controller.ControllerAxes
+import org.polyfrost.compose.host.controller.controllerArrows
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.a11y.notFocusable
@@ -70,6 +72,7 @@ internal fun FullscreenViewer(screenshot: Screenshot, list: List<Screenshot>, on
     val latestNavigate by rememberUpdatedState(onNavigate)
     val focus = remember { FocusRequester() }
     val fade = remember { Animatable(0f) }
+    val zoom = rememberZoomState(screenshot.file)
 
     EscapeCloses(onClose)
     LaunchedEffect(Unit) { fade.animateTo(1f, Motion.finiteSpec(tween(Motion.standard))) }
@@ -93,6 +96,8 @@ internal fun FullscreenViewer(screenshot: Screenshot, list: List<Screenshot>, on
                         latestNavigate(target)
                         true
                     }
+                    .controllerZoom(zoom)
+                    .controllerArrows(ControllerAxes.Horizontal)
                     .focusRequester(focus)
                     .focusable(),
             ) {
@@ -103,7 +108,7 @@ internal fun FullscreenViewer(screenshot: Screenshot, list: List<Screenshot>, on
                         .notFocusable()
                         .onTap(onClose),
                 )
-                FullscreenFrame(screenshot, Modifier.fillMaxSize().padding(GUTTER))
+                FullscreenFrame(screenshot, zoom, Modifier.fillMaxSize().padding(GUTTER))
                 if (previous != null) {
                     IconButton(
                         "left-arrow", "Previous screenshot", { onNavigate(previous) },
@@ -135,7 +140,7 @@ internal fun FullscreenViewer(screenshot: Screenshot, list: List<Screenshot>, on
 }
 
 @Composable
-private fun FullscreenFrame(screenshot: Screenshot, modifier: Modifier) {
+private fun FullscreenFrame(screenshot: Screenshot, zoom: ZoomState, modifier: Modifier) {
     val loaded = rememberImageBitmap(screenshot.file.toPath(), FULLSCREEN_WIDTH)
     val size = rememberImageSize(screenshot)
     val aspect = loaded?.let { it.width.toFloat() / it.height } ?: size?.let { it.width.toFloat() / it.height } ?: (16f / 9f)
@@ -147,7 +152,7 @@ private fun FullscreenFrame(screenshot: Screenshot, modifier: Modifier) {
                 .themedSurface(SurfaceKind.Card)
                 .swallowPresses(),
         ) {
-            ZoomableImage(screenshot.file, size, intArrayOf(VIEWER_WIDTH, FULLSCREEN_WIDTH), Modifier.fillMaxSize())
+            ZoomableImage(screenshot.file, size, intArrayOf(VIEWER_WIDTH, FULLSCREEN_WIDTH), Modifier.fillMaxSize(), zoom)
         }
     }
 }

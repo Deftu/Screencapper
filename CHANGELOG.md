@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Controller support with Controlify. On the Screenshots page and in the viewers and editor, the triggers zoom, the right stick pans and Y selects screenshots. In the editor, the bumpers undo and redo, X deletes the selected edit and Start saves a copy. You can bind "Take screenshot" and "Open screenshots" in Controlify's controls, and the right stick steers the capture wheel.
+
 ## [2.2.0] - 2026-11-21
 
 ### Added

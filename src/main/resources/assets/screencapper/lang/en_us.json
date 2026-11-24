@@ -11,5 +11,16 @@
     "screencapper.text.chat.panorama": "Panorama saved",
     "screencapper.text.chat.panorama_set_title": "Set as title background",
     "screencapper.text.chat.panorama_reset_title": "Reset title background",
-    "screencapper.text.chat.panorama_folder": "Open folder"
+    "screencapper.text.chat.panorama_folder": "Open folder",
+    "screencapper.controller.category": "Screencapper",
+    "screencapper.controller.take_screenshot": "Take screenshot",
+    "screencapper.controller.open_screenshots": "Open screenshots",
+    "screencapper.controller.zoom_in": "Zoom in",
+    "screencapper.controller.zoom_out": "Zoom out",
+    "screencapper.controller.select": "Select",
+    "screencapper.controller.deselect": "Deselect",
+    "screencapper.controller.undo": "Undo",
+    "screencapper.controller.redo": "Redo",
+    "screencapper.controller.delete": "Delete",
+    "screencapper.controller.save": "Save copy"
 }

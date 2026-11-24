@@ -75,6 +75,8 @@ import dev.deftu.screencapper.upload.UploaderProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.polyfrost.compose.host.BackStack
+import org.polyfrost.compose.host.controller.ControllerButton
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.Badge
 import org.polyfrost.oneconfig.api.ui.v1.components.BadgeTone
@@ -111,6 +113,8 @@ import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.api.ui.v1.components.TextPromptDialog
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.controllerShortcut
+import org.polyfrost.oneconfig.api.ui.v1.components.isControllerMode
 import org.polyfrost.oneconfig.api.ui.v1.components.rememberImageBitmap
 import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
@@ -258,6 +262,13 @@ private fun ScreenshotManager() {
     if (viewed != null) {
         Viewer(viewed, if (viewed in shown) shown else all, onNavigate = { viewing = it.id }, onClose = { viewing = null })
         return
+    }
+
+    if (selection.isNotEmpty() && isControllerMode()) {
+        DisposableEffect(Unit) {
+            val back = BackStack.register { selection.clear() }
+            onDispose { back.close() }
+        }
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -457,7 +468,14 @@ private fun ScreenshotTile(screenshot: Screenshot, selected: Boolean, selecting:
     MediaTile(
         onClick = onOpen,
         label = name,
-        modifier = Modifier.contextMenu { screenshotMenu(screenshot, onView = onView, onSelect = onSelect, selected = selected) },
+        modifier = Modifier
+            .contextMenu { screenshotMenu(screenshot, onView = onView, onSelect = onSelect, selected = selected) }
+            .controllerShortcut(
+                ControllerButton.Y,
+                if (selected) "screencapper.controller.deselect" else "screencapper.controller.select",
+                if (selected) "Deselect" else "Select",
+                onPress = onSelect,
+            ),
         selected = selected,
         onSelectedChange = { onSelect() },
         selecting = selecting,
@@ -628,6 +646,7 @@ private fun Viewer(screenshot: Screenshot, list: List<Screenshot>, onNavigate: (
     val next = list.getOrNull(index + 1)
     val spacing = OneConfigTheme.current.spacing
     var fullscreen by remember { mutableStateOf(false) }
+    val zoom = rememberZoomState(screenshot.file)
 
     MasterDetailLayout(
         list = {
@@ -637,7 +656,7 @@ private fun Viewer(screenshot: Screenshot, list: List<Screenshot>, onNavigate: (
                     count = list.size,
                     index = index.coerceAtLeast(0),
                     onIndexChange = { at -> list.getOrNull(at)?.let(onNavigate) },
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    modifier = Modifier.weight(1f).fillMaxWidth().controllerZoom(zoom, onPress = { fullscreen = true }),
                     onDismiss = onClose,
                     thumbnail = { at -> ScreenshotImage(list[at], THUMBNAIL_WIDTH, Modifier.fillMaxSize(), ContentScale.Crop) },
                     thumbnailLabel = { at -> list[at].file.nameWithoutExtension },
@@ -650,7 +669,7 @@ private fun Viewer(screenshot: Screenshot, list: List<Screenshot>, onNavigate: (
                     filmstripNextLabel = "Later screenshots",
                 ) { at ->
                     val shown = list.getOrNull(at) ?: screenshot
-                    ViewerFrame(shown, onMaximize = { fullscreen = true }, Modifier.contextMenu { screenshotMenu(shown, onDeleted = { if (shown.id == screenshot.id) (next ?: previous)?.let(onNavigate) ?: onClose() }) })
+                    ViewerFrame(shown, if (shown.id == screenshot.id) zoom else null, onMaximize = { fullscreen = true }, Modifier.contextMenu { screenshotMenu(shown, onDeleted = { if (shown.id == screenshot.id) (next ?: previous)?.let(onNavigate) ?: onClose() }) })
                 }
             }
         },
@@ -678,7 +697,7 @@ private fun Viewer(screenshot: Screenshot, list: List<Screenshot>, onNavigate: (
 }
 
 @Composable
-private fun ViewerFrame(screenshot: Screenshot, onMaximize: () -> Unit, modifier: Modifier = Modifier) {
+private fun ViewerFrame(screenshot: Screenshot, zoom: ZoomState?, onMaximize: () -> Unit, modifier: Modifier = Modifier) {
     val loaded = rememberImageBitmap(screenshot.file.toPath(), VIEWER_WIDTH)
     val size = rememberImageSize(screenshot)
     val aspect = loaded?.let { it.width.toFloat() / it.height } ?: size?.let { it.width.toFloat() / it.height } ?: 16f / 9f
@@ -690,7 +709,7 @@ private fun ViewerFrame(screenshot: Screenshot, onMaximize: () -> Unit, modifier
                 .themedSurface(SurfaceKind.Card)
                 .onDoubleClick(onMaximize),
         ) {
-            ZoomableImage(screenshot.file, size, intArrayOf(VIEWER_WIDTH), Modifier.fillMaxSize(), doubleClickZooms = false)
+            ZoomableImage(screenshot.file, size, intArrayOf(VIEWER_WIDTH), Modifier.fillMaxSize(), zoom ?: rememberZoomState(screenshot.file), doubleClickZooms = false)
             IconButton(
                 "maximise", "Full screen", onMaximize,
                 Modifier.align(Alignment.TopEnd).padding(OneConfigTheme.current.spacing.m),
