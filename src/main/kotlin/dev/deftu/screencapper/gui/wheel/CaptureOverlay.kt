@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import dev.deftu.screencapper.screenshot.capture.HighResCapture
 import dev.deftu.screencapper.screenshot.capture.input.InputBridge
 import net.minecraft.client.Minecraft
+import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.compose.minecraft.hud.HudLayer
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.OneConfigPrefs
@@ -69,6 +71,8 @@ internal typealias WheelGraphics = GuiGraphicsExtractor
 *///?}
 
 private const val GLYPH_EM = 10
+private const val STICK_DEAD_ZONE = 0.4f
+private const val STICK_AIM = 10_000f
 
 private val OneConfigUITheme.isSquare: Boolean get() = style == ThemeStyle.Pixel
 
@@ -103,6 +107,8 @@ internal object CaptureOverlay {
     private var shown by mutableStateOf<WheelSession?>(null)
     private var fadeEndsAt = 0L
     private var countdownEndsAt by mutableLongStateOf(-1L)
+    private var look: AutoCloseable? = null
+    private var stickSteering = false
 
     private val host = HudLayer("screencapper:capture_overlay", OneConfigComposeOptions) { Content() }.apply { acceptsInput = false }
 
@@ -115,6 +121,8 @@ internal object CaptureOverlay {
         val next = WheelSession(items)
         session = next
         shown = next
+        stickSteering = false
+        look = Controllers.captureGameplay()
         return true
     }
 
@@ -139,6 +147,8 @@ internal object CaptureOverlay {
     private fun finish(instant: Boolean): WheelSession? {
         val current = session ?: return null
         session = null
+        look?.close()
+        look = null
         endFade(instant)
         return current
     }
@@ -152,6 +162,18 @@ internal object CaptureOverlay {
         val current = session ?: return
         val scale = steerScale(InputBridge.sensitivity(), host.density)
         current.state.steer((dx * scale).toFloat(), (dy * scale).toFloat())
+    }
+
+    fun aimStick(stick: Offset) {
+        val current = session ?: return
+        val reach = stick.getDistance()
+        if (reach < STICK_DEAD_ZONE) {
+            if (stickSteering) current.state.aimAt(0f, 0f)
+            stickSteering = false
+            return
+        }
+        stickSteering = true
+        current.state.aimAt(stick.x / reach * STICK_AIM, stick.y / reach * STICK_AIM)
     }
 
     fun showCountdown(endsAt: Long) {

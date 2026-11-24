@@ -12,6 +12,7 @@ import dev.deftu.screencapper.gui.wheel.WheelOption
 import dev.deftu.screencapper.gui.wheel.WheelOptions
 import dev.deftu.screencapper.gui.wheel.WheelShot
 import dev.deftu.screencapper.metadata.MetadataCollector
+import dev.deftu.screencapper.screenshot.AutoCapture
 import dev.deftu.screencapper.screenshot.capture.CaptureKind
 import dev.deftu.screencapper.screenshot.capture.CaptureResults
 import dev.deftu.screencapper.screenshot.capture.CaptureSource
@@ -20,6 +21,9 @@ import dev.deftu.screencapper.screenshot.capture.HighResCapture
 import dev.deftu.screencapper.screenshot.capture.compression.CompressionProfile
 import dev.deftu.screencapper.screenshot.capture.compression.CompressionProfiles
 import dev.deftu.screencapper.screenshot.panorama.TitlePanorama
+import org.polyfrost.compose.host.controller.ControllerAction
+import org.polyfrost.compose.host.controller.ControllerContext
+import org.polyfrost.compose.host.controller.Controllers
 import org.polyfrost.oneconfig.api.event.v1.EventManager
 import org.polyfrost.oneconfig.api.event.v1.events.FramebufferRenderEvent
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
@@ -31,13 +35,15 @@ import java.util.function.Supplier
 object CaptureInput {
     private const val SETTLE_FRAMES = 2
     private const val NO_KEY = Int.MIN_VALUE
+    internal const val CONTROLLER_CATEGORY = "screencapper.controller.category"
 
     private class Frame(val width: Int, val height: Int, val pixels: Supplier<IntArray>, val release: Runnable)
 
     private val installed = AtomicBoolean(false)
     private val frameHooked = AtomicBoolean(false)
     private val gesture = HoldGesture { ScreencapperConfig.holdThreshold.toLong() }
-    private var heldKey = 0
+    private var heldBy: Any? = null
+    private var isHeld: () -> Boolean = { false }
     private var pending: PendingShot<Frame>? = null
 
     private var timerEndsAt = -1L
@@ -61,6 +67,13 @@ object CaptureInput {
         if (!installed.compareAndSet(false, true)) return
         hookFrames()
         TitlePanorama.install()
+        val shutter = Controllers.register(
+            "screencapper:take_screenshot",
+            "screencapper.controller.take_screenshot",
+            category = CONTROLLER_CATEGORY,
+            context = ControllerContext.Anywhere,
+        )
+        shutter.onPress { onScreenshotButton(shutter) }
     }
 
     private fun hookFrames() {
@@ -74,11 +87,17 @@ object CaptureInput {
 
     @JvmStatic
     @JvmOverloads
-    fun onScreenshotKey(key: Int, holdable: Boolean = true): Boolean {
+    fun onScreenshotKey(key: Int, holdable: Boolean = true): Boolean = begin(key, holdable) { InputBridge.isKeyDown(key) }
+
+    private fun onScreenshotButton(button: ControllerAction) {
+        if (!begin(button, true) { button.isPressed }) AutoCapture.grab()
+    }
+
+    private fun begin(source: Any, holdable: Boolean, down: () -> Boolean): Boolean {
         if (!FastCapture.isActive()) return false
         hookFrames()
         if (busy()) return true
-        if (gesture.active && key == heldKey) return true
+        if (gesture.active) return true
         if (!holdable || !ScreencapperConfig.holdForMenu) {
             captureNow()
             return true
@@ -98,7 +117,8 @@ object CaptureInput {
             },
         )
         pending = shot
-        heldKey = key
+        heldBy = source
+        isHeld = down
         gesture.press(System.currentTimeMillis())
         CaptureSource.readMain { width, height, pixels, release -> shot.arrive(Frame(width, height, pixels, release)) }
         return true
@@ -154,9 +174,10 @@ object CaptureInput {
     private fun frame() {
         val now = System.currentTimeMillis()
         if (CaptureOverlay.isOpen && !CaptureOverlay.canStayOpen()) closeMenu()
+        if (CaptureOverlay.isOpen) CaptureOverlay.aimStick(Controllers.rightStick)
 
         if (gesture.active) {
-            when (gesture.update(now, InputBridge.isKeyDown(heldKey))) {
+            when (gesture.update(now, isHeld())) {
                 HoldGesture.Outcome.TAP -> settlePending(true)
                 HoldGesture.Outcome.HOLD -> {
                     val opened = openMenu()

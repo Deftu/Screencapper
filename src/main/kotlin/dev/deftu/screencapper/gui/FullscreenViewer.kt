@@ -16,12 +16,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -38,6 +41,8 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import dev.deftu.screencapper.screenshot.Screenshot
+import org.polyfrost.compose.host.controller.ControllerAxes
+import org.polyfrost.compose.host.controller.controllerArrows
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.a11y.Motion
 import org.polyfrost.oneconfig.api.ui.v1.a11y.notFocusable
@@ -69,7 +74,9 @@ internal fun FullscreenViewer(screenshot: Screenshot, list: List<Screenshot>, on
     val latestNext by rememberUpdatedState(next)
     val latestNavigate by rememberUpdatedState(onNavigate)
     val focus = remember { FocusRequester() }
+    var imageFocused by remember { mutableStateOf(false) }
     val fade = remember { Animatable(0f) }
+    val zoom = rememberZoomState(screenshot.file)
 
     EscapeCloses(onClose)
     LaunchedEffect(Unit) { fade.animateTo(1f, Motion.finiteSpec(tween(Motion.standard))) }
@@ -82,19 +89,7 @@ internal fun FullscreenViewer(screenshot: Screenshot, list: List<Screenshot>, on
             Box(
                 Modifier
                     .fillMaxSize()
-                    .graphicsLayer { alpha = fade.value }
-                    .onKeyEvent { event ->
-                        if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
-                        val target = when (event.key) {
-                            Key.DirectionLeft -> latestPrevious
-                            Key.DirectionRight -> latestNext
-                            else -> null
-                        } ?: return@onKeyEvent false
-                        latestNavigate(target)
-                        true
-                    }
-                    .focusRequester(focus)
-                    .focusable(),
+                    .graphicsLayer { alpha = fade.value },
             ) {
                 Box(
                     Modifier
@@ -103,7 +98,23 @@ internal fun FullscreenViewer(screenshot: Screenshot, list: List<Screenshot>, on
                         .notFocusable()
                         .onTap(onClose),
                 )
-                FullscreenFrame(screenshot, Modifier.fillMaxSize().padding(GUTTER))
+                val imageFocus = Modifier
+                    .onKeyEvent { event ->
+                        if (!imageFocused || event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                        val target = when (event.key) {
+                            Key.DirectionLeft -> latestPrevious
+                            Key.DirectionRight -> latestNext
+                            else -> null
+                        } ?: return@onKeyEvent false
+                        latestNavigate(target)
+                        true
+                    }
+                    .controllerZoom(zoom)
+                    .controllerArrows(ControllerAxes.Horizontal)
+                    .focusRequester(focus)
+                    .onFocusChanged { imageFocused = it.isFocused }
+                    .focusable()
+                FullscreenFrame(screenshot, zoom, Modifier.fillMaxSize().padding(GUTTER), imageFocus)
                 if (previous != null) {
                     IconButton(
                         "left-arrow", "Previous screenshot", { onNavigate(previous) },
@@ -135,7 +146,7 @@ internal fun FullscreenViewer(screenshot: Screenshot, list: List<Screenshot>, on
 }
 
 @Composable
-private fun FullscreenFrame(screenshot: Screenshot, modifier: Modifier) {
+private fun FullscreenFrame(screenshot: Screenshot, zoom: ZoomState, modifier: Modifier, imageModifier: Modifier) {
     val loaded = rememberImageBitmap(screenshot.file.toPath(), FULLSCREEN_WIDTH)
     val size = rememberImageSize(screenshot)
     val aspect = loaded?.let { it.width.toFloat() / it.height } ?: size?.let { it.width.toFloat() / it.height } ?: (16f / 9f)
@@ -145,9 +156,10 @@ private fun FullscreenFrame(screenshot: Screenshot, modifier: Modifier) {
             Modifier
                 .size(frameWidth, frameWidth / aspect)
                 .themedSurface(SurfaceKind.Card)
-                .swallowPresses(),
+                .swallowPresses()
+                .then(imageModifier),
         ) {
-            ZoomableImage(screenshot.file, size, intArrayOf(VIEWER_WIDTH, FULLSCREEN_WIDTH), Modifier.fillMaxSize())
+            ZoomableImage(screenshot.file, size, intArrayOf(VIEWER_WIDTH, FULLSCREEN_WIDTH), Modifier.fillMaxSize(), zoom)
         }
     }
 }

@@ -42,6 +42,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -75,6 +77,7 @@ import dev.deftu.screencapper.upload.UploaderProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.polyfrost.compose.host.controller.ControllerButton
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.Badge
 import org.polyfrost.oneconfig.api.ui.v1.components.BadgeTone
@@ -111,6 +114,7 @@ import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
 import org.polyfrost.oneconfig.api.ui.v1.components.TextField
 import org.polyfrost.oneconfig.api.ui.v1.components.TextPromptDialog
 import org.polyfrost.oneconfig.api.ui.v1.components.contextMenu
+import org.polyfrost.oneconfig.api.ui.v1.components.controllerShortcut
 import org.polyfrost.oneconfig.api.ui.v1.components.rememberImageBitmap
 import org.polyfrost.oneconfig.api.ui.v1.components.themedSurface
 import org.polyfrost.oneconfig.api.ui.v1.page.OneConfigPage
@@ -119,6 +123,7 @@ import org.polyfrost.oneconfig.api.ui.v1.page.PageText
 import org.polyfrost.oneconfig.api.ui.v1.page.currentPageSearchQueryOrNull
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import org.polyfrost.oneconfig.utils.v1.ClipboardHelper
+import java.io.File
 import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -260,7 +265,15 @@ private fun ScreenshotManager() {
         return
     }
 
-    Box(Modifier.fillMaxSize()) {
+    val barFocus = remember { FocusRequester() }
+    val canReachBar = selection.isNotEmpty() && !Confirm.hasPending && ScreenshotsPage.organizing == null && ScreenshotsPage.renaming == null
+    Box(
+        Modifier
+            .fillMaxSize()
+            .controllerShortcut(ControllerButton.START, "screencapper.controller.selection_actions", "Selection actions", canReachBar, requireFocus = false) {
+                runCatching { barFocus.requestFocus() }
+            },
+    ) {
         Column(Modifier.fillMaxSize().padding(start = spacing.xxl, end = spacing.xxl, top = spacing.l)) {
             Toolbar(all, shown.size, sort, { sort = it }, gridSize, { gridSize = it }, album, { album = it })
             Spacer(Modifier.height(spacing.xl))
@@ -287,7 +300,7 @@ private fun ScreenshotManager() {
         val selected = selection.toList().mapNotNull { id -> all.firstOrNull { it.id == id } }
         var lastSelected by remember { mutableStateOf(selected) }
         if (selected.isNotEmpty()) lastSelected = selected
-        SelectionBar(selected.size, onClear = { selection.clear() }, Modifier.align(Alignment.BottomCenter).padding(bottom = spacing.xl)) {
+        SelectionBar(selected.size, onClear = { selection.clear() }, Modifier.align(Alignment.BottomCenter).padding(bottom = spacing.xl).focusRequester(barFocus)) {
             SelectionActions(lastSelected, onClear = { selection.clear() })
         }
     }
@@ -457,7 +470,14 @@ private fun ScreenshotTile(screenshot: Screenshot, selected: Boolean, selecting:
     MediaTile(
         onClick = onOpen,
         label = name,
-        modifier = Modifier.contextMenu { screenshotMenu(screenshot, onView = onView, onSelect = onSelect, selected = selected) },
+        modifier = Modifier
+            .contextMenu { screenshotMenu(screenshot, onView = onView, onSelect = onSelect, selected = selected) }
+            .controllerShortcut(
+                ControllerButton.Y,
+                if (selected) "screencapper.controller.deselect" else "screencapper.controller.select",
+                if (selected) "Deselect" else "Select",
+                onPress = onSelect,
+            ),
         selected = selected,
         onSelectedChange = { onSelect() },
         selecting = selecting,
@@ -628,6 +648,8 @@ private fun Viewer(screenshot: Screenshot, list: List<Screenshot>, onNavigate: (
     val next = list.getOrNull(index + 1)
     val spacing = OneConfigTheme.current.spacing
     var fullscreen by remember { mutableStateOf(false) }
+    val zooms = remember { RecentZooms() }
+    val zoom = zooms[screenshot.file]
 
     MasterDetailLayout(
         list = {
@@ -637,7 +659,7 @@ private fun Viewer(screenshot: Screenshot, list: List<Screenshot>, onNavigate: (
                     count = list.size,
                     index = index.coerceAtLeast(0),
                     onIndexChange = { at -> list.getOrNull(at)?.let(onNavigate) },
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    modifier = Modifier.weight(1f).fillMaxWidth().controllerZoom(zoom, onPress = { fullscreen = true }),
                     onDismiss = onClose,
                     thumbnail = { at -> ScreenshotImage(list[at], THUMBNAIL_WIDTH, Modifier.fillMaxSize(), ContentScale.Crop) },
                     thumbnailLabel = { at -> list[at].file.nameWithoutExtension },
@@ -650,7 +672,7 @@ private fun Viewer(screenshot: Screenshot, list: List<Screenshot>, onNavigate: (
                     filmstripNextLabel = "Later screenshots",
                 ) { at ->
                     val shown = list.getOrNull(at) ?: screenshot
-                    ViewerFrame(shown, onMaximize = { fullscreen = true }, Modifier.contextMenu { screenshotMenu(shown, onDeleted = { if (shown.id == screenshot.id) (next ?: previous)?.let(onNavigate) ?: onClose() }) })
+                    ViewerFrame(shown, zooms[shown.file], onMaximize = { fullscreen = true }, Modifier.contextMenu { screenshotMenu(shown, onDeleted = { if (shown.id == screenshot.id) (next ?: previous)?.let(onNavigate) ?: onClose() }) })
                 }
             }
         },
@@ -678,7 +700,7 @@ private fun Viewer(screenshot: Screenshot, list: List<Screenshot>, onNavigate: (
 }
 
 @Composable
-private fun ViewerFrame(screenshot: Screenshot, onMaximize: () -> Unit, modifier: Modifier = Modifier) {
+private fun ViewerFrame(screenshot: Screenshot, zoom: ZoomState, onMaximize: () -> Unit, modifier: Modifier = Modifier) {
     val loaded = rememberImageBitmap(screenshot.file.toPath(), VIEWER_WIDTH)
     val size = rememberImageSize(screenshot)
     val aspect = loaded?.let { it.width.toFloat() / it.height } ?: size?.let { it.width.toFloat() / it.height } ?: 16f / 9f
@@ -690,7 +712,7 @@ private fun ViewerFrame(screenshot: Screenshot, onMaximize: () -> Unit, modifier
                 .themedSurface(SurfaceKind.Card)
                 .onDoubleClick(onMaximize),
         ) {
-            ZoomableImage(screenshot.file, size, intArrayOf(VIEWER_WIDTH), Modifier.fillMaxSize(), doubleClickZooms = false)
+            ZoomableImage(screenshot.file, size, intArrayOf(VIEWER_WIDTH), Modifier.fillMaxSize(), zoom, doubleClickZooms = false)
             IconButton(
                 "maximise", "Full screen", onMaximize,
                 Modifier.align(Alignment.TopEnd).padding(OneConfigTheme.current.spacing.m),
@@ -1091,3 +1113,13 @@ private fun countLabel(shown: Int, total: Int): String = when {
     shown == total -> if (total == 1) "1 screenshot" else "$total screenshots"
     else -> "$shown of $total"
 }
+
+private class RecentZooms {
+    private val states = object : LinkedHashMap<File, ZoomState>(4, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<File, ZoomState>): Boolean = size > KEPT_ZOOMS
+    }
+
+    operator fun get(file: File): ZoomState = states.getOrPut(file) { ZoomState() }
+}
+
+private const val KEPT_ZOOMS = 8

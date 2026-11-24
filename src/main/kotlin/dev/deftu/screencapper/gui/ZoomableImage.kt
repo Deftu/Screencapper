@@ -26,6 +26,11 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
@@ -39,11 +44,16 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.polyfrost.compose.backend.asComposeImageBitmap
+import org.polyfrost.compose.host.controller.ControllerButton
+import org.polyfrost.compose.host.controller.Controllers
+import org.polyfrost.compose.host.controller.controllerPan
+import org.polyfrost.compose.host.controller.isFromController
 import org.polyfrost.compose.render.PolyBitmap
 import org.polyfrost.oneconfig.api.ui.v1.ExperimentalOneConfigUiApi
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlSize
 import org.polyfrost.oneconfig.api.ui.v1.components.ControlStyle
 import org.polyfrost.oneconfig.api.ui.v1.components.TextButton
+import org.polyfrost.oneconfig.api.ui.v1.components.controllerShortcut
 import org.polyfrost.oneconfig.api.ui.v1.components.rememberImageBitmap
 import org.polyfrost.oneconfig.api.ui.v1.theme.OneConfigTheme
 import java.io.File
@@ -153,9 +163,39 @@ internal class ZoomGeometry(val viewWidth: Float, val viewHeight: Float, val ima
 internal class ZoomState {
     var transform: ZoomTransform by mutableStateOf(ZoomTransform())
 
+    var geometry: ZoomGeometry? by mutableStateOf(null)
+
     fun reset() {
         transform = ZoomTransform()
     }
+
+    fun zoomBy(factor: Float) {
+        val layout = geometry ?: return
+        transform = layout.zoomBy(transform, factor, layout.viewWidth / 2f, layout.viewHeight / 2f)
+    }
+
+    fun toggle() {
+        val layout = geometry ?: return
+        transform = layout.toggle(transform, layout.viewWidth / 2f, layout.viewHeight / 2f)
+    }
+
+    fun panBy(dx: Float, dy: Float) {
+        val layout = geometry ?: return
+        transform = layout.panBy(transform, dx, dy)
+    }
+}
+
+internal fun Modifier.controllerZoom(state: ZoomState, onPress: (() -> Unit)? = null): Modifier {
+    val zoomed = state.transform.zoomed
+    return this
+        .controllerPan(zoomed) { delta -> state.panBy(-delta.x, -delta.y) }
+        .controllerShortcut(ControllerButton.RIGHT_TRIGGER, "screencapper.controller.zoom_in", "Zoom in", state.geometry != null) { state.zoomBy(CONTROLLER_ZOOM_STEP) }
+        .controllerShortcut(ControllerButton.LEFT_TRIGGER, "screencapper.controller.zoom_out", "Zoom out", zoomed) { state.zoomBy(1f / CONTROLLER_ZOOM_STEP) }
+        .onKeyEvent { event ->
+            if (!event.isFromController || (event.key != Key.Enter && event.key != Key.NumPadEnter)) return@onKeyEvent false
+            if (event.type == KeyEventType.KeyDown) (onPress ?: state::toggle)()
+            true
+        }
 }
 
 @Composable
@@ -180,7 +220,10 @@ internal fun ZoomableImage(
         else ZoomGeometry(viewSize.width.toFloat(), viewSize.height.toFloat(), sourceSize.width, sourceSize.height)
     }
     val latestGeometry by rememberUpdatedState(geometry)
-    LaunchedEffect(geometry) { geometry?.let { state.transform = it.clamp(state.transform) } }
+    LaunchedEffect(state, geometry) {
+        state.geometry = geometry
+        geometry?.let { state.transform = it.clamp(state.transform) }
+    }
     val sharp = rememberSharpRegion(file, state, geometry.takeIf { imageSize != null }, baseWidths.maxOrNull() ?: 0)
     val fade by animateFloatAsState(if (fallback != null) 1f else 0f)
     val crisp by remember(geometry, state) { derivedStateOf { geometry != null && geometry.pixelScale(state.transform) >= CRISP_PIXEL_SCALE } }
@@ -259,7 +302,7 @@ private val sharpDecodes = Mutex()
 @Composable
 private fun rememberSharpRegion(file: File, state: ZoomState, geometry: ZoomGeometry?, baseWidth: Int): SharpBitmap? {
     var sharp by remember(file) { mutableStateOf<SharpBitmap?>(null) }
-    LaunchedEffect(file, geometry, baseWidth) {
+    LaunchedEffect(file, state, geometry, baseWidth) {
         if (geometry == null) {
             sharp = null
             return@LaunchedEffect
@@ -296,6 +339,7 @@ private fun Modifier.zoomGestures(state: ZoomState, geometry: () -> ZoomGeometry
                 val layout = geometry()
                 when (event.type) {
                     PointerEventType.Scroll -> {
+                        if (Controllers.isDispatching) continue
                         val factor = ZoomGeometry.wheelFactor(change.scrollDelta.y)
                         if (layout != null && factor != 1f) state.transform = layout.zoomBy(state.transform, factor, change.position.x, change.position.y)
                         event.changes.forEach { it.consume() }
@@ -335,4 +379,5 @@ private fun Modifier.zoomGestures(state: ZoomState, geometry: () -> ZoomGeometry
     }
 
 private const val CRISP_PIXEL_SCALE = 2f
+private const val CONTROLLER_ZOOM_STEP = 1.5f
 private const val SHARPEN_DELAY_MILLIS = 150L
