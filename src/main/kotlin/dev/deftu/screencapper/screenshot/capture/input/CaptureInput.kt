@@ -12,6 +12,7 @@ import dev.deftu.screencapper.gui.wheel.WheelOption
 import dev.deftu.screencapper.gui.wheel.WheelOptions
 import dev.deftu.screencapper.gui.wheel.WheelShot
 import dev.deftu.screencapper.metadata.MetadataCollector
+import dev.deftu.screencapper.screenshot.capture.ArgentumFramebuffer
 import dev.deftu.screencapper.screenshot.capture.CaptureKind
 import dev.deftu.screencapper.screenshot.capture.CaptureResults
 import dev.deftu.screencapper.screenshot.capture.CaptureSource
@@ -145,7 +146,10 @@ object CaptureInput {
     private fun busy(): Boolean = CaptureOverlay.isOpen || timerEndsAt >= 0 || settleAction != null || HighResCapture.isCapturing
 
     private fun onFrame() {
-        runCatching { frame() }.onFailure {
+        runCatching {
+            frame()
+            if (busy()) ArgentumFramebuffer.request()
+        }.onFailure {
             Screencapper.LOGGER.error("Capture input failed", it)
             reset()
         }

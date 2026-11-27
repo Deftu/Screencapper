@@ -16,6 +16,7 @@ publish.curseforge = "640948"
 mod.mc_compat = "1.8.9"
 mod.mc_releases = ["1.8.9"]
 feather_build = 2
+deps.argentum = "1.1.0+63f3fb4"
 
 ["1.21.1"]
 mod.mc_compat = ">=1.21 <=1.21.1"

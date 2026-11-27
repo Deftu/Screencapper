@@ -77,6 +77,7 @@ repositories {
     strictMaven("https://maven.fabricmc.net/", "FabricMC", "net.fabricmc")
     strictMaven("https://maven.parchmentmc.org", "ParchmentMC", "org.parchmentmc.data")
     strictMaven("https://api.modrinth.com/maven", "Modrinth", "maven.modrinth")
+    strictMaven("https://maven.taumc.org/releases", "TauMC", "dev.rdh")
 }
 
 dependencies {
@@ -96,6 +97,7 @@ dependencies {
     for (module in arrayOf("config", "config-impl", "events", "hud", "internal", "notifications", "ui", "utils")) {
         implementation("org.polyfrost.oneconfig:$module:$oneconfigversion")
     }
+    sc.properties.getOrNull<String>("deps.argentum")?.let { modCompileOnly("dev.rdh:argentum:$it") { isTransitive = false } }
     testImplementation(kotlin("test"))
 }
 

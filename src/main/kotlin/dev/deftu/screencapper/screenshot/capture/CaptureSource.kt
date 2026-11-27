@@ -29,7 +29,8 @@ object CaptureSource {
         //?} else if >=1.21 {
         /*read(minecraft.mainRenderTarget, 1, sink)
         *///?} else {
-        /*read(minecraft.renderTarget, minecraft.width, minecraft.height, sink)
+        /*if (ArgentumFramebuffer.deferIfDirect { readMain(sink) }) return
+        read(minecraft.renderTarget, minecraft.width, minecraft.height, sink)
         *///?}
     }
 
