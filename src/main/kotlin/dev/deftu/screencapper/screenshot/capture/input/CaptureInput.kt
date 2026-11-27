@@ -40,6 +40,7 @@ object CaptureInput {
     private val gesture = HoldGesture { ScreencapperConfig.holdThreshold.toLong() }
     private var heldKey = 0
     private var pending: PendingShot<Frame>? = null
+    private val frameReads = ArrayList<CaptureSource.Sink>()
 
     private var timerEndsAt = -1L
         set(value) {
@@ -81,7 +82,7 @@ object CaptureInput {
         if (busy()) return true
         if (gesture.active && key == heldKey) return true
         if (!holdable || !ScreencapperConfig.holdForMenu) {
-            captureNow()
+            captureNow(read = ::readFrame)
             return true
         }
 
@@ -101,8 +102,23 @@ object CaptureInput {
         pending = shot
         heldKey = key
         gesture.press(System.currentTimeMillis())
-        CaptureSource.readMain { width, height, pixels, release -> shot.arrive(Frame(width, height, pixels, release)) }
+        readFrame { width, height, pixels, release -> shot.arrive(Frame(width, height, pixels, release)) }
         return true
+    }
+
+    private fun readFrame(sink: CaptureSource.Sink) {
+        //? if <1.21 {
+        /*frameReads += sink
+        *///?} else {
+        CaptureSource.readMain(sink)
+        //?}
+    }
+
+    private fun drainFrameReads() {
+        if (frameReads.isEmpty()) return
+        val reads = frameReads.toList()
+        frameReads.clear()
+        reads.forEach(CaptureSource::readMain)
     }
 
     @JvmStatic
@@ -147,6 +163,7 @@ object CaptureInput {
 
     private fun onFrame() {
         runCatching {
+            drainFrameReads()
             frame()
             if (busy()) ArgentumFramebuffer.request()
         }.onFailure {
@@ -283,14 +300,14 @@ object CaptureInput {
         if (!PanoramaShot.start(faceSize)) ScreenshotActions.notifyError("Couldn't take panorama", "Another capture is still running.")
     }
 
-    private fun captureNow(option: WheelOption? = null) {
+    private fun captureNow(option: WheelOption? = null, read: (CaptureSource.Sink) -> Unit = CaptureSource::readMain) {
         val metadata = MetadataCollector.collect()
         val profile = profileOf(option, CaptureKind.NORMAL)
         val file = fileFor(CaptureKind.NORMAL, profile, null)
         ShutterSound.play()
-        CaptureSource.readMain { width, height, pixels, release ->
+        read(CaptureSource.Sink { width, height, pixels, release ->
             FastCapture.save(file, width, height, pixels, release, { error -> CaptureResults.deliver(file, error) }, CaptureKind.NORMAL, metadata, profile)
-        }
+        })
     }
 
     private fun reset() {

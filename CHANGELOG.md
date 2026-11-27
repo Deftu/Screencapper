@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - On 1.8.9 with Argentum's direct rendering on, screenshots and high-resolution shots no longer come out blank.
+- On 1.8.9, screenshots taken with a OneConfig or OneClient menu open now include the menu.
 
 ## [2.2.0] - 2026-11-21
 
