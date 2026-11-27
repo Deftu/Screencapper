@@ -101,6 +101,13 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+configurations.runtimeClasspath {
+    exclude(group = "org.jetbrains.skiko")
+    for (module in arrayOf("ui", "ui-desktop", "ui-skiko", "ui-skiko-desktop")) {
+        exclude(group = "org.jetbrains.compose.ui", module = module)
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
 }
