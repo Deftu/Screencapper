@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The shutter sound is a little quieter.
+
 ### Fixed
 
 - On 1.8.9 with Argentum's direct rendering on, screenshots and high-resolution shots no longer come out blank.
