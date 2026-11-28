@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-11-28
+
 ### Changed
 
 - The shutter sound is a little quieter.
 
 ### Fixed
 
-- On 1.8.9 with Argentum's direct rendering on, screenshots and high-resolution shots no longer come out blank.
-- On 1.8.9, screenshots taken with a OneConfig or OneClient menu open now include the menu.
+- Screenshots and high-resolution shots on 1.8.9 no longer come out blank when Argentum's direct rendering is on.
+- Screenshots taken on 1.8.9 with a OneConfig or OneClient menu open now include the menu.
 
 ## [2.2.0] - 2026-11-21
 
