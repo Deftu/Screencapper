@@ -39,7 +39,7 @@ object ScreenshotPaths {
     fun resolve(root: File, id: String): File? {
         if (id.isBlank() || '\u0000' in id) return null
         val base = canonical(root) ?: return null
-        val file = canonical(File(base, id)) ?: return null
+        val file = canonical(File(base, id.replace('\\', '/'))) ?: return null
         if (!file.path.startsWith(base.path + File.separator)) return null
         val parts = relative(base, file).split('/')
         if (!parts.dropLast(1).all(::isListedFolder) || !isScreenshotName(parts.last())) return null

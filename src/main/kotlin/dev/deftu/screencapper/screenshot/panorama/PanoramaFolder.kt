@@ -22,7 +22,7 @@ object PanoramaFolder {
     fun resolve(root: File, id: String, allowLegacy: Boolean = false): File? {
         if (id.isBlank() || '\u0000' in id || id.split('/', '\\').any { it == ".." || it == "." }) return null
         val base = canonical(root) ?: return null
-        val dir = canonical(File(base, id)) ?: return null
+        val dir = canonical(File(base, id.replace('\\', '/'))) ?: return null
         if (!dir.path.startsWith(base.path + File.separator)) return null
         val parts = relative(base, dir).split('/')
         val inside = parts.size > 1 && parts.first().equals(PathSanitizer.PANORAMAS, ignoreCase = true) && parts.none { it.startsWith(".") }
