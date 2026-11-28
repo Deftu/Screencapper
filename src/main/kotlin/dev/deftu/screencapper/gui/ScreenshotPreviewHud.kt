@@ -110,6 +110,8 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot Preview"
 
     override fun shouldShow(): Boolean = visible()
 
+    override val previewsBehindMenu: Boolean get() = false
+
     override fun showByDefault(): Boolean = true
 
     override fun multipleInstancesAllowed(): Boolean = false
@@ -154,7 +156,7 @@ class ScreenshotPreviewHud : Hud("screenshot_preview.json", "Screenshot Preview"
     private fun RenderContext.draw(x: Float, y: Float, width: Float, height: Float, colors: PreviewColors, icons: Map<String, PolyBitmap?>) {
         val preview = active?.takeIf { visible() }
         if (preview == null) clearRegions()
-        if (preview == null && isReal && !HudManager.isEditing) return
+        if (preview == null && isReal && !HudManager.isPreviewing(this@ScreenshotPreviewHud)) return
 
         val unit = if (staticW > 0f) width / staticW else 1f
         if (showBackground) rect(x, y, width, height, bgPolyColor, bgRadius * unit)
